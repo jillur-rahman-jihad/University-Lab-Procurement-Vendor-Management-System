@@ -24,9 +24,42 @@ const userSchema = new mongoose.Schema(
         required: true
     },
 
-    phone: String,
+    phone: String, // Contact number / Official phone
 
-    address: String,
+    address: String, // Physical address / Physical location
+
+    // === University Specific Fields ===
+    department: {
+        type: String,
+        required: function() { return this.role === 'university'; }
+    },
+    authorizedRepresentative: {
+        name: { type: String, required: function() { return this.role === 'university'; } },
+        email: { type: String, required: function() { return this.role === 'university'; } },
+        phone: { type: String, required: function() { return this.role === 'university'; } }
+    },
+
+    // === Vendor Specific Fields ===
+    // 'name' maps to shop or company name
+    tradeLicenseNumber: {
+        type: String,
+        required: function() { return this.role === 'vendor'; }
+    },
+
+    // === Consultant Specific Fields ===
+    professionalCredentials: {
+        type: String,
+        required: function() { return this.role === 'consultant'; }
+    },
+    relevantExperience: {
+        type: String,
+        required: function() { return this.role === 'consultant'; }
+    },
+    certificationInformation: {
+        type: String,
+        required: function() { return this.role === 'consultant'; }
+    },
+
 
     verified: {
         type: Boolean,
