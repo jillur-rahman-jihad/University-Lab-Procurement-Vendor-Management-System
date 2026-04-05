@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import LabPlanningDashboard from './pages/LabPlanningDashboard';
 
 function App() {
   return (
@@ -12,7 +13,7 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <span className="text-xl font-bold text-blue-600">UniProcure</span>
+                <span className="text-xl font-bold text-blue-600">ULPVMS</span>
               </div>
             </div>
           </div>
@@ -23,6 +24,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/lab-planning" element={<LabPlanningDashboard />} />
           </Routes>
         </main>
       </div>

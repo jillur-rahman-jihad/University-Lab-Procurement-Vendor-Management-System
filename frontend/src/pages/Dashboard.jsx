@@ -23,12 +23,20 @@ const Dashboard = () => {
             <h3 className="text-lg leading-6 font-medium text-gray-900">User Dashboard</h3>
             <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application status.</p>
           </div>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
-          >
-            Logout
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => navigate('/lab-planning')}
+              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            >
+              Create Lab
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700"
+            >
+              Logout
+            </button>
+          </div>
         </div>
         <div className="border-t border-gray-200 px-4 py-5 sm:p-0">
           <dl className="sm:divide-y sm:divide-gray-200">
