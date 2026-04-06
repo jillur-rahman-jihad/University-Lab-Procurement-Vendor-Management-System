@@ -1,73 +1,57 @@
 const mongoose = require("mongoose");
 
-const userSchema = new mongoose.Schema(
-{
-    name: {
-        type: String,
-        required: true
-    },
-
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-
-    password: {
-        type: String,
-        required: true
-    },
-
+const userSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ["university", "vendor", "consultant", "admin"],
         required: true
     },
 
-    phone: String, // Contact number / Official phone
+    // Common fields
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    phone: String,
 
-    address: String, // Physical address / Physical location
-
-    // === University Specific Fields ===
-    department: {
-        type: String,
-        required: function() { return this.role === 'university'; }
-    },
-    authorizedRepresentative: {
-        name: { type: String, required: function() { return this.role === 'university'; } },
-        email: { type: String, required: function() { return this.role === 'university'; } },
-        phone: { type: String, required: function() { return this.role === 'university'; } }
-    },
-
-    // === Vendor Specific Fields ===
-    // 'name' maps to shop or company name
-    tradeLicenseNumber: {
-        type: String,
-        required: function() { return this.role === 'vendor'; }
+    // University-specific
+    universityInfo: {
+        universityName: String,
+        department: String,
+        address: String,
+        representative: String,
+        isApproved: { type: Boolean, default: false },
+        subscriptionPlan: { type: String, enum: ["free", "premium"], default: "free" }
     },
 
-    // === Consultant Specific Fields ===
-    professionalCredentials: {
-        type: String,
-        required: function() { return this.role === 'consultant'; }
-    },
-    relevantExperience: {
-        type: String,
-        required: function() { return this.role === 'consultant'; }
-    },
-    certificationInformation: {
-        type: String,
-        required: function() { return this.role === 'consultant'; }
+    // Vendor-specific
+    vendorInfo: {
+        shopName: String,
+        tradeLicense: String,
+        location: {
+            address: String,
+            lat: Number,
+            lng: Number,
+            // GeoJSON format needed for 2dsphere index
+            type: { type: String, enum: ['Point'], default: 'Point' },
+            coordinates: { type: [Number] } // [longitude, latitude]
+        },
+        isVerified: { type: Boolean, default: false },
+        rating: { type: Number, default: 0 }
     },
 
-
-    verified: {
-        type: Boolean,
-        default: false
+    // Consultant-specific
+    consultantInfo: {
+        expertise: { type: [String] },
+        experienceLevel: { type: String, enum: ["General", "Certified", "Professional"] },
+        completedProjects: { type: Number, default: 0 },
+        rating: { type: Number, default: 0 },
+        points: { type: Number, default: 0 },
+        availability: { type: Boolean, default: true },
+        bio: String
     }
+}, { timestamps: true });
 
-},
-{ timestamps: true }
-);
+// Geo Index for vendor location mapping
+userSchema.index({ "vendorInfo.location": "2dsphere" });
 
 module.exports = mongoose.model("User", userSchema);
