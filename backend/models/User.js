@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
             lat: Number,
             lng: Number,
             // GeoJSON format needed for 2dsphere index
-            type: { type: String, enum: ['Point'], default: 'Point' },
+            type: { type: String, enum: ['Point'] },
             coordinates: { type: [Number] } // [longitude, latitude]
         },
         isVerified: { type: Boolean, default: false },
@@ -52,6 +52,6 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Geo Index for vendor location mapping
-userSchema.index({ "vendorInfo.location": "2dsphere" });
+userSchema.index({ "vendorInfo.location": "2dsphere" }, { sparse: true });
 
 module.exports = mongoose.model("User", userSchema);
