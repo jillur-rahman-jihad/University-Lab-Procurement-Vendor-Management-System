@@ -151,12 +151,7 @@ const LabPlanningDashboard = () => {
       setFormData(prev => ({
         ...prev,
         mainRequirement: requirements.mainRequirement || '',
-        software: requirements.software || '',
-        numberOfSystems: requirements.numberOfSystems || '',
-        budgetMin: requirements.budgetMin || '',
-        budgetMax: requirements.budgetMax || '',
-        performancePriority: requirements.performancePriority || 'Medium',
-        timeline: requirements.timeline || ''
+        software: requirements.software || ''
       }));
       
       setSuccess('PDF parsed successfully! Please review the extracted details.');

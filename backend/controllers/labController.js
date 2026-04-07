@@ -1,6 +1,6 @@
 const LabProject = require('../models/LabProject');
 const pdfParse = require('pdf-parse');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk'); 
 
 exports.createLabProject = async (req, res) => {
     try {
@@ -27,8 +27,8 @@ exports.uploadAndParsePDF = async (req, res) => {
             return res.status(400).json({ message: 'No PDF file provided.' });
         }
         
-        if (!process.env.GEMINI_API_KEY) {
-            return res.status(500).json({ message: 'Server configuration error: GEMINI_API_KEY is missing in your .env file or not loaded.' });
+        if (!process.env.GROQ_API_KEY) {
+            return res.status(500).json({ message: 'Server configuration error: GROQ_API_KEY is missing in your .env file or not loaded.' });
         }
 
         let text = "";
@@ -43,30 +43,28 @@ exports.uploadAndParsePDF = async (req, res) => {
         
         let content = "";
         try {
-            const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-            const prompt = `You are an AI assistant that extracts lab project requirements from PDF text. Extract the following details from the document text below and output it strictly in JSON format matching this schema:
+            const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+            const prompt = `You are an AI assistant that extracts lab project requirements from PDF text. Extract the following details from the document text below and output it strictly in JSON format matching this schema, for main requirement you will findout which hardwares are required for this course lab and for software requirement you will findout which softwares are requiredfor this course.:
 {
   "mainRequirement": "Brief description of the main focus of this lab",
   "software": "Comma separated list of required softwares",
-  "numberOfSystems": integer (the count of systems/computers/machines required, default to 1 if not mentioned),
-  "budgetMin": integer (minimum budget in USD, default to 0 if not explicitly mentioned),
-  "budgetMax": integer (maximum budget in USD, default to 0 if not explicitly mentioned),
-  "performancePriority": "Low" or "Medium" or "High" (deduce from text),
-  "timeline": "YYYY-MM-DD" (deduce an explicit deadline or just give a date 3 months from now)
 }
 
 Document Text (truncated):
 """
-${text.substring(0, 10000)}
+${text.substring(0, 15000)}
 """`;
 
-            const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            content = response.text();
-        } catch (geminiErr) {
-            console.error('Gemini API Error:', geminiErr);
-            return res.status(500).json({ message: `Gemini API refused or failed to process the request. Details: ${geminiErr.message}` });
+            const chatCompletion = await groq.chat.completions.create({
+                messages: [{ role: 'user', content: prompt }],
+                model: 'openai/gpt-oss-120b',
+                temperature: 0.2,
+                response_format: { type: 'json_object' }
+            });
+            content = chatCompletion.choices[0]?.message?.content || "{}";
+        } catch (apiErr) {
+            console.error('Groq API Error:', apiErr);
+            return res.status(500).json({ message: `Groq API refused or failed to process the request. Details: ${apiErr.message}` });
         }
         
         try {
