@@ -7,7 +7,7 @@ dotenv.config();
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const labRoutes = require('./routes/labRoutes');
-
+const vendorRoutes = require("./routes/vendorRoutes");
 connectDB();
 
 const app = express();
@@ -17,6 +17,7 @@ app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
+app.use("/api/vendor", vendorRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
