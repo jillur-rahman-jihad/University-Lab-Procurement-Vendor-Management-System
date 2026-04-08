@@ -13,8 +13,11 @@ const ConsultantProfile = () => {
   const [bioText, setBioText] = useState('');
   const [editExpertise, setEditExpertise] = useState(false);
   const [selectedExpertise, setSelectedExpertise] = useState([]);
+  const [editExperienceLevel, setEditExperienceLevel] = useState(false);
+  const [selectedExperienceLevel, setSelectedExperienceLevel] = useState('');
 
   const EXPERTISE_OPTIONS = ["Networking", "Graphics", "Research", "AI Infrastructure"];
+  const EXPERIENCE_LEVEL_OPTIONS = ["General", "Certified", "Professional"];
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   const token = localStorage.getItem('token');
@@ -31,6 +34,7 @@ const ConsultantProfile = () => {
       setProfile(response.data);
       setBioText(response.data.consultantInfo?.bio || '');
       setSelectedExpertise(response.data.consultantInfo?.expertise || []);
+      setSelectedExperienceLevel(response.data.consultantInfo?.experienceLevel || '');
       setLoading(false);
     } catch (err) {
       setError('Failed to load profile');
@@ -132,6 +136,28 @@ const ConsultantProfile = () => {
     setEditExpertise(false);
   };
 
+  const handleExperienceLevelSave = async () => {
+    try {
+      const response = await axios.patch(`${API_URL}/api/consultants/profile`, 
+        { experienceLevel: selectedExperienceLevel },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setProfile(response.data.user);
+      setEditExperienceLevel(false);
+      setSuccess('Experience level updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to update experience level: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleExperienceLevelCancel = () => {
+    setSelectedExperienceLevel(profile.consultantInfo?.experienceLevel || '');
+    setEditExperienceLevel(false);
+  };
+
   if (loading) return <div className="p-4">Loading...</div>;
 
   return (
@@ -188,11 +214,63 @@ const ConsultantProfile = () => {
             </div>
           </div>
 
-          {/* Consultant Info */}
+          {/* Consultant Info - Experience Level */}
           <div className="border-b pb-6">
-            <h2 className="text-xl font-semibold mb-4">Consultant Information</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Experience Level</h2>
+              <button
+                onClick={() => setEditExperienceLevel(!editExperienceLevel)}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              >
+                {editExperienceLevel ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
+
+            {editExperienceLevel ? (
+              <div>
+                <div className="space-y-2 mb-4">
+                  {EXPERIENCE_LEVEL_OPTIONS.map(level => (
+                    <label key={level} className="flex items-center">
+                      <input
+                        type="radio"
+                        name="experienceLevel"
+                        value={level}
+                        checked={selectedExperienceLevel === level}
+                        onChange={(e) => setSelectedExperienceLevel(e.target.value)}
+                        className="w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span className="ml-3 text-gray-700 cursor-pointer">{level}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExperienceLevelSave}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Save Level
+                  </button>
+                  <button
+                    onClick={handleExperienceLevelCancel}
+                    className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-lg font-semibold text-blue-600">
+                  {profile.consultantInfo?.experienceLevel || 'Not Set'}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Other Consultant Info */}
+          <div className="border-b pb-6">
+            <h2 className="text-xl font-semibold mb-4">Profile Statistics</h2>
             <div className="space-y-2">
-              <p><strong>Experience Level:</strong> {profile.consultantInfo?.experienceLevel || 'N/A'}</p>
               <p><strong>Completed Projects:</strong> {profile.consultantInfo?.completedProjects || 0}</p>
               <p><strong>Rating:</strong> {profile.consultantInfo?.rating || 0} ⭐</p>
               <p><strong>Availability:</strong> {profile.consultantInfo?.availability ? '✓ Available' : '✗ Not Available'}</p>
