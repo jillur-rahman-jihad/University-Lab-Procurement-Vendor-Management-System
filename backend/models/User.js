@@ -47,7 +47,8 @@ const userSchema = new mongoose.Schema({
         rating: { type: Number, default: 0 },
         points: { type: Number, default: 0 },
         availability: { type: Boolean, default: true },
-        bio: String
+        bio: String,
+        profilePhoto: { type: String, default: null }
     }
 }, { timestamps: true });
 
