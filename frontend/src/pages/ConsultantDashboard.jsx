@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ConsultantProfile from '../components/ConsultantProfile';
 import AssignedProjects from '../components/AssignedProjects';
+import ProjectProgress from '../components/ProjectProgress';
 
 const ConsultantDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -34,6 +35,16 @@ const ConsultantDashboard = () => {
           >
             Assigned Projects
           </button>
+          <button
+            onClick={() => setActiveTab('progress')}
+            className={`py-4 px-2 font-semibold border-b-2 transition ${
+              activeTab === 'progress'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            Project Progress & Documentation
+          </button>
         </div>
       </div>
 
@@ -41,6 +52,7 @@ const ConsultantDashboard = () => {
       <div className="p-6">
         {activeTab === 'profile' && <ConsultantProfile />}
         {activeTab === 'projects' && <AssignedProjects />}
+        {activeTab === 'progress' && <ProjectProgress />}
       </div>
     </div>
   );

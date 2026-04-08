@@ -39,6 +39,42 @@ const labProjectAssignmentSchema = new mongoose.Schema({
     
     configurationSuggestions: [configurationSuggestionSchema],
     
+    // Documentation and Setup Files
+    documentation: [
+        {
+            fileName: String,
+            fileType: String, // pdf, doc, txt, etc
+            fileSize: Number, // in bytes
+            filePath: String,
+            uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+            uploadedAt: { type: Date, default: Date.now },
+            description: String
+        }
+    ],
+    
+    // Project Milestones and Progress Tracking
+    milestones: [
+        {
+            title: String,
+            description: String,
+            dueDate: Date,
+            status: { type: String, enum: ["Pending", "In Progress", "Completed", "Delayed"], default: "Pending" },
+            progress: { type: Number, default: 0, min: 0, max: 100 }, // percentage
+            completedDate: Date,
+            notes: String,
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
+    
+    // Overall project progress
+    overallProgress: {
+        startDate: Date,
+        expectedCompletionDate: Date,
+        completionPercentage: { type: Number, default: 0, min: 0, max: 100 },
+        lastUpdated: Date,
+        estimatedDaysRemaining: Number
+    },
+    
     notes: String,
     performanceMetrics: {
         initialBudget: Number,

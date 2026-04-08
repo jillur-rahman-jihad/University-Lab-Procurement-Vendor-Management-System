@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const labRoutes = require('./routes/labRoutes');
 const consultantRoutes = require('./routes/consultantRoutes');
 const projectAssignmentRoutes = require('./routes/projectAssignmentRoutes');
+const projectProgressRoutes = require('./routes/projectProgressRoutes');
 
 
 dotenv.config();
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/consultants', consultantRoutes);
 app.use('/api/consultants', projectAssignmentRoutes);
+app.use('/api/consultants', projectProgressRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
