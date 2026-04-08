@@ -118,17 +118,139 @@ exports.submitQuotation = async (req, res) => {
 };
 
 exports.getMyQuotations = async (req, res) => {
-  res.status(200).json({ message: "getMyQuotations placeholder" });
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const quotations = await Quotation.find({ vendorId: req.user.id })
+      .populate("labProjectId")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(quotations);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch quotations",
+      error: error.message
+    });
+  }
 };
 
 exports.updateQuotation = async (req, res) => {
-  res.status(200).json({ message: "updateQuotation placeholder" });
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const quotation = await Quotation.findById(req.params.id);
+
+    if (!quotation) {
+      return res.status(404).json({ message: "Quotation not found" });
+    }
+
+    if (quotation.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "You can update only your own quotation"
+      });
+    }
+
+    if (quotation.status !== "pending") {
+      return res.status(400).json({
+        message: "Only pending quotations can be updated"
+      });
+    }
+
+    const {
+      components,
+      totalPrice,
+      bulkDiscount,
+      installationIncluded,
+      maintenanceIncluded
+    } = req.body;
+
+    quotation.components = components ?? quotation.components;
+    quotation.totalPrice = totalPrice ?? quotation.totalPrice;
+    quotation.bulkDiscount = bulkDiscount ?? quotation.bulkDiscount;
+    quotation.installationIncluded =
+      installationIncluded ?? quotation.installationIncluded;
+    quotation.maintenanceIncluded =
+      maintenanceIncluded ?? quotation.maintenanceIncluded;
+
+    quotation.revisionHistory.push({
+      updatedAt: new Date(),
+      changes: "Quotation updated by vendor"
+    });
+
+    await quotation.save();
+
+    res.status(200).json({
+      message: "Quotation updated successfully",
+      quotation
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update quotation",
+      error: error.message
+    });
+  }
 };
 
 exports.getVendorContracts = async (req, res) => {
-  res.status(200).json({ message: "getVendorContracts placeholder" });
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const contracts = await Procurement.find({
+      selectedVendorIds: req.user.id
+    }).populate("labProjectId");
+
+    res.status(200).json(contracts);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch vendor contracts",
+      error: error.message
+    });
+  }
 };
 
 exports.getVendorAnalytics = async (req, res) => {
-  res.status(200).json({ message: "getVendorAnalytics placeholder" });
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const quotations = await Quotation.find({ vendorId: req.user.id });
+
+    const totalQuotations = quotations.length;
+    const acceptedQuotations = quotations.filter(q => q.status === "accepted").length;
+    const rejectedQuotations = quotations.filter(q => q.status === "rejected").length;
+    const pendingQuotations = quotations.filter(q => q.status === "pending").length;
+
+    const winRatio =
+      totalQuotations > 0
+        ? ((acceptedQuotations / totalQuotations) * 100).toFixed(2)
+        : "0.00";
+
+    res.status(200).json({
+      totalQuotations,
+      acceptedQuotations,
+      rejectedQuotations,
+      pendingQuotations,
+      winRatio
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch analytics",
+      error: error.message
+    });
+  }
 };
