@@ -9,6 +9,8 @@ const ConsultantProfile = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [editBio, setEditBio] = useState(false);
+  const [bioText, setBioText] = useState('');
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   const token = localStorage.getItem('token');
@@ -23,6 +25,7 @@ const ConsultantProfile = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(response.data);
+      setBioText(response.data.consultantInfo?.bio || '');
       setLoading(false);
     } catch (err) {
       setError('Failed to load profile');
@@ -70,6 +73,28 @@ const ConsultantProfile = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleBioSave = async () => {
+    try {
+      const response = await axios.patch(`${API_URL}/api/consultants/profile`, 
+        { bio: bioText },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setProfile(response.data.user);
+      setEditBio(false);
+      setSuccess('Bio updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to update bio: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleBioCancel = () => {
+    setBioText(profile.consultantInfo?.bio || '');
+    setEditBio(false);
   };
 
   if (loading) return <div className="p-4">Loading...</div>;
@@ -137,8 +162,54 @@ const ConsultantProfile = () => {
               <p><strong>Rating:</strong> {profile.consultantInfo?.rating || 0} ⭐</p>
               <p><strong>Availability:</strong> {profile.consultantInfo?.availability ? '✓ Available' : '✗ Not Available'}</p>
               <p><strong>Expertise:</strong> {profile.consultantInfo?.expertise?.join(', ') || 'Not specified'}</p>
-              <p><strong>Bio:</strong> {profile.consultantInfo?.bio || 'No bio added'}</p>
             </div>
+          </div>
+
+          {/* Detailed Bio Section */}
+          <div className="border-b pb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Detailed Bio</h2>
+              <button
+                onClick={() => setEditBio(!editBio)}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              >
+                {editBio ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
+            
+            {editBio ? (
+              <div>
+                <textarea
+                  value={bioText}
+                  onChange={(e) => setBioText(e.target.value)}
+                  placeholder="Write your detailed bio here..."
+                  rows="6"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength="1000"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={handleBioSave}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Save Bio
+                  </button>
+                  <button
+                    onClick={handleBioCancel}
+                    className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">{bioText.length}/1000 characters</p>
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {profile.consultantInfo?.bio || 'No bio added yet. Click Edit to add your bio.'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
