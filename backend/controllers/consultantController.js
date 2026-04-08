@@ -52,13 +52,15 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { bio, expertise, experienceLevel, availability } = req.body;
+    const { bio, expertise, experienceLevel, availability, completedLabDeployments, averageResponseTime } = req.body;
 
     const updateData = {};
     if (bio) updateData["consultantInfo.bio"] = bio;
     if (expertise) updateData["consultantInfo.expertise"] = expertise;
     if (experienceLevel) updateData["consultantInfo.experienceLevel"] = experienceLevel;
     if (availability !== undefined) updateData["consultantInfo.availability"] = availability;
+    if (completedLabDeployments !== undefined) updateData["consultantInfo.completedLabDeployments"] = completedLabDeployments;
+    if (averageResponseTime !== undefined) updateData["consultantInfo.averageResponseTime"] = averageResponseTime;
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,

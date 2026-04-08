@@ -22,10 +22,22 @@ mongoose.connect('mongodb://127.0.0.1:27017/lab-project', {}).then(async () => {
         consultantInfo: {
           expertise: ['Networking', 'Graphics'],
           experienceLevel: 'Certified',
-          completedProjects: 8,
+          completedLabDeployments: 8,
           rating: 4.8,
-          points: 250,
+          averageResponseTime: 12,
           availability: true,
+          reviews: [
+            {
+              universityName: 'MIT',
+              reviewText: 'Excellent consultant with great expertise in networking.',
+              rating: 5
+            },
+            {
+              universityName: 'Stanford',
+              reviewText: 'Very responsive and professional. Highly recommend.',
+              rating: 5
+            }
+          ],
           bio: 'I am an experienced consultant with expertise in networking and graphics.',
           profilePhoto: null
         }

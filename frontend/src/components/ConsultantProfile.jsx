@@ -15,6 +15,9 @@ const ConsultantProfile = () => {
   const [selectedExpertise, setSelectedExpertise] = useState([]);
   const [editExperienceLevel, setEditExperienceLevel] = useState(false);
   const [selectedExperienceLevel, setSelectedExperienceLevel] = useState('');
+  const [editStatistics, setEditStatistics] = useState(false);
+  const [completedDeployments, setCompletedDeployments] = useState(0);
+  const [responseTime, setResponseTime] = useState(24);
 
   const EXPERTISE_OPTIONS = ["Networking", "Graphics", "Research", "AI Infrastructure"];
   const EXPERIENCE_LEVEL_OPTIONS = ["General", "Certified", "Professional"];
@@ -35,6 +38,8 @@ const ConsultantProfile = () => {
       setBioText(response.data.consultantInfo?.bio || '');
       setSelectedExpertise(response.data.consultantInfo?.expertise || []);
       setSelectedExperienceLevel(response.data.consultantInfo?.experienceLevel || '');
+      setCompletedDeployments(response.data.consultantInfo?.completedLabDeployments || 0);
+      setResponseTime(response.data.consultantInfo?.averageResponseTime || 24);
       setLoading(false);
     } catch (err) {
       setError('Failed to load profile');
@@ -158,6 +163,29 @@ const ConsultantProfile = () => {
     setEditExperienceLevel(false);
   };
 
+  const handleStatisticsSave = async () => {
+    try {
+      const response = await axios.patch(`${API_URL}/api/consultants/profile`, 
+        { completedLabDeployments, averageResponseTime: responseTime },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setProfile(response.data.user);
+      setEditStatistics(false);
+      setSuccess('Statistics updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to update statistics: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleStatisticsCancel = () => {
+    setCompletedDeployments(profile.consultantInfo?.completedLabDeployments || 0);
+    setResponseTime(profile.consultantInfo?.averageResponseTime || 24);
+    setEditStatistics(false);
+  };
+
   if (loading) return <div className="p-4">Loading...</div>;
 
   return (
@@ -267,13 +295,102 @@ const ConsultantProfile = () => {
             )}
           </div>
 
-          {/* Other Consultant Info */}
+          {/* Profile Statistics */}
           <div className="border-b pb-6">
-            <h2 className="text-xl font-semibold mb-4">Profile Statistics</h2>
-            <div className="space-y-2">
-              <p><strong>Completed Projects:</strong> {profile.consultantInfo?.completedProjects || 0}</p>
-              <p><strong>Rating:</strong> {profile.consultantInfo?.rating || 0} ⭐</p>
-              <p><strong>Availability:</strong> {profile.consultantInfo?.availability ? '✓ Available' : '✗ Not Available'}</p>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Profile Statistics</h2>
+              <button
+                onClick={() => setEditStatistics(!editStatistics)}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              >
+                {editStatistics ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
+
+            {editStatistics ? (
+              <div>
+                <div className="space-y-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Completed Lab Deployments</label>
+                    <input
+                      type="number"
+                      value={completedDeployments}
+                      onChange={(e) => setCompletedDeployments(parseInt(e.target.value))}
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Average Response Time (hours)</label>
+                    <input
+                      type="number"
+                      value={responseTime}
+                      onChange={(e) => setResponseTime(parseInt(e.target.value))}
+                      min="0"
+                      max="168"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleStatisticsSave}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Save Statistics
+                  </button>
+                  <button
+                    onClick={handleStatisticsCancel}
+                    className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                <div className="flex justify-between">
+                  <span><strong>Completed Lab Deployments:</strong></span>
+                  <span className="text-lg font-semibold text-blue-600">{profile.consultantInfo?.completedLabDeployments || 0}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span><strong>Overall Rating:</strong></span>
+                  <span className="text-lg font-semibold text-blue-600">{profile.consultantInfo?.rating || 0} ⭐</span>
+                </div>
+                <div className="flex justify-between">
+                  <span><strong>Average Response Time:</strong></span>
+                  <span className="text-lg font-semibold text-blue-600">{profile.consultantInfo?.averageResponseTime || 24} hours</span>
+                </div>
+                <div className="flex justify-between">
+                  <span><strong>Current Availability:</strong></span>
+                  <span className={`text-lg font-semibold ${profile.consultantInfo?.availability ? 'text-green-600' : 'text-red-600'}`}>
+                    {profile.consultantInfo?.availability ? '✓ Available' : '✗ Not Available'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* University Reviews Section */}
+          <div className="border-b pb-6">
+            <h2 className="text-xl font-semibold mb-4">Reviews from Universities</h2>
+            <div className="space-y-4">
+              {profile.consultantInfo?.reviews && profile.consultantInfo.reviews.length > 0 ? (
+                profile.consultantInfo.reviews.map((review, idx) => (
+                  <div key={idx} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold text-blue-900">{review.universityName}</h3>
+                      <span className="text-yellow-500 font-semibold">{review.rating} ⭐</span>
+                    </div>
+                    <p className="text-gray-700">{review.reviewText}</p>
+                    <p className="text-sm text-gray-500 mt-2">
+                      {new Date(review.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 italic">No reviews yet. Complete deployments to earn reviews from universities.</p>
+              )}
             </div>
           </div>
 

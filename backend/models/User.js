@@ -47,10 +47,19 @@ const userSchema = new mongoose.Schema({
             default: []
         },
         experienceLevel: { type: String, enum: ["General", "Certified", "Professional"] },
-        completedProjects: { type: Number, default: 0 },
-        rating: { type: Number, default: 0 },
-        points: { type: Number, default: 0 },
+        completedLabDeployments: { type: Number, default: 0 },
+        rating: { type: Number, default: 0, min: 0, max: 5 },
+        averageResponseTime: { type: Number, default: 24 }, // in hours
         availability: { type: Boolean, default: true },
+        reviews: [
+            {
+                universityName: String,
+                reviewText: String,
+                rating: { type: Number, min: 1, max: 5 },
+                date: { type: Date, default: Date.now }
+            }
+        ],
+        points: { type: Number, default: 0 },
         bio: String,
         profilePhoto: { type: String, default: null }
     }
