@@ -1,4 +1,4 @@
-const Lab = require('../models/lab');
+const Lab = require('../models/LabProject');
 
 exports.createLabProject = async (req, res) => {
     try {
