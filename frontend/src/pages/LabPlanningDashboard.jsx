@@ -13,18 +13,22 @@ const LabPlanningDashboard = () => {
 
   const [formData, setFormData] = useState({
     labName: '',
-    components: '',
+    mainRequirement: '',
+    software: '',
     numberOfSystems: '',
-    budgetRange: ''
+    budgetMin: '',
+    budgetMax: '',
+    performancePriority: '',
+    timeline: ''
   });
   
   const labTypes = [
-    'Normal Usage Lab',
-    'Graphics Lab',
-    'Networking Lab',
-    'Thesis/Research Lab',
-    'AI/ML Lab',
-    'Custom Lab'
+    { value: 'Normal', label: 'Normal Usage Lab' },
+    { value: 'Graphics', label: 'Graphics Lab' },
+    { value: 'Networking', label: 'Networking Lab' },
+    { value: 'Thesis', label: 'Thesis/Research Lab' },
+    { value: 'AI', label: 'AI/ML Lab' },
+    { value: 'Other', label: 'Other' }
   ];
 
   const handleLabTypeSelect = (type) => {
@@ -63,23 +67,29 @@ const LabPlanningDashboard = () => {
       }
 
       if (entryMethod === 'manual') {
-        if (!formData.labName || !formData.components || !formData.numberOfSystems || !formData.budgetRange) {
+        if (!formData.labName || !formData.mainRequirement || !formData.software || !formData.numberOfSystems || !formData.budgetMin || !formData.budgetMax || !formData.timeline) {
           setError('Please fill in all required fields.');
           setLoading(false);
           return;
         }
 
-        const componentsArray = formData.components
+        const softwareArray = formData.software
           .split(',')
-          .map(comp => comp.trim())
-          .filter(comp => comp);
+          .map(sw => sw.trim())
+          .filter(sw => sw);
 
         const payload = {
-          name: formData.labName,
-          type: selectedLabType,
-          components: componentsArray,
-          budget: parseInt(formData.budgetRange),
-          performancePriority: 'medium'
+          labName: formData.labName,
+          labType: selectedLabType,
+          requirements: {
+            mainRequirement: formData.mainRequirement,
+            systems: Number(formData.numberOfSystems),
+            budgetMin: Number(formData.budgetMin),
+            budgetMax: Number(formData.budgetMax),
+            performancePriority: formData.performancePriority,
+            software: softwareArray,
+            ...(formData.timeline && { timeline: formData.timeline })
+          }
         };
 
         const response = await axios.post(
@@ -105,6 +115,56 @@ const LabPlanningDashboard = () => {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setError('');
+    setSuccess('');
+    setLoading(true);
+
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const token = userInfo?.token;
+
+      if (!token) {
+        setError('Authentication token not found. Please login again.');
+        setLoading(false);
+        return;
+      }
+
+      const formDataPayload = new FormData();
+      formDataPayload.append('document', file);
+
+      const response = await axios.post(
+        'http://localhost:5001/api/labs/upload-pdf',
+        formDataPayload,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      const { requirements } = response.data;
+      
+      setFormData(prev => ({
+        ...prev,
+        mainRequirement: requirements.mainRequirement || '',
+        software: requirements.software || ''
+      }));
+      
+      setSuccess('PDF parsed successfully! Please review the extracted details.');
+      setEntryMethod('manual'); // switch back to manual entry to allow user to review
+    } catch (err) {
+      console.error('Upload Error:', err);
+      setError(err.response?.data?.message || 'Failed to parse PDF. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Step 1: Select Lab Type
   if (step === 1) {
     return (
@@ -118,15 +178,15 @@ const LabPlanningDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {labTypes.map((type) => (
             <div
-              key={type}
-              onClick={() => handleLabTypeSelect(type)}
+              key={type.value}
+              onClick={() => handleLabTypeSelect(type.value)}
               className={`p-8 rounded-lg cursor-pointer transition-all transform hover:scale-105 ${
-                selectedLabType === type
+                selectedLabType === type.value
                   ? 'bg-white border-2 border-blue-600 shadow-lg'
                   : 'bg-white border-2 border-gray-200 shadow'
               }`}
             >
-              <h2 className="text-xl font-bold text-black text-center">{type}</h2>
+              <h2 className="text-xl font-bold text-black text-center">{type.label}</h2>
             </div>
           ))}
         </div>
@@ -159,7 +219,7 @@ const LabPlanningDashboard = () => {
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Create Lab - {selectedLabType}</h1>
+        <h1 className="text-3xl font-extrabold text-gray-900">Create Lab - {labTypes.find(t => t.value === selectedLabType)?.label}</h1>
         <p className="mt-2 text-gray-600">Fill in the lab details</p>
       </div>
 
@@ -230,18 +290,33 @@ const LabPlanningDashboard = () => {
             <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Components * (comma separated)
+                  Main Lab Project Requirement *
                 </label>
                 <textarea
-                  name="components"
-                  value={formData.components}
+                  name="mainRequirement"
+                  value={formData.mainRequirement}
                   onChange={handleInputChange}
-                  placeholder="e.g., Microscope, Centrifuge, Incubator"
+                  placeholder="e.g., We need a high-performance lab capable of rendering 3D graphics and running neural network models."
                   rows="4"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
-                <p className="mt-1 text-xs text-gray-500">Separate each component with a comma</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Required Software * (comma separated)
+                </label>
+                <textarea
+                  name="software"
+                  value={formData.software}
+                  onChange={handleInputChange}
+                  placeholder="e.g., MATLAB, AutoCAD, VS Code"
+                  rows="4"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+                <p className="mt-1 text-xs text-gray-500">Separate each software with a comma</p>
               </div>
 
               <div>
@@ -259,16 +334,63 @@ const LabPlanningDashboard = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Minimum Budget * 
+                  </label>
+                  <input
+                    type="number"
+                    name="budgetMin"
+                    value={formData.budgetMin}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 10000"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Maximum Budget *
+                  </label>
+                  <input
+                    type="number"
+                    name="budgetMax"
+                    value={formData.budgetMax}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 50000"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Budget Range * (USD)
+                  Performance Priority *
+                </label>
+                <select
+                  name="performancePriority"
+                  value={formData.performancePriority}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  required
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Timeline / Expected Completion Date *
                 </label>
                 <input
-                  type="number"
-                  name="budgetRange"
-                  value={formData.budgetRange}
+                  type="date"
+                  name="timeline"
+                  value={formData.timeline}
                   onChange={handleInputChange}
-                  placeholder="e.g., 50000"
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
@@ -279,18 +401,20 @@ const LabPlanningDashboard = () => {
           {/* Upload Document Option */}
           {entryMethod === 'upload' && (
             <div className="bg-gray-50 p-6 rounded-lg">
-              <button
-                type="button"
-                className="w-full px-6 py-3 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-all"
-              >
+              <label className={`w-full px-6 py-3 border-2 border-dashed ${loading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'} rounded-lg transition-all cursor-pointer block`}>
+                <input 
+                  type="file" 
+                  accept="application/pdf" 
+                  className="hidden" 
+                  onChange={handleFileUpload} 
+                  disabled={loading}
+                />
                 <div className="text-center">
                   <p className="text-gray-600">Upload Lab Specifications Document</p>
-                  <p className="text-xs text-gray-500 mt-2">Supported formats: PDF, DOC, DOCX</p>
+                  <p className="text-xs text-gray-500 mt-2">Supported formats: PDF Only</p>
+                  {loading && <p className="text-blue-600 mt-2 font-medium">Uploading and Parsing PDF...</p>}
                 </div>
-              </button>
-              <p className="mt-4 text-sm text-gray-600 text-center">
-                (This feature will be implemented in the next phase)
-              </p>
+              </label>
             </div>
           )}
         </div>
