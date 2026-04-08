@@ -11,6 +11,10 @@ const ConsultantProfile = () => {
   const [success, setSuccess] = useState(null);
   const [editBio, setEditBio] = useState(false);
   const [bioText, setBioText] = useState('');
+  const [editExpertise, setEditExpertise] = useState(false);
+  const [selectedExpertise, setSelectedExpertise] = useState([]);
+
+  const EXPERTISE_OPTIONS = ["Networking", "Graphics", "Research", "AI Infrastructure"];
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   const token = localStorage.getItem('token');
@@ -26,6 +30,7 @@ const ConsultantProfile = () => {
       });
       setProfile(response.data);
       setBioText(response.data.consultantInfo?.bio || '');
+      setSelectedExpertise(response.data.consultantInfo?.expertise || []);
       setLoading(false);
     } catch (err) {
       setError('Failed to load profile');
@@ -97,6 +102,36 @@ const ConsultantProfile = () => {
     setEditBio(false);
   };
 
+  const handleExpertiseToggle = (expertise) => {
+    setSelectedExpertise(prev =>
+      prev.includes(expertise)
+        ? prev.filter(e => e !== expertise)
+        : [...prev, expertise]
+    );
+  };
+
+  const handleExpertiseSave = async () => {
+    try {
+      const response = await axios.patch(`${API_URL}/api/consultants/profile`, 
+        { expertise: selectedExpertise },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setProfile(response.data.user);
+      setEditExpertise(false);
+      setSuccess('Expertise updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to update expertise: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleExpertiseCancel = () => {
+    setSelectedExpertise(profile.consultantInfo?.expertise || []);
+    setEditExpertise(false);
+  };
+
   if (loading) return <div className="p-4">Loading...</div>;
 
   return (
@@ -161,8 +196,66 @@ const ConsultantProfile = () => {
               <p><strong>Completed Projects:</strong> {profile.consultantInfo?.completedProjects || 0}</p>
               <p><strong>Rating:</strong> {profile.consultantInfo?.rating || 0} ⭐</p>
               <p><strong>Availability:</strong> {profile.consultantInfo?.availability ? '✓ Available' : '✗ Not Available'}</p>
-              <p><strong>Expertise:</strong> {profile.consultantInfo?.expertise?.join(', ') || 'Not specified'}</p>
             </div>
+          </div>
+
+          {/* Areas of Expertise Section */}
+          <div className="border-b pb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Areas of Expertise</h2>
+              <button
+                onClick={() => setEditExpertise(!editExpertise)}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              >
+                {editExpertise ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
+            
+            {editExpertise ? (
+              <div>
+                <div className="space-y-2 mb-4">
+                  {EXPERTISE_OPTIONS.map(expt => (
+                    <label key={expt} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedExpertise.includes(expt)}
+                        onChange={() => handleExpertiseToggle(expt)}
+                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <span className="ml-3 text-gray-700 cursor-pointer">{expt}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleExpertiseSave}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Save Expertise
+                  </button>
+                  <button
+                    onClick={handleExpertiseCancel}
+                    className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                {profile.consultantInfo?.expertise && profile.consultantInfo.expertise.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {profile.consultantInfo.expertise.map(expt => (
+                      <span key={expt} className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                        {expt}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No expertise areas selected yet. Click Edit to add your areas of expertise.</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Detailed Bio Section */}

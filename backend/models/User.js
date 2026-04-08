@@ -41,7 +41,11 @@ const userSchema = new mongoose.Schema({
 
     // Consultant-specific
     consultantInfo: {
-        expertise: { type: [String] },
+        expertise: { 
+            type: [String],
+            enum: ["Networking", "Graphics", "Research", "AI Infrastructure"],
+            default: []
+        },
         experienceLevel: { type: String, enum: ["General", "Certified", "Professional"] },
         completedProjects: { type: Number, default: 0 },
         rating: { type: Number, default: 0 },
