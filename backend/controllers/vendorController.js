@@ -4,11 +4,52 @@ const Procurement = require("../models/Procurement");
 const User = require("../models/User");
 
 exports.getAvailableLabRequests = async (req, res) => {
-  res.status(200).json({ message: "getAvailableLabRequests placeholder" });
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const labs = await LabProject.find({
+      status: { $in: ["draft", "bidding", "finalized"] }
+    })
+      .populate("universityId", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(labs);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch lab requests",
+      error: error.message
+    });
+  }
 };
 
 exports.getSingleLabRequest = async (req, res) => {
-  res.status(200).json({ message: "getSingleLabRequest placeholder" });
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const lab = await LabProject.findById(req.params.id).populate(
+      "universityId",
+      "name email"
+    );
+
+    if (!lab) {
+      return res.status(404).json({ message: "Lab project not found" });
+    }
+
+    res.status(200).json(lab);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch lab request",
+      error: error.message
+    });
+  }
 };
 
 exports.submitQuotation = async (req, res) => {
