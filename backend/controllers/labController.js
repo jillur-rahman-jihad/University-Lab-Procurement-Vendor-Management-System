@@ -44,10 +44,21 @@ exports.uploadAndParsePDF = async (req, res) => {
         let content = "";
         try {
             const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-            const prompt = `You are an AI assistant that extracts lab project requirements from PDF text. Extract the following details from the document text below and output it strictly in JSON format matching this schema, for main requirement you will findout which hardwares are required for this course lab and for software requirement you will findout which softwares are requiredfor this course.:
+            const prompt = `You are an academic assistant. Based on the given course outline, generate ONLY two sections:
+
+1. Hardware Requirements
+2. Software Requirements
+
+Rules:
+- Each section must be one concise paragraph
+- Do not add explanations, headings, or extra text beyond the two sections
+- Hardware requirements must include essential system components (CPU, RAM, storage, etc.)
+- Software requirements must include OS, softwares,  tools, and libraries
+- Keep it formal and suitable for a university report
+ Extract the following details from the document text below and output it strictly in JSON format matching this schema.
 {
-  "mainRequirement": "Brief description of the main focus of this lab",
-  "software": "Comma separated list of required softwares",
+  "mainRequirement": "Brief Hardware required for a system to conduct the lab smoothly and efficiently.",
+  "software": "Comma separated list of required OS, softwares,  tools, and libraries needed to conduct the lab.",
 }
 
 Document Text (truncated):

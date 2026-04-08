@@ -18,7 +18,7 @@ const LabPlanningDashboard = () => {
     numberOfSystems: '',
     budgetMin: '',
     budgetMax: '',
-    performancePriority: 'Medium',
+    performancePriority: '',
     timeline: ''
   });
   
@@ -27,7 +27,8 @@ const LabPlanningDashboard = () => {
     { value: 'Graphics', label: 'Graphics Lab' },
     { value: 'Networking', label: 'Networking Lab' },
     { value: 'Thesis', label: 'Thesis/Research Lab' },
-    { value: 'AI', label: 'AI/ML Lab' }
+    { value: 'AI', label: 'AI/ML Lab' },
+    { value: 'Other', label: 'Other' }
   ];
 
   const handleLabTypeSelect = (type) => {
@@ -336,7 +337,7 @@ const LabPlanningDashboard = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Minimum Budget * (USD)
+                    Minimum Budget * 
                   </label>
                   <input
                     type="number"
@@ -350,7 +351,7 @@ const LabPlanningDashboard = () => {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Maximum Budget * (USD)
+                    Maximum Budget *
                   </label>
                   <input
                     type="number"
