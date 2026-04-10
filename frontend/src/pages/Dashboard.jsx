@@ -70,6 +70,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import VendorDashboard from "./VendorDashboard";
+import LabPlanningDashboard from "./LabPlanningDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -87,6 +88,10 @@ const Dashboard = () => {
 
   if (userInfo.role === "vendor") {
     return <VendorDashboard />;
+  }
+
+  if (userInfo.role === "university") {
+    return <LabPlanningDashboard />;
   }
 
   return (
