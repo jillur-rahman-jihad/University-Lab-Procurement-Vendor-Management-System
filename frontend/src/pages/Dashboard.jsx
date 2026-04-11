@@ -1,19 +1,34 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
+  useEffect(() => {
+    if (!userInfo) {
+      navigate('/login');
+      return;
+    }
+
+    // Role-based routing
+    if (userInfo.role === 'consultant') {
+      navigate('/consultant-dashboard');
+    } else if (userInfo.role === 'university') {
+      // Stay on dashboard or redirect to university dashboard when created
+      return;
+    } else if (userInfo.role === 'vendor') {
+      navigate('/vendor-dashboard');
+    } else {
+      return;
+    }
+  }, [userInfo, navigate]);
+
   const handleLogout = () => {
     localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
     navigate('/login');
   };
-
-  if (!userInfo) {
-    navigate('/login');
-    return null;
-  }
 
   return (
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">

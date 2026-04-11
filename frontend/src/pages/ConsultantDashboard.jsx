@@ -1,15 +1,29 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import ConsultantProfile from '../components/ConsultantProfile';
 import AssignedProjects from '../components/AssignedProjects';
 import ProjectProgress from '../components/ProjectProgress';
 
 const ConsultantDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <nav className="bg-white shadow-md p-4">
+      <nav className="bg-white shadow-md p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-600">Consultant Dashboard</h1>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition font-medium"
+        >
+          Logout
+        </button>
       </nav>
 
       {/* Tab Navigation */}

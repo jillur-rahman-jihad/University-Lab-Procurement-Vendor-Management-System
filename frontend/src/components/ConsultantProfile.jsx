@@ -166,7 +166,7 @@ const ConsultantProfile = () => {
   const handleStatisticsSave = async () => {
     try {
       const response = await axios.patch(`${API_URL}/api/consultants/profile`, 
-        { completedLabDeployments, averageResponseTime: responseTime },
+        { completedLabDeployments: completedDeployments, averageResponseTime: responseTime },
         {
           headers: { Authorization: `Bearer ${token}` }
         }

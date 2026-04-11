@@ -66,6 +66,7 @@ const Register = () => {
 
       const response = await axios.post('http://localhost:5001/api/auth/register', payload);
       localStorage.setItem('userInfo', JSON.stringify(response.data));
+      localStorage.setItem('token', response.data.token);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to register');

@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema({
             lng: Number,
             // GeoJSON format needed for 2dsphere index
             type: { type: String, enum: ['Point'], default: 'Point' },
-            coordinates: { type: [Number] } // [longitude, latitude]
+            coordinates: { type: [Number], default: [0, 0] } // [longitude, latitude]
         },
         isVerified: { type: Boolean, default: false },
         rating: { type: Number, default: 0 }

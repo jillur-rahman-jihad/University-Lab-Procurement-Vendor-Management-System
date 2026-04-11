@@ -20,6 +20,7 @@ const Login = () => {
         password
       });
       localStorage.setItem('userInfo', JSON.stringify(response.data));
+      localStorage.setItem('token', response.data.token);
       navigate('/dashboard'); // Will create a simple protected route or dashboard later
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login');
