@@ -40,7 +40,13 @@ exports.registerUser = async (req, res) => {
       address,
       ...(role === "university" && { department, authorizedRepresentative }),
       ...(role === "vendor" && { tradeLicenseNumber }),
-      ...(role === "consultant" && { professionalCredentials, relevantExperience, certificationInformation }),
+      ...(role === "consultant" && {
+        consultantInfo: {
+          professionalCredentials,
+          relevantExperience,
+          certificationInformation
+        }
+      }),
     });
 
     await user.save();

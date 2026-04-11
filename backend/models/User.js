@@ -1,9 +1,16 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+
+const reviewSchema = new mongoose.Schema({
+    reviewer: { type: String },
+    rating: { type: Number, min: 0, max: 5 },
+    comment: String,
+    createdAt: { type: Date, default: Date.now }
+});
 
 const userSchema = new mongoose.Schema({
     role: {
         type: String,
-        enum: ["university", "vendor", "consultant", "admin"],
+        enum: ['university', 'vendor', 'consultant', 'admin'],
         required: true
     },
 
@@ -20,7 +27,7 @@ const userSchema = new mongoose.Schema({
         address: String,
         representative: String,
         isApproved: { type: Boolean, default: false },
-        subscriptionPlan: { type: String, enum: ["free", "premium"], default: "free" }
+        subscriptionPlan: { type: String, enum: ['free', 'premium'], default: 'free' }
     },
 
     // Vendor-specific
@@ -31,9 +38,8 @@ const userSchema = new mongoose.Schema({
             address: String,
             lat: Number,
             lng: Number,
-            // GeoJSON format needed for 2dsphere index
             type: { type: String, enum: ['Point'] },
-            coordinates: { type: [Number] } // [longitude, latitude]
+            coordinates: { type: [Number] }
         },
         isVerified: { type: Boolean, default: false },
         rating: { type: Number, default: 0 }
@@ -41,17 +47,23 @@ const userSchema = new mongoose.Schema({
 
     // Consultant-specific
     consultantInfo: {
-        expertise: { type: [String] },
-        experienceLevel: { type: String, enum: ["General", "Certified", "Professional"] },
-        completedProjects: { type: Number, default: 0 },
+        profilePhoto: String,
+        bio: String,
+        expertise: { type: [String], default: [] },
+        experienceLevel: { type: String, enum: ['General', 'Certified', 'Professional'], default: 'General' },
+        completedLabDeployments: { type: Number, default: 0 },
         rating: { type: Number, default: 0 },
-        points: { type: Number, default: 0 },
+        reviews: { type: [reviewSchema], default: [] },
+        averageResponseTime: { type: Number, default: 24 }, // in hours
         availability: { type: Boolean, default: true },
-        bio: String
+        points: { type: Number, default: 0 },
+        professionalCredentials: String,
+        relevantExperience: String,
+        certificationInformation: String
     }
 }, { timestamps: true });
 
 // Geo Index for vendor location mapping
-userSchema.index({ "vendorInfo.location": "2dsphere" }, { sparse: true });
+userSchema.index({ 'vendorInfo.location': '2dsphere' }, { sparse: true });
 
-module.exports = mongoose.model("User", userSchema);
+module.exports = mongoose.model('User', userSchema);

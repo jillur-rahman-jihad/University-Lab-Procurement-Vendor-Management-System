@@ -71,6 +71,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import VendorDashboard from "./VendorDashboard";
 import LabPlanningDashboard from "./LabPlanningDashboard";
+import ConsultantDashboard from "./ConsultantDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -93,7 +94,9 @@ const Dashboard = () => {
   if (userInfo.role === "university") {
     return <LabPlanningDashboard />;
   }
-
+  if (userInfo.role === "consultant") {
+    return ( <ConsultantDashboard />);
+  }
   return (
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
