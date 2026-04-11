@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const ConsultantProfile = () => {
@@ -18,6 +18,10 @@ const ConsultantProfile = () => {
   const [editStatistics, setEditStatistics] = useState(false);
   const [completedDeployments, setCompletedDeployments] = useState(0);
   const [responseTime, setResponseTime] = useState(24);
+  const [editAvailability, setEditAvailability] = useState(false);
+  const [isAvailable, setIsAvailable] = useState(true);
+  
+  const fileInputRef = useRef(null);
 
   const EXPERTISE_OPTIONS = ["Networking", "Graphics", "Research", "AI Infrastructure"];
   const EXPERIENCE_LEVEL_OPTIONS = ["General", "Certified", "Professional"];
@@ -40,9 +44,13 @@ const ConsultantProfile = () => {
       setSelectedExperienceLevel(response.data.consultantInfo?.experienceLevel || '');
       setCompletedDeployments(response.data.consultantInfo?.completedLabDeployments || 0);
       setResponseTime(response.data.consultantInfo?.averageResponseTime || 24);
+      setIsAvailable(response.data.consultantInfo?.availability !== false);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load profile');
+      console.error('Profile fetch error:', err.response?.data || err.message);
+      console.error('Token:', token);
+      console.error('API URL:', API_URL);
+      setError('Failed to load profile: ' + (err.response?.data?.message || err.message));
       setLoading(false);
     }
   };
@@ -56,6 +64,34 @@ const ConsultantProfile = () => {
         setPhotoPreview(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePhotoCancel = () => {
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handlePhotoDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete your profile photo?')) {
+      return;
+    }
+
+    try {
+      const response = await axios.patch(`${API_URL}/api/consultants/profile`, 
+        { profilePhoto: null },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setProfile(response.data.user);
+      setSuccess('Profile photo deleted successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to delete photo: ' + (err.response?.data?.message || err.message));
     }
   };
 
@@ -186,6 +222,28 @@ const ConsultantProfile = () => {
     setEditStatistics(false);
   };
 
+  const handleAvailabilitySave = async () => {
+    try {
+      const response = await axios.patch(`${API_URL}/api/consultants/profile`, 
+        { availability: isAvailable },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      setProfile(response.data.user);
+      setEditAvailability(false);
+      setSuccess('Availability updated successfully!');
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (err) {
+      setError('Failed to update availability: ' + (err.response?.data?.message || err.message));
+    }
+  };
+
+  const handleAvailabilityCancel = () => {
+    setIsAvailable(profile.consultantInfo?.availability !== false);
+    setEditAvailability(false);
+  };
+
   if (loading) return <div className="p-4">Loading...</div>;
 
   return (
@@ -215,18 +273,39 @@ const ConsultantProfile = () => {
               <div className="flex-1">
                 <form onSubmit={handlePhotoUpload}>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handlePhotoSelect}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
-                  <button
-                    type="submit"
-                    disabled={uploading || !photoFile}
-                    className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
-                  >
-                    {uploading ? 'Uploading...' : 'Upload Photo'}
-                  </button>
+                  <div className="flex gap-2 mt-2">
+                    <button
+                      type="submit"
+                      disabled={uploading || !photoFile}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400"
+                    >
+                      {uploading ? 'Uploading...' : 'Upload Photo'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePhotoCancel}
+                      disabled={uploading || !photoFile}
+                      className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 disabled:bg-gray-300"
+                    >
+                      Cancel
+                    </button>
+                    {profile.consultantInfo?.profilePhoto && !photoFile && (
+                      <button
+                        type="button"
+                        onClick={handlePhotoDelete}
+                        disabled={uploading}
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:bg-gray-400"
+                      >
+                        Delete Photo
+                      </button>
+                    )}
+                  </div>
                 </form>
               </div>
             </div>
@@ -364,6 +443,73 @@ const ConsultantProfile = () => {
                 <div className="flex justify-between">
                   <span><strong>Current Availability:</strong></span>
                   <span className={`text-lg font-semibold ${profile.consultantInfo?.availability ? 'text-green-600' : 'text-red-600'}`}>
+                    {profile.consultantInfo?.availability ? '✓ Available' : '✗ Not Available'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Availability Toggle Section */}
+          <div className="border-b pb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Availability Status</h2>
+              <button
+                onClick={() => setEditAvailability(!editAvailability)}
+                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+              >
+                {editAvailability ? 'Cancel' : 'Edit'}
+              </button>
+            </div>
+
+            {editAvailability ? (
+              <div>
+                <div className="space-y-4 mb-4">
+                  <div className="flex items-center p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <button
+                        onClick={() => setIsAvailable(!isAvailable)}
+                        className={`relative w-16 h-8 rounded-full transition-colors ${
+                          isAvailable ? 'bg-green-500' : 'bg-red-500'
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                            isAvailable ? 'translate-x-8' : 'translate-x-1'
+                          }`}
+                        ></div>
+                      </button>
+                      <span className="ml-4 text-lg font-semibold">
+                        {isAvailable ? '✓ Available' : '✗ Not Available'}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 italic">
+                    Toggle to update your availability status. Available consultants can receive project assignments.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={handleAvailabilitySave}
+                    className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                  >
+                    Save Availability
+                  </button>
+                  <button
+                    onClick={handleAvailabilityCancel}
+                    className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold">
+                    Current Status:
+                  </span>
+                  <span className={`text-xl font-bold ${profile.consultantInfo?.availability ? 'text-green-600' : 'text-red-600'}`}>
                     {profile.consultantInfo?.availability ? '✓ Available' : '✗ Not Available'}
                   </span>
                 </div>
