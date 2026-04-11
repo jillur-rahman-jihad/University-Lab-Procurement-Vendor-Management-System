@@ -11,13 +11,19 @@ exports.getAvailableLabRequests = async (req, res) => {
       return res.status(403).json({ message: "Access denied. Vendor only." });
     }
 
+    // Exclude lab projects for which this vendor already submitted a quotation
+    const submittedQuotations = await Quotation.find({ vendorId: req.user.id }).select('labProjectId');
+    const submittedLabIds = submittedQuotations.map(q => q.labProjectId.toString());
+
     const labs = await LabProject.find({
       status: { $in: ["draft", "bidding", "finalized"] }
     })
       .populate("universityId", "name email")
       .sort({ createdAt: -1 });
 
-    res.status(200).json(labs);
+    const available = labs.filter(l => !submittedLabIds.includes(l._id.toString()));
+
+    res.status(200).json(available);
   } catch (error) {
     res.status(500).json({
       message: "Failed to fetch lab requests",
@@ -49,6 +55,25 @@ exports.getSingleLabRequest = async (req, res) => {
       message: "Failed to fetch lab request",
       error: error.message
     });
+  }
+};
+
+exports.getLabQuotations = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const labId = req.params.id;
+    const quotations = await Quotation.find({ labProjectId: labId })
+      .populate('vendorId', 'name vendorInfo.shopName')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(quotations);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch quotations for lab', error: error.message });
   }
 };
 
@@ -114,6 +139,27 @@ exports.submitQuotation = async (req, res) => {
       message: "Failed to submit quotation",
       error: error.message
     });
+  }
+};
+
+exports.getQuotationById = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const quotation = await Quotation.findById(req.params.id).populate('labProjectId');
+    if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
+
+    if (quotation.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'You can only view your own quotation' });
+    }
+
+    res.status(200).json(quotation);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch quotation', error: error.message });
   }
 };
 

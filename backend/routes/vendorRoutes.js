@@ -8,13 +8,18 @@ const {
   getMyQuotations,
   updateQuotation,
   getVendorContracts,
-  getVendorAnalytics
+  getVendorAnalytics,
+  getLabQuotations
 } = require("../controllers/vendorController");
+// include getQuotationById as well
+const { getQuotationById } = require("../controllers/vendorController");
 
 router.get("/labs", authMiddleware, getAvailableLabRequests);
 router.get("/labs/:id", authMiddleware, getSingleLabRequest);
+router.get("/labs/:id/quotations", authMiddleware, getLabQuotations);
 router.post("/quotations", authMiddleware, submitQuotation);
 router.get("/quotations/my", authMiddleware, getMyQuotations);
+router.get("/quotations/:id", authMiddleware, getQuotationById);
 router.put("/quotations/:id", authMiddleware, updateQuotation);
 router.get("/contracts", authMiddleware, getVendorContracts);
 router.get("/analytics", authMiddleware, getVendorAnalytics);

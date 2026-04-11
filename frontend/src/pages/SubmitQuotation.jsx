@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 
 const SubmitQuotation = () => {
   const { labId } = useParams();
@@ -24,6 +24,46 @@ const SubmitQuotation = () => {
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [isEdit, setIsEdit] = useState(false);
+  const [quotationId, setQuotationId] = useState(null);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const qid = params.get('quotationId');
+    if (!qid) return;
+    setQuotationId(qid);
+    setIsEdit(true);
+
+    const fetchQuotation = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5001/api/vendor/quotations/${qid}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const q = res.data;
+        if (q.components && q.components.length > 0) {
+          const c = q.components[0];
+          setFormData({
+            componentName: c.name || '',
+            category: c.category || 'CPU',
+            unitPrice: c.unitPrice || '',
+            quantity: c.quantity || '',
+            warranty: c.warranty || '',
+            deliveryTime: c.deliveryTime || '',
+            totalPrice: q.totalPrice || '',
+            bulkDiscount: q.bulkDiscount || '',
+            installationIncluded: q.installationIncluded || false,
+            maintenanceIncluded: q.maintenanceIncluded || false
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch quotation for editing', err);
+      }
+    };
+
+    fetchQuotation();
+  }, [location.search]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -58,13 +98,19 @@ const SubmitQuotation = () => {
         maintenanceIncluded: formData.maintenanceIncluded
       };
 
-      await axios.post("http://localhost:5001/api/vendor/quotations", payload, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-
-      setSuccess("Quotation submitted successfully");
+      if (isEdit && quotationId) {
+        await axios.put(`http://localhost:5001/api/vendor/quotations/${quotationId}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setSuccess('Quotation updated successfully');
+      } else {
+        await axios.post("http://localhost:5001/api/vendor/quotations", payload, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setSuccess("Quotation submitted successfully");
+      }
 
       setTimeout(() => {
         navigate("/vendor/quotations");

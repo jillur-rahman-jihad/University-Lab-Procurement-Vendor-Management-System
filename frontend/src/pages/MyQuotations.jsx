@@ -42,6 +42,20 @@ const MyQuotations = () => {
             <p className="text-gray-600">Status: {quotation.status}</p>
             <p className="text-gray-600">Total Price: {quotation.totalPrice}</p>
             <p className="text-gray-600">Bulk Discount: {quotation.bulkDiscount}</p>
+            <div className="mt-4 flex gap-2">
+              <a
+                href={`/vendor/labs/${quotation.labProjectId?._id || ''}/quote?quotationId=${quotation._id}`}
+                className="px-3 py-1 bg-yellow-500 text-white rounded"
+              >
+                Edit
+              </a>
+              <a
+                href={`/vendor/labs/${quotation.labProjectId?._id || ''}/quote`}
+                className="px-3 py-1 bg-blue-600 text-white rounded"
+              >
+                Submit New
+              </a>
+            </div>
           </div>
         ))}
       </div>
