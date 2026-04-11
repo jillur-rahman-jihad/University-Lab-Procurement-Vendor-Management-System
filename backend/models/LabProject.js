@@ -6,7 +6,6 @@ const labProjectSchema = new mongoose.Schema({
   labType: { type: String, enum: ["Normal", "Graphics", "Networking", "Thesis", "AI"], required: true },
   
   requirements: {
-    mainRequirement: String,
     systems: Number,
     budgetMin: Number,
     budgetMax: Number,
