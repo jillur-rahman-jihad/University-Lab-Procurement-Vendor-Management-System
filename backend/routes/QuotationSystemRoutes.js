@@ -12,5 +12,6 @@ router.post('/quotations', quotationController.submitQuotation);
 router.get('/quotations/my', quotationController.getMyQuotations);
 router.get('/quotations/:id', quotationController.getQuotationById);
 router.put('/quotations/:id', quotationController.updateQuotation);
+router.post('/quotations/:id/accept', quotationController.acceptQuotation);
 
 module.exports = router;

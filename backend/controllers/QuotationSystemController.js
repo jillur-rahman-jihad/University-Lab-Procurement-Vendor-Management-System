@@ -1,5 +1,6 @@
 const LabProject = require('../models/LabProject');
 const Quotation = require('../models/Quotation');
+const Procurement = require('../models/Procurement');
 const User = require('../models/User');
 
 const populateUniversity = 'name email universityInfo.universityName universityInfo.department';
@@ -229,9 +230,41 @@ exports.getMyQuotations = async (req, res) => {
 exports.getQuotationById = async (req, res) => {
 	try {
 		const role = await getRole(req.user.id);
+		const quotation = await Quotation.findById(req.params.id)
+			.populate('vendorId', 'name vendorInfo.shopName email')
+			.populate({ path: 'labProjectId', populate: { path: 'universityId', select: populateUniversity } });
 
-		if (role !== 'vendor') {
-			return res.status(403).json({ message: 'Access denied. Vendor only.' });
+		if (!quotation) {
+			return res.status(404).json({ message: 'Quotation not found' });
+		}
+
+		if (role === 'vendor' && quotation.vendorId._id.toString() !== req.user.id) {
+			return res.status(403).json({ message: 'You can only view your own quotation' });
+		}
+
+		if (role === 'university') {
+			const labOwnerId = quotation.labProjectId?.universityId?._id?.toString?.() || quotation.labProjectId?.universityId?.toString?.();
+			if (labOwnerId !== req.user.id) {
+				return res.status(403).json({ message: 'You can only view quotations for your own lab projects' });
+			}
+		}
+
+		if (role !== 'vendor' && role !== 'university') {
+			return res.status(403).json({ message: 'Access denied' });
+		}
+
+		return res.status(200).json(quotation);
+	} catch (error) {
+		return res.status(500).json({ message: 'Failed to fetch quotation', error: error.message });
+	}
+};
+
+exports.acceptQuotation = async (req, res) => {
+	try {
+		const role = await getRole(req.user.id);
+
+		if (role !== 'university') {
+			return res.status(403).json({ message: 'Access denied. University only.' });
 		}
 
 		const quotation = await Quotation.findById(req.params.id)
@@ -241,13 +274,78 @@ exports.getQuotationById = async (req, res) => {
 			return res.status(404).json({ message: 'Quotation not found' });
 		}
 
-		if (quotation.vendorId.toString() !== req.user.id) {
-			return res.status(403).json({ message: 'You can only view your own quotation' });
+		const labOwnerId = quotation.labProjectId?.universityId?._id?.toString?.() || quotation.labProjectId?.universityId?.toString?.();
+		if (labOwnerId !== req.user.id) {
+			return res.status(403).json({ message: 'You can only accept quotations for your own lab projects' });
 		}
 
-		return res.status(200).json(quotation);
+		if (quotation.status !== 'pending') {
+			return res.status(400).json({ message: 'Only pending quotations can be accepted' });
+		}
+
+		const acceptanceType = req.body.acceptanceType === 'partial' ? 'partial' : 'full';
+		const componentIndexes = Array.isArray(req.body.componentIndexes) ? req.body.componentIndexes : [];
+
+		let acceptedComponents = quotation.components.map((component) => ({ ...component.toObject?.() || component }));
+
+		if (acceptanceType === 'partial') {
+			const uniqueIndexes = [...new Set(componentIndexes.map((index) => Number(index)).filter((index) => Number.isInteger(index)))];
+			if (!uniqueIndexes.length) {
+				return res.status(400).json({ message: 'Please select at least one component for partial acceptance' });
+			}
+
+			acceptedComponents = uniqueIndexes
+				.filter((index) => index >= 0 && index < quotation.components.length)
+				.map((index) => quotation.components[index].toObject ? quotation.components[index].toObject() : quotation.components[index]);
+
+			if (!acceptedComponents.length) {
+				return res.status(400).json({ message: 'Selected components are invalid' });
+			}
+		}
+
+		const finalCost = acceptedComponents.reduce((sum, component) => sum + (Number(component.unitPrice || 0) * Number(component.quantity || 1)), 0);
+
+		quotation.status = 'accepted';
+		quotation.revisionHistory = quotation.revisionHistory || [];
+		quotation.revisionHistory.push({ updatedAt: new Date(), changes: `Quotation accepted (${acceptanceType}) by university` });
+
+		const vendorId = quotation.vendorId?._id || quotation.vendorId;
+
+		const procurementPayload = {
+			labProjectId: quotation.labProjectId._id,
+			quotationId: quotation._id,
+			selectedVendorIds: [vendorId],
+			finalCost,
+			acceptanceType,
+			acceptedComponents,
+			approvedByAdmin: false
+		};
+
+		const existingProcurement = await Procurement.findOne({ labProjectId: quotation.labProjectId._id });
+		if (existingProcurement) {
+			existingProcurement.quotationId = procurementPayload.quotationId;
+			existingProcurement.selectedVendorIds = procurementPayload.selectedVendorIds;
+			existingProcurement.finalCost = procurementPayload.finalCost;
+			existingProcurement.acceptanceType = procurementPayload.acceptanceType;
+			existingProcurement.acceptedComponents = procurementPayload.acceptedComponents;
+			existingProcurement.approvedByAdmin = procurementPayload.approvedByAdmin;
+			await existingProcurement.save();
+		} else {
+			await Procurement.create(procurementPayload);
+		}
+
+		await quotation.save();
+		await LabProject.findByIdAndUpdate(quotation.labProjectId._id, { status: 'approved' });
+
+		return res.status(200).json({
+			message: 'Quotation accepted successfully',
+			quotation,
+			acceptedComponents,
+			finalCost,
+			acceptanceType
+		});
 	} catch (error) {
-		return res.status(500).json({ message: 'Failed to fetch quotation', error: error.message });
+		return res.status(500).json({ message: 'Failed to accept quotation', error: error.message });
 	}
 };
 

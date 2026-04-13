@@ -295,7 +295,7 @@ exports.getVendorContracts = async (req, res) => {
 
     const contracts = await Procurement.find({
       selectedVendorIds: req.user.id
-    }).populate("labProjectId");
+    }).populate("labProjectId").populate("quotationId");
 
     res.status(200).json(contracts);
   } catch (error) {

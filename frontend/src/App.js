@@ -48,6 +48,7 @@ import VendorContracts from './pages/VendorContracts';
 import VendorAnalytics from './pages/VendorAnalytics';
 import QuotationSystem from './pages/QuotationSystem';
 import CompareQuotation from './pages/CompareQuotation';
+import ViewAndAccept from './pages/ViewAndAccept';
 
 function App() {
   return (
@@ -72,6 +73,7 @@ function App() {
             <Route path="/lab-planning" element={<LabPlanningDashboard />} />
             <Route path="/quotation-system" element={<QuotationSystem />} />
             <Route path="/compare-quotation" element={<CompareQuotation />} />
+            <Route path="/view-and-accept/:quotationId" element={<ViewAndAccept />} />
 
             <Route path="/vendor/labs" element={<AvailableLabRequests />} />
             <Route path="/vendor/labs/:labId/quote" element={<SubmitQuotation />} />

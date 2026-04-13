@@ -117,6 +117,23 @@ const QuotationSystem = () => {
 		}, 0);
 	}, [components]);
 
+	const bestQuotation = useMemo(() => {
+		if (role !== 'university' || quotations.length === 0) {
+			return null;
+		}
+
+		return quotations.reduce((currentBest, quotation) => {
+			if (!currentBest) {
+				return quotation;
+			}
+
+			const currentBestPrice = Number(currentBest.totalPrice ?? Number.POSITIVE_INFINITY);
+			const quotationPrice = Number(quotation.totalPrice ?? Number.POSITIVE_INFINITY);
+
+			return quotationPrice < currentBestPrice ? quotation : currentBest;
+		}, null);
+	}, [quotations, role]);
+
 	const updateComponent = (index, key, value) => {
 		setComponents((prev) => prev.map((component, componentIndex) => (componentIndex === index ? { ...component, [key]: value } : component)));
 	};
@@ -314,6 +331,19 @@ const QuotationSystem = () => {
 									{role === 'university' && <span className="text-sm text-gray-500">{quotations.length} offers</span>}
 								</div>
 								{role === 'university' && (
+									<>
+									<div className="mb-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-900">
+										<p className="font-semibold">Best offer based on price</p>
+										<p className="mt-1">
+											{bestQuotation ? (
+												<>
+													{bestQuotation.vendorId?.vendorInfo?.shopName || bestQuotation.vendorId?.name || 'Vendor'} — {bestQuotation.totalPrice}
+												</>
+											) : (
+												'No quotations available yet.'
+											)}
+										</p>
+									</div>
 									<div className="mb-3 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-900 flex flex-wrap items-center justify-between gap-3">
 										<span>{selectedQuotations.length} of 2 quotations selected for comparison</span>
 										<button
@@ -325,6 +355,7 @@ const QuotationSystem = () => {
 											Compare Selected
 										</button>
 									</div>
+									</>
 								)}
 								{compareError && <p className="mb-3 text-sm text-red-600">{compareError}</p>}
 
@@ -339,7 +370,14 @@ const QuotationSystem = () => {
 											>
 												<div className="flex items-center justify-between gap-3">
 													<div>
-														<p className="font-semibold text-gray-900">{quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor'}</p>
+														<div className="flex items-center gap-2 flex-wrap">
+															<p className="font-semibold text-gray-900">{quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor'}</p>
+															{bestQuotation?._id === quotation._id && (
+																<span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-semibold text-green-800">
+																	Best offer
+																</span>
+															)}
+														</div>
 														<p className="text-gray-500">{quotation.vendorId?.email}</p>
 													</div>
 													<div className="text-right">
@@ -350,6 +388,13 @@ const QuotationSystem = () => {
 															className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700"
 														>
 															{selectedQuotations.some((item) => item._id === quotation._id) ? 'Remove from comparison' : 'Select for comparison'}
+														</button>
+														<button
+															type="button"
+															onClick={() => navigate(`/view-and-accept/${quotation._id}`, { state: { quotation } })}
+															className="mt-2 text-xs font-semibold text-green-600 hover:text-green-700"
+														>
+															View & Accept
 														</button>
 													</div>
 												</div>
