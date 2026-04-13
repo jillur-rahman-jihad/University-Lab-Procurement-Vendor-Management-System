@@ -70,7 +70,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import VendorDashboard from "./VendorDashboard";
-import LabPlanningDashboard from "./LabPlanningDashboard";
+import UniversityDashboard from "./UniversityDashboard";
 import ConsultantDashboard from "./ConsultantDashboard";
 
 const Dashboard = () => {
@@ -92,7 +92,7 @@ const Dashboard = () => {
   }
 
   if (userInfo.role === "university") {
-    return <LabPlanningDashboard />;
+    return <UniversityDashboard />;
   }
   if (userInfo.role === "consultant") {
     return ( <ConsultantDashboard />);

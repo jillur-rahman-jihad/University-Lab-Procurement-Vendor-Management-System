@@ -11,11 +11,16 @@ const blankComponent = {
 	deliveryTime: ''
 };
 
-const QuotationSystem = () => {
+function QuotationSystem() {
 	const navigate = useNavigate();
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-	const token = userInfo?.token;
-	const role = userInfo?.role;
+	let token = null;
+	let role = null;
+
+	if (userInfo) {
+		token = userInfo.token;
+		role = userInfo.role;
+	}
 
 	const [labs, setLabs] = useState([]);
 	const [selectedLab, setSelectedLab] = useState(null);
@@ -33,8 +38,8 @@ const QuotationSystem = () => {
 	const [selectedQuotations, setSelectedQuotations] = useState([]);
 	const [compareError, setCompareError] = useState('');
 
-	useEffect(() => {
-		const fetchLabs = async () => {
+	useEffect(function () {
+		async function fetchLabs() {
 			setLoading(true);
 			setError('');
 			try {
@@ -42,46 +47,64 @@ const QuotationSystem = () => {
 					headers: { Authorization: `Bearer ${token}` }
 				});
 				setLabs(res.data || []);
-				if (res.data?.length) {
+				if (res.data && res.data.length > 0) {
 					setSelectedLab(res.data[0]);
 				}
 			} catch (err) {
-				setError(err.response?.data?.message || 'Failed to load quotation system');
+				if (err.response && err.response.data && err.response.data.message) {
+					setError(err.response.data.message);
+				} else {
+					setError('Failed to load quotation system');
+				}
 			} finally {
 				setLoading(false);
 			}
-		};
+		}
 
 		if (token) {
 			fetchLabs();
 		}
 	}, [token]);
 
-	useEffect(() => {
-		const fetchLabDetails = async () => {
-			if (!selectedLab?._id) return;
+	useEffect(function () {
+		async function fetchLabDetails() {
+			if (!selectedLab || !selectedLab._id) {
+				return;
+			}
 
 			setLoadingDetails(true);
 			setError('');
 			try {
-				const [labRes, quotationRes] = await Promise.all([
-					axios.get(`http://localhost:5001/api/quotation-system/labs/${selectedLab._id}`, {
-						headers: { Authorization: `Bearer ${token}` }
-					}),
-					axios.get(`http://localhost:5001/api/quotation-system/labs/${selectedLab._id}/quotations`, {
-						headers: { Authorization: `Bearer ${token}` }
-					})
-				]);
+				const labPromise = axios.get(`http://localhost:5001/api/quotation-system/labs/${selectedLab._id}`, {
+					headers: { Authorization: `Bearer ${token}` }
+				});
+				const quotationPromise = axios.get(`http://localhost:5001/api/quotation-system/labs/${selectedLab._id}/quotations`, {
+					headers: { Authorization: `Bearer ${token}` }
+				});
+				const labRes = await labPromise;
+				const quotationRes = await quotationPromise;
 
 				setLabDetails(labRes.data);
 				setQuotations(quotationRes.data || []);
 
 				if (role === 'vendor') {
-					const myQuotation = quotationRes.data?.[0];
+					let myQuotation = null;
+
+					if (quotationRes.data && quotationRes.data.length > 0) {
+						myQuotation = quotationRes.data[0];
+					}
 					if (myQuotation) {
 						setEditingQuotationId(myQuotation._id);
-						setComponents(myQuotation.components?.length ? myQuotation.components : [blankComponent]);
-						setBulkDiscount(myQuotation.bulkDiscount ?? '');
+						if (myQuotation.components && myQuotation.components.length > 0) {
+							setComponents(myQuotation.components);
+						} else {
+							setComponents([blankComponent]);
+						}
+						if (myQuotation.bulkDiscount !== undefined && myQuotation.bulkDiscount !== null) {
+							setBulkDiscount(myQuotation.bulkDiscount);
+						} else {
+							setBulkDiscount('');
+						}
 						setInstallationIncluded(Boolean(myQuotation.installationIncluded));
 						setMaintenanceIncluded(Boolean(myQuotation.maintenanceIncluded));
 					} else {
@@ -93,59 +116,100 @@ const QuotationSystem = () => {
 					}
 				}
 			} catch (err) {
-				setError(err.response?.data?.message || 'Failed to load lab details');
+				if (err.response && err.response.data && err.response.data.message) {
+					setError(err.response.data.message);
+				} else {
+					setError('Failed to load lab details');
+				}
 			} finally {
 				setLoadingDetails(false);
 			}
-		};
+		}
 
 		if (token && selectedLab) {
 			fetchLabDetails();
 		}
 	}, [selectedLab, token, role]);
 
-	useEffect(() => {
+	useEffect(function () {
 		setSelectedQuotations([]);
 		setCompareError('');
-	}, [selectedLab?._id]);
+	}, [selectedLab && selectedLab._id]);
 
-	const totalPrice = useMemo(() => {
-		return components.reduce((sum, component) => {
+	const totalPrice = useMemo(function () {
+		return components.reduce(function (sum, component) {
 			const unitPrice = Number(component.unitPrice || 0);
 			const quantity = Number(component.quantity || 1);
 			return sum + unitPrice * quantity;
 		}, 0);
 	}, [components]);
 
-	const bestQuotation = useMemo(() => {
+	const bestQuotation = useMemo(function () {
 		if (role !== 'university' || quotations.length === 0) {
 			return null;
 		}
 
-		return quotations.reduce((currentBest, quotation) => {
+		return quotations.reduce(function (currentBest, quotation) {
 			if (!currentBest) {
 				return quotation;
 			}
 
-			const currentBestPrice = Number(currentBest.totalPrice ?? Number.POSITIVE_INFINITY);
-			const quotationPrice = Number(quotation.totalPrice ?? Number.POSITIVE_INFINITY);
+			let currentBestPrice = Number.POSITIVE_INFINITY;
+			let quotationPrice = Number.POSITIVE_INFINITY;
 
-			return quotationPrice < currentBestPrice ? quotation : currentBest;
+			if (currentBest.totalPrice !== undefined && currentBest.totalPrice !== null) {
+				currentBestPrice = Number(currentBest.totalPrice);
+			}
+
+			if (quotation.totalPrice !== undefined && quotation.totalPrice !== null) {
+				quotationPrice = Number(quotation.totalPrice);
+			}
+
+			if (quotationPrice < currentBestPrice) {
+				return quotation;
+			}
+
+			return currentBest;
 		}, null);
 	}, [quotations, role]);
 
-	const updateComponent = (index, key, value) => {
-		setComponents((prev) => prev.map((component, componentIndex) => (componentIndex === index ? { ...component, [key]: value } : component)));
-	};
+	function updateComponent(index, key, value) {
+		setComponents(function (prev) {
+			return prev.map(function (component, componentIndex) {
+				if (componentIndex === index) {
+					return { ...component, [key]: value };
+				}
 
-	const addComponent = () => setComponents((prev) => [...prev, { ...blankComponent }]);
-	const removeComponent = (index) => setComponents((prev) => prev.length === 1 ? prev : prev.filter((_, componentIndex) => componentIndex !== index));
+				return component;
+			});
+		});
+	}
 
-	const toggleQuotationSelection = (quotation) => {
+	function addComponent() {
+		setComponents(function (prev) {
+			return [...prev, { ...blankComponent }];
+		});
+	}
+
+	function removeComponent(index) {
+		setComponents(function (prev) {
+			if (prev.length === 1) {
+				return prev;
+			}
+
+			return prev.filter(function (_, componentIndex) {
+				return componentIndex !== index;
+			});
+		});
+	}
+
+	function toggleQuotationSelection(quotation) {
 		setCompareError('');
-		setSelectedQuotations((prev) => {
-			if (prev.some((item) => item._id === quotation._id)) {
-				return prev.filter((item) => item._id !== quotation._id);
+		setSelectedQuotations(function (prev) {
+			if (prev.some(function (item) { return item._id === quotation._id; })) {
+				return prev.filter(function (item) {
+					return item._id !== quotation._id;
+				});
 			}
 
 			if (prev.length >= 2) {
@@ -155,9 +219,9 @@ const QuotationSystem = () => {
 
 			return [...prev, quotation];
 		});
-	};
+	}
 
-	const compareSelectedQuotations = () => {
+	function compareSelectedQuotations() {
 		if (selectedQuotations.length !== 2) {
 			setCompareError('Please select exactly two quotations to compare.');
 			return;
@@ -170,9 +234,9 @@ const QuotationSystem = () => {
 
 		sessionStorage.setItem('quotationComparisonData', JSON.stringify(comparisonData));
 		navigate('/compare-quotation', { state: comparisonData });
-	};
+	}
 
-	const submitQuotation = async (event) => {
+	async function submitQuotation(event) {
 		event.preventDefault();
 		setError('');
 		setSuccess('');
@@ -199,9 +263,13 @@ const QuotationSystem = () => {
 				setSuccess('Quotation submitted successfully.');
 			}
 		} catch (err) {
-			setError(err.response?.data?.message || 'Failed to submit quotation');
+			if (err.response && err.response.data && err.response.data.message) {
+				setError(err.response.data.message);
+			} else {
+				setError('Failed to submit quotation');
+			}
 		}
-	};
+	}
 
 	if (!token) {
 		return (
