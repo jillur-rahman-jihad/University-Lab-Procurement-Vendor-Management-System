@@ -94,7 +94,7 @@ exports.submitQuotation = async (req, res) => {
       maintenanceIncluded
     } = req.body;
 
-    if (!labProjectId || !components || !components.length || !totalPrice) {
+    if (!labProjectId || !components || !components.length) {
       return res.status(400).json({
         message: "Please provide all required quotation fields"
       });
@@ -116,11 +116,29 @@ exports.submitQuotation = async (req, res) => {
       });
     }
 
+    const normalizedComponents = components.map((component) => ({
+      category: component.category,
+      name: component.name,
+      unitPrice: Number(component.unitPrice || 0),
+      quantity: Number(component.quantity || 1),
+      warranty: component.warranty || "",
+      deliveryTime: component.deliveryTime || ""
+    }));
+
+    const calculatedTotal = normalizedComponents.reduce(
+      (sum, component) => sum + component.unitPrice * component.quantity,
+      0
+    );
+
+    const finalTotalPrice = Number.isFinite(Number(totalPrice))
+      ? Number(totalPrice)
+      : calculatedTotal;
+
     const quotation = new Quotation({
       labProjectId,
       vendorId: req.user.id,
-      components,
-      totalPrice,
+      components: normalizedComponents,
+      totalPrice: finalTotalPrice,
       bulkDiscount: bulkDiscount || 0,
       installationIncluded: installationIncluded || false,
       maintenanceIncluded: maintenanceIncluded || false,
@@ -218,8 +236,30 @@ exports.updateQuotation = async (req, res) => {
       maintenanceIncluded
     } = req.body;
 
-    quotation.components = components ?? quotation.components;
-    quotation.totalPrice = totalPrice ?? quotation.totalPrice;
+    const normalizedComponents = Array.isArray(components)
+      ? components.map((component) => ({
+          category: component.category,
+          name: component.name,
+          unitPrice: Number(component.unitPrice || 0),
+          quantity: Number(component.quantity || 1),
+          warranty: component.warranty || "",
+          deliveryTime: component.deliveryTime || ""
+        }))
+      : null;
+
+    if (normalizedComponents) {
+      quotation.components = normalizedComponents;
+      const calculatedTotal = normalizedComponents.reduce(
+        (sum, component) => sum + component.unitPrice * component.quantity,
+        0
+      );
+      quotation.totalPrice = Number.isFinite(Number(totalPrice))
+        ? Number(totalPrice)
+        : calculatedTotal;
+    } else if (Number.isFinite(Number(totalPrice))) {
+      quotation.totalPrice = Number(totalPrice);
+    }
+
     quotation.bulkDiscount = bulkDiscount ?? quotation.bulkDiscount;
     quotation.installationIncluded =
       installationIncluded ?? quotation.installationIncluded;

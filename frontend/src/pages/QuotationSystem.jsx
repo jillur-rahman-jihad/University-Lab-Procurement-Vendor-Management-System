@@ -30,6 +30,8 @@ const QuotationSystem = () => {
 	const [bulkDiscount, setBulkDiscount] = useState('');
 	const [installationIncluded, setInstallationIncluded] = useState(false);
 	const [maintenanceIncluded, setMaintenanceIncluded] = useState(false);
+	const [selectedQuotations, setSelectedQuotations] = useState([]);
+	const [compareError, setCompareError] = useState('');
 
 	useEffect(() => {
 		const fetchLabs = async () => {
@@ -102,6 +104,11 @@ const QuotationSystem = () => {
 		}
 	}, [selectedLab, token, role]);
 
+	useEffect(() => {
+		setSelectedQuotations([]);
+		setCompareError('');
+	}, [selectedLab?._id]);
+
 	const totalPrice = useMemo(() => {
 		return components.reduce((sum, component) => {
 			const unitPrice = Number(component.unitPrice || 0);
@@ -116,6 +123,37 @@ const QuotationSystem = () => {
 
 	const addComponent = () => setComponents((prev) => [...prev, { ...blankComponent }]);
 	const removeComponent = (index) => setComponents((prev) => prev.length === 1 ? prev : prev.filter((_, componentIndex) => componentIndex !== index));
+
+	const toggleQuotationSelection = (quotation) => {
+		setCompareError('');
+		setSelectedQuotations((prev) => {
+			if (prev.some((item) => item._id === quotation._id)) {
+				return prev.filter((item) => item._id !== quotation._id);
+			}
+
+			if (prev.length >= 2) {
+				setCompareError('Please select only two quotations for comparison.');
+				return prev;
+			}
+
+			return [...prev, quotation];
+		});
+	};
+
+	const compareSelectedQuotations = () => {
+		if (selectedQuotations.length !== 2) {
+			setCompareError('Please select exactly two quotations to compare.');
+			return;
+		}
+
+		const comparisonData = {
+			selectedLab,
+			quotations: selectedQuotations
+		};
+
+		sessionStorage.setItem('quotationComparisonData', JSON.stringify(comparisonData));
+		navigate('/compare-quotation', { state: comparisonData });
+	};
 
 	const submitQuotation = async (event) => {
 		event.preventDefault();
@@ -275,19 +313,45 @@ const QuotationSystem = () => {
 									<p className="text-sm font-semibold text-gray-900">{role === 'university' ? 'Vendor Quotations' : 'Your Quotation'}</p>
 									{role === 'university' && <span className="text-sm text-gray-500">{quotations.length} offers</span>}
 								</div>
+								{role === 'university' && (
+									<div className="mb-3 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-900 flex flex-wrap items-center justify-between gap-3">
+										<span>{selectedQuotations.length} of 2 quotations selected for comparison</span>
+										<button
+											type="button"
+											onClick={compareSelectedQuotations}
+											disabled={selectedQuotations.length !== 2}
+											className={`rounded-lg px-4 py-2 font-semibold text-white transition ${selectedQuotations.length === 2 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-300 cursor-not-allowed'}`}
+										>
+											Compare Selected
+										</button>
+									</div>
+								)}
+								{compareError && <p className="mb-3 text-sm text-red-600">{compareError}</p>}
 
 								{role === 'university' ? (
 									<div className="space-y-3 max-h-72 overflow-auto pr-1">
 										{quotations.length === 0 ? (
 											<p className="text-sm text-gray-500">No quotations have been submitted yet.</p>
 										) : quotations.map((quotation) => (
-											<div key={quotation._id} className="rounded-xl border border-gray-200 p-4 text-sm">
+											<div
+												key={quotation._id}
+												className={`rounded-xl border p-4 text-sm transition ${selectedQuotations.some((item) => item._id === quotation._id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}
+											>
 												<div className="flex items-center justify-between gap-3">
 													<div>
 														<p className="font-semibold text-gray-900">{quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor'}</p>
 														<p className="text-gray-500">{quotation.vendorId?.email}</p>
 													</div>
-													<p className="font-semibold text-blue-700">{quotation.totalPrice}</p>
+													<div className="text-right">
+														<p className="font-semibold text-blue-700">{quotation.totalPrice}</p>
+														<button
+															type="button"
+															onClick={() => toggleQuotationSelection(quotation)}
+															className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700"
+														>
+															{selectedQuotations.some((item) => item._id === quotation._id) ? 'Remove from comparison' : 'Select for comparison'}
+														</button>
+													</div>
 												</div>
 												<ul className="mt-3 space-y-1 text-gray-600">
 													{quotation.components?.map((component, index) => (
