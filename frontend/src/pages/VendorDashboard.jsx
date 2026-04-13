@@ -98,6 +98,13 @@ const VendorDashboard = () => {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Link
+          to="/quotation-system"
+          className="bg-blue-600 text-white p-5 rounded-lg shadow hover:bg-blue-700"
+        >
+          Quotation System
+        </Link>
+
+        <Link
           to="/vendor/labs"
           className="bg-blue-600 text-white p-5 rounded-lg shadow hover:bg-blue-700"
         >

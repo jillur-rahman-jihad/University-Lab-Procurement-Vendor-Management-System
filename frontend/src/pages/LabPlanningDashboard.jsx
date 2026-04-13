@@ -170,8 +170,19 @@ const LabPlanningDashboard = () => {
     return (
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
-          <h1 className="text-3xl font-extrabold text-gray-900">Create Lab Project</h1>
-          <p className="mt-4 text-lg text-gray-600">Select the type of lab you want to create</p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900">Create Lab Project</h1>
+              <p className="mt-4 text-lg text-gray-600">Select the type of lab you want to create</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/quotation-system')}
+              className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              Quotation System
+            </button>
+          </div>
         </div>
 
         {/* Lab Type Grid */}

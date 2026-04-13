@@ -46,6 +46,7 @@ import SubmitQuotation from './pages/SubmitQuotation';
 import MyQuotations from './pages/MyQuotations';
 import VendorContracts from './pages/VendorContracts';
 import VendorAnalytics from './pages/VendorAnalytics';
+import QuotationSystem from './pages/QuotationSystem';
 
 function App() {
   return (
@@ -68,6 +69,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lab-planning" element={<LabPlanningDashboard />} />
+            <Route path="/quotation-system" element={<QuotationSystem />} />
 
             <Route path="/vendor/labs" element={<AvailableLabRequests />} />
             <Route path="/vendor/labs/:labId/quote" element={<SubmitQuotation />} />
