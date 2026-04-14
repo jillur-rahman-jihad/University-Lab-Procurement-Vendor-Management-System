@@ -5,7 +5,7 @@ const quotationSchema = new mongoose.Schema({
   vendorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   
   components: [{
-    category: { type: String, enum: ["CPU", "GPU", "RAM", "Storage", "Networking", "UPS"] },
+    category: { type: String, enum: ["CPU", "GPU", "RAM", "Storage", "Motherboard", "Networking", "UPS", "Other"] },
     name: String,
     unitPrice: Number,
     quantity: Number,

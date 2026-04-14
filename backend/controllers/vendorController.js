@@ -11,13 +11,19 @@ exports.getAvailableLabRequests = async (req, res) => {
       return res.status(403).json({ message: "Access denied. Vendor only." });
     }
 
+    // Exclude lab projects for which this vendor already submitted a quotation
+    const submittedQuotations = await Quotation.find({ vendorId: req.user.id }).select('labProjectId');
+    const submittedLabIds = submittedQuotations.map(q => q.labProjectId.toString());
+
     const labs = await LabProject.find({
       status: { $in: ["draft", "bidding", "finalized"] }
     })
       .populate("universityId", "name email")
       .sort({ createdAt: -1 });
 
-    res.status(200).json(labs);
+    const available = labs.filter(l => !submittedLabIds.includes(l._id.toString()));
+
+    res.status(200).json(available);
   } catch (error) {
     res.status(500).json({
       message: "Failed to fetch lab requests",
@@ -52,6 +58,25 @@ exports.getSingleLabRequest = async (req, res) => {
   }
 };
 
+exports.getLabQuotations = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const labId = req.params.id;
+    const quotations = await Quotation.find({ labProjectId: labId })
+      .populate('vendorId', 'name vendorInfo.shopName')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(quotations);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch quotations for lab', error: error.message });
+  }
+};
+
 exports.submitQuotation = async (req, res) => {
   try {
     const vendor = await User.findById(req.user.id);
@@ -69,7 +94,7 @@ exports.submitQuotation = async (req, res) => {
       maintenanceIncluded
     } = req.body;
 
-    if (!labProjectId || !components || !components.length || !totalPrice) {
+    if (!labProjectId || !components || !components.length) {
       return res.status(400).json({
         message: "Please provide all required quotation fields"
       });
@@ -91,11 +116,29 @@ exports.submitQuotation = async (req, res) => {
       });
     }
 
+    const normalizedComponents = components.map((component) => ({
+      category: component.category,
+      name: component.name,
+      unitPrice: Number(component.unitPrice || 0),
+      quantity: Number(component.quantity || 1),
+      warranty: component.warranty || "",
+      deliveryTime: component.deliveryTime || ""
+    }));
+
+    const calculatedTotal = normalizedComponents.reduce(
+      (sum, component) => sum + component.unitPrice * component.quantity,
+      0
+    );
+
+    const finalTotalPrice = Number.isFinite(Number(totalPrice))
+      ? Number(totalPrice)
+      : calculatedTotal;
+
     const quotation = new Quotation({
       labProjectId,
       vendorId: req.user.id,
-      components,
-      totalPrice,
+      components: normalizedComponents,
+      totalPrice: finalTotalPrice,
       bulkDiscount: bulkDiscount || 0,
       installationIncluded: installationIncluded || false,
       maintenanceIncluded: maintenanceIncluded || false,
@@ -114,6 +157,27 @@ exports.submitQuotation = async (req, res) => {
       message: "Failed to submit quotation",
       error: error.message
     });
+  }
+};
+
+exports.getQuotationById = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const quotation = await Quotation.findById(req.params.id).populate('labProjectId');
+    if (!quotation) return res.status(404).json({ message: 'Quotation not found' });
+
+    if (quotation.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'You can only view your own quotation' });
+    }
+
+    res.status(200).json(quotation);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch quotation', error: error.message });
   }
 };
 
@@ -172,8 +236,30 @@ exports.updateQuotation = async (req, res) => {
       maintenanceIncluded
     } = req.body;
 
-    quotation.components = components ?? quotation.components;
-    quotation.totalPrice = totalPrice ?? quotation.totalPrice;
+    const normalizedComponents = Array.isArray(components)
+      ? components.map((component) => ({
+          category: component.category,
+          name: component.name,
+          unitPrice: Number(component.unitPrice || 0),
+          quantity: Number(component.quantity || 1),
+          warranty: component.warranty || "",
+          deliveryTime: component.deliveryTime || ""
+        }))
+      : null;
+
+    if (normalizedComponents) {
+      quotation.components = normalizedComponents;
+      const calculatedTotal = normalizedComponents.reduce(
+        (sum, component) => sum + component.unitPrice * component.quantity,
+        0
+      );
+      quotation.totalPrice = Number.isFinite(Number(totalPrice))
+        ? Number(totalPrice)
+        : calculatedTotal;
+    } else if (Number.isFinite(Number(totalPrice))) {
+      quotation.totalPrice = Number(totalPrice);
+    }
+
     quotation.bulkDiscount = bulkDiscount ?? quotation.bulkDiscount;
     quotation.installationIncluded =
       installationIncluded ?? quotation.installationIncluded;
@@ -199,6 +285,43 @@ exports.updateQuotation = async (req, res) => {
   }
 };
 
+exports.deleteQuotation = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const quotation = await Quotation.findById(req.params.id);
+
+    if (!quotation) {
+      return res.status(404).json({ message: "Quotation not found" });
+    }
+
+    if (quotation.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "You can delete only your own quotation"
+      });
+    }
+
+    if (quotation.status !== "pending") {
+      return res.status(400).json({
+        message: "Only pending quotations can be deleted"
+      });
+    }
+
+    await quotation.deleteOne();
+
+    return res.status(200).json({ message: "Quotation deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to delete quotation",
+      error: error.message
+    });
+  }
+};
+
 exports.getVendorContracts = async (req, res) => {
   try {
     const vendor = await User.findById(req.user.id);
@@ -209,7 +332,7 @@ exports.getVendorContracts = async (req, res) => {
 
     const contracts = await Procurement.find({
       selectedVendorIds: req.user.id
-    }).populate("labProjectId");
+    }).populate("labProjectId").populate("quotationId");
 
     res.status(200).json(contracts);
   } catch (error) {

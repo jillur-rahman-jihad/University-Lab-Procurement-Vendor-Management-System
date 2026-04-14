@@ -42,10 +42,12 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import LabPlanningDashboard from './pages/LabPlanningDashboard';
 import AvailableLabRequests from './pages/AvailableLabRequests';
-import SubmitQuotation from './pages/SubmitQuotation';
 import MyQuotations from './pages/MyQuotations';
 import VendorContracts from './pages/VendorContracts';
 import VendorAnalytics from './pages/VendorAnalytics';
+import QuotationSystem from './pages/QuotationSystem';
+import CompareQuotation from './pages/CompareQuotation';
+import ViewAndAccept from './pages/ViewAndAccept';
 
 function App() {
   return (
@@ -68,9 +70,12 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lab-planning" element={<LabPlanningDashboard />} />
+            <Route path="/quotation-system" element={<QuotationSystem />} />
+            <Route path="/compare-quotation" element={<CompareQuotation />} />
+            <Route path="/view-and-accept/:quotationId" element={<ViewAndAccept />} />
 
             <Route path="/vendor/labs" element={<AvailableLabRequests />} />
-            <Route path="/vendor/labs/:labId/quote" element={<SubmitQuotation />} />
+            <Route path="/vendor/labs/:labId/quote" element={<QuotationSystem />} />
             <Route path="/vendor/quotations" element={<MyQuotations />} />
             <Route path="/vendor/contracts" element={<VendorContracts />} />
             <Route path="/vendor/analytics" element={<VendorAnalytics />} />

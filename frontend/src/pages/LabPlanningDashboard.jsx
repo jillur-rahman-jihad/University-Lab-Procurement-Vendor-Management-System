@@ -170,8 +170,13 @@ const LabPlanningDashboard = () => {
     return (
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
-          <h1 className="text-3xl font-extrabold text-gray-900">Create Lab Project</h1>
-          <p className="mt-4 text-lg text-gray-600">Select the type of lab you want to create</p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-extrabold text-gray-900">Create Lab Project</h1>
+              <p className="mt-4 text-lg text-gray-600">Select the type of lab you want to create</p>
+            </div>
+
+          </div>
         </div>
 
         {/* Lab Type Grid */}
@@ -180,7 +185,7 @@ const LabPlanningDashboard = () => {
             <div
               key={type.value}
               onClick={() => handleLabTypeSelect(type.value)}
-              className={`p-8 rounded-lg cursor-pointer transition-all transform hover:scale-105 ${
+              className={`p-8  cursor-pointer transition-all transform hover:scale-105 ${
                 selectedLabType === type.value
                   ? 'bg-white border-2 border-blue-600 shadow-lg'
                   : 'bg-white border-2 border-gray-200 shadow'
@@ -235,7 +240,7 @@ const LabPlanningDashboard = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg">
+      <form onSubmit={handleSubmit} className="bg-white shadow ">
         <div className="p-8">
           {/* Lab Name */}
           <div className="mb-8">
@@ -261,7 +266,7 @@ const LabPlanningDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
                 onClick={() => setEntryMethod('manual')}
-                className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`p-6  border-2 cursor-pointer transition-all ${
                   entryMethod === 'manual'
                     ? 'border-blue-600 bg-blue-50'
                     : 'border-gray-200 bg-white hover:border-gray-300'
@@ -273,21 +278,21 @@ const LabPlanningDashboard = () => {
 
               <div
                 onClick={() => setEntryMethod('upload')}
-                className={`p-6 rounded-lg border-2 cursor-pointer transition-all ${
+                className={`p-6  border-2 cursor-pointer transition-all ${
                   entryMethod === 'upload'
                     ? 'border-blue-600 bg-blue-50'
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
                 <h3 className="text-lg font-bold text-gray-900 mb-2">Upload Document</h3>
-                <p className="text-sm text-gray-600">Upload a document with lab specifications</p>
+                <p className="text-sm text-gray-600">Upload  course outline of the lab</p>
               </div>
             </div>
           </div>
 
           {/* Manual Entry Fields */}
           {entryMethod === 'manual' && (
-            <div className="space-y-6 bg-gray-50 p-6 rounded-lg">
+            <div className="space-y-6 bg-gray-100 p-6 rounded">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Main Lab Project Requirement *
@@ -400,8 +405,8 @@ const LabPlanningDashboard = () => {
 
           {/* Upload Document Option */}
           {entryMethod === 'upload' && (
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <label className={`w-full px-6 py-3 border-2 border-dashed ${loading ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'} rounded-lg transition-all cursor-pointer block`}>
+            <div className="bg-gray-50 p-6 ">
+              <label className={`w-full px-10 py-3 border-2 border-dashed ${loading ? 'border-blue-800 bg-blue-50' : 'border-gray-400 hover:border-blue-900'}  transition-all cursor-pointer block`}> 
                 <input 
                   type="file" 
                   accept="application/pdf" 
@@ -410,9 +415,8 @@ const LabPlanningDashboard = () => {
                   disabled={loading}
                 />
                 <div className="text-center">
-                  <p className="text-gray-600">Upload Lab Specifications Document</p>
-                  <p className="text-xs text-gray-500 mt-2">Supported formats: PDF Only</p>
-                  {loading && <p className="text-blue-600 mt-2 font-medium">Uploading and Parsing PDF...</p>}
+                  <p className="text-gray-600">Upload Course Outline</p>
+                  <p className="text-xs text-gray-500 mt-2">PDF Only</p>
                 </div>
               </label>
             </div>
@@ -440,7 +444,7 @@ const LabPlanningDashboard = () => {
                   : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
-              {loading ? 'Creating...' : 'Create Lab'}
+              Submit
             </button>
           )}
         </div>
