@@ -453,14 +453,14 @@ function QuotationSystem() {
 														<button
 															type="button"
 															onClick={() => toggleQuotationSelection(quotation)}
-															className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700"
+															className="mt-2 border border-blue-600 text-xs font-semibold text-blue-600 hover:text-blue-700"
 														>
 															{selectedQuotations.some((item) => item._id === quotation._id) ? 'Remove from comparison' : 'Select for comparison'}
 														</button>
 														<button
 															type="button"
 															onClick={() => navigate(`/view-and-accept/${quotation._id}`, { state: { quotation } })}
-															className="mt-2 text-xs font-semibold text-green-600 hover:text-green-700"
+															className="mt-2 ml-3 border border-green-600 text-xs font-bold text-green-600 hover:text-green-700"
 														>
 															View & Accept
 														</button>
