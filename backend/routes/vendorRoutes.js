@@ -7,6 +7,7 @@ const {
   submitQuotation,
   getMyQuotations,
   updateQuotation,
+  deleteQuotation,
   getVendorContracts,
   getVendorAnalytics,
   getLabQuotations
@@ -21,6 +22,7 @@ router.post("/quotations", authMiddleware, submitQuotation);
 router.get("/quotations/my", authMiddleware, getMyQuotations);
 router.get("/quotations/:id", authMiddleware, getQuotationById);
 router.put("/quotations/:id", authMiddleware, updateQuotation);
+router.delete("/quotations/:id", authMiddleware, deleteQuotation);
 router.get("/contracts", authMiddleware, getVendorContracts);
 router.get("/analytics", authMiddleware, getVendorAnalytics);
 

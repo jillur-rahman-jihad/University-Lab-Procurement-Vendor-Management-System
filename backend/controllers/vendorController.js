@@ -285,6 +285,43 @@ exports.updateQuotation = async (req, res) => {
   }
 };
 
+exports.deleteQuotation = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id);
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const quotation = await Quotation.findById(req.params.id);
+
+    if (!quotation) {
+      return res.status(404).json({ message: "Quotation not found" });
+    }
+
+    if (quotation.vendorId.toString() !== req.user.id) {
+      return res.status(403).json({
+        message: "You can delete only your own quotation"
+      });
+    }
+
+    if (quotation.status !== "pending") {
+      return res.status(400).json({
+        message: "Only pending quotations can be deleted"
+      });
+    }
+
+    await quotation.deleteOne();
+
+    return res.status(200).json({ message: "Quotation deleted successfully" });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to delete quotation",
+      error: error.message
+    });
+  }
+};
+
 exports.getVendorContracts = async (req, res) => {
   try {
     const vendor = await User.findById(req.user.id);

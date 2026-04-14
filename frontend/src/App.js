@@ -42,7 +42,6 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import LabPlanningDashboard from './pages/LabPlanningDashboard';
 import AvailableLabRequests from './pages/AvailableLabRequests';
-import SubmitQuotation from './pages/SubmitQuotation';
 import MyQuotations from './pages/MyQuotations';
 import VendorContracts from './pages/VendorContracts';
 import VendorAnalytics from './pages/VendorAnalytics';
@@ -76,7 +75,7 @@ function App() {
             <Route path="/view-and-accept/:quotationId" element={<ViewAndAccept />} />
 
             <Route path="/vendor/labs" element={<AvailableLabRequests />} />
-            <Route path="/vendor/labs/:labId/quote" element={<SubmitQuotation />} />
+            <Route path="/vendor/labs/:labId/quote" element={<QuotationSystem />} />
             <Route path="/vendor/quotations" element={<MyQuotations />} />
             <Route path="/vendor/contracts" element={<VendorContracts />} />
             <Route path="/vendor/analytics" element={<VendorAnalytics />} />

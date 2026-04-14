@@ -59,92 +59,81 @@ const VendorDashboard = () => {
       {loading ? (
         <p>Loading dashboard...</p>
       ) : (
-        <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-5 rounded-lg shadow">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Total Quotations</p>
-            <h2 className="text-2xl font-bold">{analytics?.totalQuotations || 0}</h2>
+            <h2 className="text-3xl font-bold">{analytics?.totalQuotations || 0}</h2>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Accepted</p>
-            <h2 className="text-2xl font-bold">{analytics?.acceptedQuotations || 0}</h2>
+            <h2 className="text-3xl font-bold">{analytics?.acceptedQuotations || 0}</h2>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Pending</p>
-            <h2 className="text-2xl font-bold">{analytics?.pendingQuotations || 0}</h2>
+            <h2 className="text-3xl font-bold">{analytics?.pendingQuotations || 0}</h2>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Win Ratio</p>
-            <h2 className="text-2xl font-bold">{analytics?.winRatio || 0}%</h2>
+            <h2 className="text-3xl font-bold">{analytics?.winRatio || 0}%</h2>
           </div>
 
-          <div className="bg-white p-5 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Institutional Acceptance Rate</p>
-            <h2 className="text-2xl font-bold">{analytics?.institutionalAcceptanceRate ?? 'N/A'}</h2>
+            <h2 className="text-3xl font-bold">{analytics?.institutionalAcceptanceRate ?? 'N/A'}</h2>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Active Bids</p>
-            <h2 className="text-2xl font-bold">{analytics?.activeBids || 0}</h2>
+            <h2 className="text-3xl font-bold">{analytics?.activeBids || 0}</h2>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Avg Response Time</p>
-            <h2 className="text-2xl font-bold">{analytics?.avgResponseTime ?? analytics?.averageResponseTime ?? 'N/A'} hrs</h2>
+            <h2 className="text-3xl font-bold">{analytics?.avgResponseTime ?? analytics?.averageResponseTime ?? 'N/A'} hrs</h2>
           </div>
-          <div className="bg-white p-5 rounded-lg shadow">
+          <div className="bg-white p-8 rounded-lg shadow h-40 flex flex-col justify-center">
             <p className="text-sm text-gray-500">Competing Offers (recent)</p>
-            <h2 className="text-2xl font-bold">{analytics?.competingOffers || 0}</h2>
+            <h2 className="text-3xl font-bold">{analytics?.competingOffers || 0}</h2>
           </div>
         </div>
       )}
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
         <Link
           to="/quotation-system"
-          className="bg-blue-600 text-white p-5 rounded-lg shadow hover:bg-blue-700"
+          className="bg-blue-600 text-white p-8 rounded-lg shadow hover:bg-blue-700 h-32 flex items-center justify-center text-center font-semibold"
         >
           Quotation System
         </Link>
 
         <Link
           to="/vendor/labs"
-          className="bg-blue-600 text-white p-5 rounded-lg shadow hover:bg-blue-700"
+          className="bg-blue-600 text-white p-8 rounded-lg shadow hover:bg-blue-700 h-32 flex items-center justify-center text-center font-semibold"
         >
           View Lab Requests
         </Link>
 
         <Link
           to="/vendor/quotations"
-          className="bg-green-600 text-white p-5 rounded-lg shadow hover:bg-green-700"
+          className="bg-green-600 text-white p-8 rounded-lg shadow hover:bg-green-700 h-32 flex items-center justify-center text-center font-semibold"
         >
           My Quotations
         </Link>
 
         <Link
           to="/vendor/contracts"
-          className="bg-purple-600 text-white p-5 rounded-lg shadow hover:bg-purple-700"
+          className="bg-purple-600 text-white p-8 rounded-lg shadow hover:bg-purple-700 h-32 flex items-center justify-center text-center font-semibold"
         >
           Accepted Contracts
         </Link>
 
         <Link
-          to="/vendor/bulk-quotations"
-          className="bg-yellow-600 text-white p-5 rounded-lg shadow hover:bg-yellow-700"
-        >
-          Submit Bulk Quotations
-        </Link>
-
-        <Link
           to="/vendor/analytics"
-          className="bg-gray-800 text-white p-5 rounded-lg shadow hover:bg-gray-900"
+          className="bg-gray-800 text-white p-8 rounded-lg shadow hover:bg-gray-900 h-32 flex items-center justify-center text-center font-semibold"
         >
           Analytics
         </Link>
       </div>
 
       {/* Recent Lab Requests preview */}
-      <div className="mt-8">
-        <h2 className="text-2xl font-semibold mb-4">Recent Lab Requests</h2>
-        <RecentLabRequests token={token} />
-      </div>
     </div>
   );
 };
