@@ -37,8 +37,14 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       role,
       phone,
-      address,
-      ...(role === "university" && { department, authorizedRepresentative }),
+      ...(role === "university" && { 
+        universityInfo: {
+          universityName: name,
+          department,
+          address,
+          representative: authorizedRepresentative
+        }
+      }),
       ...(role === "vendor" && { tradeLicenseNumber }),
       ...(role === "consultant" && {
         consultantInfo: {

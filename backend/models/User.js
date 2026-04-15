@@ -25,7 +25,11 @@ const userSchema = new mongoose.Schema({
         universityName: String,
         department: String,
         address: String,
-        representative: String,
+        representative: {
+            name: String,
+            email: String,
+            phone: String
+        },
         isApproved: { type: Boolean, default: false },
         subscriptionPlan: { type: String, enum: ['free', 'premium'], default: 'free' }
     },
