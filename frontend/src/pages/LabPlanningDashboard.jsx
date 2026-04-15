@@ -229,7 +229,10 @@ const LabPlanningDashboard = () => {
         <div className="mb-12">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <h1 className="text-3xl font-extrabold text-gray-900">Create Lab Project</h1>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="material-icons text-4xl text-blue-600">construction</span>
+                <h1 className="text-3xl font-extrabold text-gray-900">Create Lab Project</h1>
+              </div>
               <p className="mt-4 text-lg text-gray-600">Select the type of lab you want to create</p>
             </div>
 
@@ -238,38 +241,53 @@ const LabPlanningDashboard = () => {
 
         {/* Lab Type Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {labTypes.map((type) => (
-            <div
-              key={type.value}
-              onClick={() => handleLabTypeSelect(type.value)}
-              className={`p-8  cursor-pointer transition-all transform hover:scale-105 ${
-                selectedLabType === type.value
-                  ? 'bg-white border-2 border-blue-600 shadow-lg'
-                  : 'bg-white border-2 border-gray-200 shadow'
-              }`}
-            >
-              <h2 className="text-xl font-bold text-black text-center">{type.label}</h2>
-            </div>
-          ))}
+          {labTypes.map((type) => {
+            const iconMap = {
+              'Normal': 'computer',
+              'Graphics': 'palette',
+              'Networking': 'cloud',
+              'Thesis': 'school',
+              'AI': 'smart_toy',
+              'Other': 'more_horiz'
+            };
+            return (
+              <div
+                key={type.value}
+                onClick={() => handleLabTypeSelect(type.value)}
+                className={`p-8  cursor-pointer transition-all transform hover:scale-105 ${
+                  selectedLabType === type.value
+                    ? 'bg-white border-2 border-blue-600 shadow-lg'
+                    : 'bg-white border-2 border-gray-200 shadow'
+                }`}
+              >
+                <div className="text-center">
+                  <span className="material-icons text-4xl" style={{ display: 'inline-block', color: selectedLabType === type.value ? '#3b82f6' : '#6b7280', marginBottom: '8px' }}>{iconMap[type.value]}</span>
+                  <h2 className="text-xl font-bold text-black">{type.label}</h2>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center">
           <button
             onClick={() => navigate('/dashboard')}
-            className="px-6 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            className="px-6 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"
           >
+            <span className="material-icons" style={{ fontSize: '20px' }}>arrow_back</span>
             Back
           </button>
           <button
             onClick={handleNextStep}
             disabled={!selectedLabType}
-            className={`px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+            className={`px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white flex items-center gap-2 ${
               selectedLabType
                 ? 'bg-blue-600 hover:bg-blue-700 cursor-pointer'
                 : 'bg-gray-400 cursor-not-allowed'
             }`}
           >
+            <span className="material-icons" style={{ fontSize: '20px' }}>arrow_forward</span>
             Next
           </button>
         </div>
@@ -291,12 +309,15 @@ const LabPlanningDashboard = () => {
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">
-          {isReorderMode ? 'Reorder Lab' : 'Create Lab'} - {labTypes.find(t => t.value === selectedLabType)?.label}
-        </h1>
-        <p className="mt-2 text-gray-600">
-          {isReorderMode ? 'Edit the lab details and create a new draft' : 'Fill in the lab details'}
-        </p>
+          <div className="flex items-center gap-3 mb-2">
+            <span className="material-icons text-4xl text-blue-600">{isReorderMode ? 'refresh' : 'edit'}</span>
+            <h1 className="text-3xl font-extrabold text-gray-900">
+              {isReorderMode ? 'Reorder Lab' : 'Create Lab'} - {labTypes.find(t => t.value === selectedLabType)?.label}
+            </h1>
+          </div>
+          <p className="mt-2 text-gray-600">
+            {isReorderMode ? 'Edit the lab details and create a new draft' : 'Fill in the lab details'}
+          </p>
       </div>
 
       {error && (
@@ -315,7 +336,8 @@ const LabPlanningDashboard = () => {
         <div className="p-8">
           {/* Lab Name */}
           <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>label</span>
               Lab Name *
             </label>
             <input
@@ -331,7 +353,8 @@ const LabPlanningDashboard = () => {
 
           {/* Entry Method Selection */}
           <div className="mb-8">
-            <label className="block text-sm font-medium text-gray-700 mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-4 flex items-center gap-2">
+              <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>input</span>
               How would you like to enter lab details? *
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -343,7 +366,10 @@ const LabPlanningDashboard = () => {
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Manual Entry</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="material-icons" style={{ fontSize: '24px', color: '#3b82f6' }}>edit_note</span>
+                  Manual Entry
+                </h3>
                 <p className="text-sm text-gray-600">Enter lab components and specifications manually</p>
               </div>
 
@@ -355,7 +381,10 @@ const LabPlanningDashboard = () => {
                     : 'border-gray-200 bg-white hover:border-gray-300'
                 }`}
               >
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Upload Document</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2 flex items-center gap-2">
+                  <span className="material-icons" style={{ fontSize: '24px', color: '#3b82f6' }}>cloud_upload</span>
+                  Upload Document
+                </h3>
                 <p className="text-sm text-gray-600">Upload  course outline of the lab</p>
               </div>
             </div>
@@ -365,7 +394,8 @@ const LabPlanningDashboard = () => {
           {entryMethod === 'manual' && (
             <div className="space-y-6 bg-gray-100 p-6 rounded">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>assignment</span>
                   Main Lab Project Requirement *
                 </label>
                 <textarea
@@ -380,7 +410,8 @@ const LabPlanningDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>apps</span>
                   Required Software * (comma separated)
                 </label>
                 <textarea
@@ -392,11 +423,15 @@ const LabPlanningDashboard = () => {
                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
-                <p className="mt-1 text-xs text-gray-500">Separate each software with a comma</p>
+                <p className="mt-1 text-xs text-gray-500 flex items-center gap-1">
+                  <span className="material-icons" style={{ fontSize: '14px' }}>info</span>
+                  Separate each software with a comma
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>devices</span>
                   Number of Systems *
                 </label>
                 <input
@@ -412,7 +447,8 @@ const LabPlanningDashboard = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>trending_down</span>
                     Minimum Budget * 
                   </label>
                   <input
@@ -426,7 +462,8 @@ const LabPlanningDashboard = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>trending_up</span>
                     Maximum Budget *
                   </label>
                   <input
@@ -442,7 +479,8 @@ const LabPlanningDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>speed</span>
                   Performance Priority *
                 </label>
                 <select
@@ -459,7 +497,8 @@ const LabPlanningDashboard = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                  <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>calendar_today</span>
                   Timeline / Expected Completion Date *
                 </label>
                 <input
@@ -486,8 +525,12 @@ const LabPlanningDashboard = () => {
                   disabled={loading}
                 />
                 <div className="text-center">
-                  <p className="text-gray-600">Upload Course Outline</p>
-                  <p className="text-xs text-gray-500 mt-2">PDF Only</p>
+                  <span className="material-icons text-4xl text-blue-600" style={{ display: 'inline-block' }}>file_upload</span>
+                  <p className="text-gray-600 mt-2">Upload Course Outline</p>
+                  <p className="text-xs text-gray-500 mt-2 flex items-center justify-center gap-1">
+                    <span className="material-icons" style={{ fontSize: '14px' }}>description</span>
+                    PDF Only
+                  </p>
                 </div>
               </label>
             </div>
@@ -501,20 +544,22 @@ const LabPlanningDashboard = () => {
               setStep(1);
               setError('');
             }}
-            className="px-6 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            className="px-6 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 flex items-center gap-2"
           >
+            <span className="material-icons" style={{ fontSize: '20px' }}>arrow_back</span>
             Back
           </button>
           {entryMethod === 'manual' && (
             <button
               type="submit"
               disabled={loading}
-              className={`px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white ${
+              className={`px-6 py-2 border border-transparent text-sm font-medium rounded-md text-white flex items-center gap-2 ${
                 loading
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
+              <span className="material-icons" style={{ fontSize: '20px' }}>{loading ? 'hourglass_top' : 'check_circle'}</span>
               {loading ? 'Creating...' : (isReorderMode ? 'Create Reorder' : 'Create Lab')}
             </button>
           )}
