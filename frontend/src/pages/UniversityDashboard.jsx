@@ -177,12 +177,20 @@ const UniversityDashboard = () => {
 												</span>
 											</td>
 											<td className="px-6 py-4 text-center">
-												<button
-													onClick={() => handleViewSummary(project._id)}
-													className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
-												>
-													View Summary
-												</button>
+												<div className="flex items-center justify-center gap-2">
+													<button
+														onClick={() => handleViewSummary(project._id)}
+														className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+													>
+														View Summary
+													</button>
+													<button
+														onClick={() => navigate(`/lab-planning?reorder=${project._id}`)}
+														className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+													>
+														Reorder
+													</button>
+												</div>
 											</td>
 										</tr>
 									))}
