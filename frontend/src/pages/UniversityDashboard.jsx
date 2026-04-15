@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ProcurementSummaryModal from '../components/ProcurementSummaryModal';
 
 const UniversityDashboard = () => {
 	const navigate = useNavigate();
@@ -8,6 +9,8 @@ const UniversityDashboard = () => {
 	const [labProjects, setLabProjects] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedProjectId, setSelectedProjectId] = useState(null);
 
 	useEffect(() => {
 		const fetchUniversityProfile = async () => {
@@ -61,6 +64,11 @@ const UniversityDashboard = () => {
 	const handleLogout = () => {
 		localStorage.removeItem('userInfo');
 		navigate('/login');
+	};
+
+	const handleViewSummary = (projectId) => {
+		setSelectedProjectId(projectId);
+		setIsModalOpen(true);
 	};
 
 	if (!userInfo) {
@@ -141,6 +149,7 @@ const UniversityDashboard = () => {
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Created Date</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quotations</th>
+										<th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
 									</tr>
 								</thead>
 								<tbody className="divide-y divide-gray-200">
@@ -166,6 +175,14 @@ const UniversityDashboard = () => {
 												<span className="inline-flex items-center justify-center h-6 w-6 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
 													{project.quotationCount}
 												</span>
+											</td>
+											<td className="px-6 py-4 text-center">
+												<button
+													onClick={() => handleViewSummary(project._id)}
+													className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+												>
+													View Summary
+												</button>
 											</td>
 										</tr>
 									))}
@@ -205,6 +222,14 @@ const UniversityDashboard = () => {
 					</button>
 				</div>
 			</div>
+
+			{/* Procurement Summary Modal */}
+			<ProcurementSummaryModal
+				isOpen={isModalOpen}
+				projectId={selectedProjectId}
+				onClose={() => setIsModalOpen(false)}
+				userToken={userInfo?.token}
+			/>
 		</div>
 	);
 };
