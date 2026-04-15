@@ -5,6 +5,7 @@ const UniversityDashboard = () => {
 	const navigate = useNavigate();
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 	const [profile, setProfile] = useState(null);
+	const [labProjects, setLabProjects] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
@@ -32,8 +33,28 @@ const UniversityDashboard = () => {
 			}
 		};
 
+		const fetchLabProjects = async () => {
+			try {
+				const response = await fetch('http://localhost:5001/api/labs/user-projects', {
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to fetch lab projects');
+				}
+
+				const data = await response.json();
+				setLabProjects(data.projects || []);
+			} catch (err) {
+				console.error('Error fetching lab projects:', err);
+			}
+		};
+
 		if (userInfo?.token) {
 			fetchUniversityProfile();
+			fetchLabProjects();
 		}
 	}, [userInfo?.token]);
 
@@ -106,6 +127,55 @@ const UniversityDashboard = () => {
 						</div>
 					</div>
 				) : null}
+
+				{/* Lab Projects Section */}
+				<div className="px-6 py-5 sm:px-8 border-b border-gray-100 bg-white">
+					<h2 className="text-lg font-semibold text-gray-900 mb-4">Lab Projects History</h2>
+					{labProjects.length > 0 ? (
+						<div className="overflow-x-auto">
+							<table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+								<thead className="bg-gray-50">
+									<tr>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Lab Name</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Lab Type</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Created Date</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Quotations</th>
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-gray-200">
+									{labProjects.map((project) => (
+										<tr key={project._id} className="hover:bg-gray-50 transition-colors">
+											<td className="px-6 py-4 text-sm text-gray-900">{project.labName}</td>
+											<td className="px-6 py-4 text-sm text-gray-600">{project.labType}</td>
+											<td className="px-6 py-4 text-sm">
+												<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+													project.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+													project.status === 'bidding' ? 'bg-blue-100 text-blue-800' :
+													project.status === 'finalized' ? 'bg-purple-100 text-purple-800' :
+													project.status === 'approved' ? 'bg-green-100 text-green-800' :
+													'bg-gray-100 text-gray-800'
+												}`}>
+													{project.status.charAt(0).toUpperCase() + project.status.slice(1)}
+												</span>
+											</td>
+											<td className="px-6 py-4 text-sm text-gray-600">
+												{new Date(project.createdAt).toLocaleDateString()}
+											</td>
+											<td className="px-6 py-4 text-sm text-gray-900">
+												<span className="inline-flex items-center justify-center h-6 w-6 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+													{project.quotationCount}
+												</span>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<p className="text-sm text-gray-500">No lab projects created yet.</p>
+					)}
+				</div>
 
 				<div className="grid gap-6 md:grid-cols-2 p-6 sm:p-8">
 					<button
