@@ -241,10 +241,20 @@ function QuotationSystem() {
 		setError('');
 		setSuccess('');
 
+		// Filter out empty components
+		const validComponents = components.filter(
+			(component) => component.name && component.name.trim() && component.unitPrice
+		);
+
+		if (validComponents.length === 0) {
+			setError('Please add at least one complete component (name and unit price required).');
+			return;
+		}
+
 		try {
 			const payload = {
 				labProjectId: selectedLab._id,
-				components,
+				components: validComponents,
 				totalPrice,
 				bulkDiscount: Number(bulkDiscount || 0),
 				installationIncluded,

@@ -32,14 +32,14 @@ const CompareQuotation = () => {
 
 		quotations.forEach((quotation) => {
 			(quotation.components || []).forEach((component) => {
-				const key = normalizeName(component.name || component.category);
+				const key = normalizeName(component.category || 'Other');
 				if (!key) {
 					return;
 				}
 
 				if (!componentMap.has(key)) {
 					componentMap.set(key, {
-						name: component.name || component.category || 'Component',
+						category: component.category || 'Other',
 						components: new Map()
 					});
 				}
@@ -151,7 +151,7 @@ const CompareQuotation = () => {
 								<tr>
 									<th className="px-5 py-3 font-semibold flex items-center gap-2">
 										<span className="material-icons" style={{ fontSize: '18px' }}>category</span>
-										Component
+										Category
 									</th>
 									{quotations.map((quotation, index) => (
 										<th key={quotation._id} className="px-5 py-3 font-semibold">
@@ -165,8 +165,8 @@ const CompareQuotation = () => {
 							</thead>
 							<tbody className="divide-y divide-gray-200 bg-white">
 								{comparisonRows.map((row) => (
-									<tr key={row.name} className="align-top">
-										<td className="px-5 py-4 font-semibold text-gray-900">{row.name}</td>
+									<tr key={row.category} className="align-top">
+										<td className="px-5 py-4 font-semibold text-gray-900">{row.category}</td>
 										{quotations.map((quotation) => {
 											const component = row.components.get(quotation._id);
 											return (

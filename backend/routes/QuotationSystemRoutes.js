@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
-const quotationController = require('../controllers/quotationSystemController');
+const quotationController = require('../controllers/QuotationSystemController');
 
 router.use(authMiddleware);
 
