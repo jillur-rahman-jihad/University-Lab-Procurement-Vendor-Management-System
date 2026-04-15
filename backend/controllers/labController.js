@@ -136,3 +136,33 @@ exports.getUserLabProjects = async (req, res) => {
         res.status(500).json({ message: 'Error fetching lab projects', error: error.message });
     }
 };
+
+exports.getLabProjectById = async (req, res) => {
+    try {
+        const { labProjectId } = req.params;
+        const universityId = req.user.id;
+
+        const labProject = await LabProject.findById(labProjectId);
+
+        if (!labProject) {
+            return res.status(404).json({ message: 'Lab project not found' });
+        }
+
+        // Verify ownership
+        if (labProject.universityId.toString() !== universityId) {
+            return res.status(403).json({ message: 'Access denied. You do not own this project.' });
+        }
+
+        // Return project data for prefill (exclude timestamps and consultantId)
+        res.status(200).json({
+            _id: labProject._id,
+            labName: labProject.labName,
+            labType: labProject.labType,
+            requirements: labProject.requirements,
+            courseOutlineFile: labProject.courseOutlineFile,
+            aiRecommendation: labProject.aiRecommendation
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching lab project', error: error.message });
+    }
+};
