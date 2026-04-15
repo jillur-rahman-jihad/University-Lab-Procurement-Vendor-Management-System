@@ -283,7 +283,10 @@ function QuotationSystem() {
 		<div className="max-w-7xl mx-auto py-10 px-4">
 			<div className="flex items-start justify-between gap-4 flex-wrap mb-6">
 				<div>
-					<h1 className="text-3xl font-bold text-gray-900">Quotation System</h1>
+					<div className="flex items-center gap-3 mb-2">
+						<span className="material-icons text-4xl text-blue-600">receipt_long</span>
+						<h1 className="text-3xl font-bold text-gray-900">Quotation System</h1>
+					</div>
 					<p className="text-gray-600 mt-1">
 						{role === 'vendor'
 							? 'Review available lab projects and submit your offer.'
@@ -292,8 +295,9 @@ function QuotationSystem() {
 				</div>
 				<button
 					onClick={() => navigate('/dashboard')}
-					className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
+					className="px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200 flex items-center gap-2"
 				>
+					<span className="material-icons" style={{ fontSize: '20px' }}>arrow_back</span>
 					Back to Dashboard
 				</button>
 			</div>
@@ -304,8 +308,14 @@ function QuotationSystem() {
 			<div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
 				<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
 					<div className="flex items-center justify-between mb-4">
-						<h2 className="text-xl font-semibold text-gray-900">Lab Projects</h2>
-						<span className="text-sm text-gray-500">{labs.length} found</span>
+						<h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+							<span className="material-icons" style={{ fontSize: '24px', color: '#3b82f6' }}>lab</span>
+							Lab Projects
+						</h2>
+						<span className="text-sm text-gray-500 flex items-center gap-1">
+							<span className="material-icons" style={{ fontSize: '16px' }}>done_all</span>
+							{labs.length} found
+						</span>
 					</div>
 
 					{loading ? (
@@ -342,7 +352,10 @@ function QuotationSystem() {
 				</div>
 
 				<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-					<h2 className="text-xl font-semibold text-gray-900 mb-4">Project Details</h2>
+					<h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center gap-2">
+						<span className="material-icons" style={{ fontSize: '24px', color: '#3b82f6' }}>folder_open</span>
+						Project Details
+					</h2>
 
 					{loadingDetails ? (
 						<p className="text-gray-500">Loading details...</p>
@@ -351,35 +364,55 @@ function QuotationSystem() {
 					) : (
 						<div className="space-y-5">
 							<div>
-								<p className="text-sm text-gray-500">Lab Name</p>
-								<p className="font-semibold text-gray-900">{labDetails.labName}</p>
+							<p className="text-sm text-gray-500 flex items-center gap-1">
+								<span className="material-icons" style={{ fontSize: '16px' }}>label</span>
+								Lab Name
+							</p>
+							<p className="font-semibold text-gray-900">{labDetails.labName}</p>
+						</div>
+						<div className="grid grid-cols-2 gap-4 text-sm">
+							<div>
+								<p className="text-gray-500 flex items-center gap-1">
+									<span className="material-icons" style={{ fontSize: '16px' }}>school</span>
+									University
+								</p>
+								<p className="font-medium text-gray-900">{labDetails.universityName}</p>
 							</div>
-							<div className="grid grid-cols-2 gap-4 text-sm">
-								<div>
-									<p className="text-gray-500">University</p>
-									<p className="font-medium text-gray-900">{labDetails.universityName}</p>
-								</div>
-								<div>
-									<p className="text-gray-500">Type</p>
-									<p className="font-medium text-gray-900">{labDetails.labType}</p>
-								</div>
-								<div>
-									<p className="text-gray-500">Min Budget</p>
-									<p className="font-medium text-gray-900">{labDetails.minBudget}</p>
-								</div>
-								<div>
-									<p className="text-gray-500">Max Budget</p>
-									<p className="font-medium text-gray-900">{labDetails.maxBudget}</p>
+							<div>
+								<p className="text-gray-500 flex items-center gap-1">
+									<span className="material-icons" style={{ fontSize: '16px' }}>category</span>
+									Type
+								</p>
+								<p className="font-medium text-gray-900">{labDetails.labType}</p>
+							</div>
+							<div>
+								<p className="text-gray-500 flex items-center gap-1">
+									<span className="material-icons" style={{ fontSize: '16px' }}>attach_money</span>
+									Min Budget
+								</p>
+								<p className="font-medium text-gray-900">{labDetails.minBudget}</p>
+							</div>
+							<div>
+								<p className="text-gray-500 flex items-center gap-1">
+									<span className="material-icons" style={{ fontSize: '16px' }}>trending_up</span>
+									Max Budget
+								</p>
 								</div>
 							</div>
 
 							<div>
-								<p className="text-sm text-gray-500 mb-1">Main Requirement</p>
-								<p className="text-sm text-gray-700 leading-7">{labDetails.requirements?.mainRequirement || 'No requirement provided.'}</p>
-							</div>
+							<p className="text-sm text-gray-500 mb-1 flex items-center gap-1">
+								<span className="material-icons" style={{ fontSize: '16px' }}>assignment</span>
+								Main Requirement
+							</p>
+							<p className="text-sm text-gray-700 leading-7">{labDetails.requirements?.mainRequirement || 'No requirement provided.'}</p>
+						</div>
 
-							<div>
-								<p className="text-sm text-gray-500 mb-2">Software</p>
+						<div>
+							<p className="text-sm text-gray-500 mb-2 flex items-center gap-1">
+								<span className="material-icons" style={{ fontSize: '16px' }}>apps</span>
+								Software
+							</p>
 								<div className="flex flex-wrap gap-2">
 									{(labDetails.requirements?.software || []).length > 0 ? (
 										labDetails.requirements.software.map((item, index) => (
@@ -395,13 +428,22 @@ function QuotationSystem() {
 
 							<div>
 								<div className="flex items-center justify-between mb-2">
-									<p className="text-sm font-semibold text-gray-900">{role === 'university' ? 'Vendor Quotations' : 'Your Quotation'}</p>
-									{role === 'university' && <span className="text-sm text-gray-500">{quotations.length} offers</span>}
+									<p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+										<span className="material-icons" style={{ fontSize: '18px', color: '#3b82f6' }}>{role === 'university' ? 'list_alt' : 'edit'}</span>
+										{role === 'university' ? 'Vendor Quotations' : 'Your Quotation'}
+									</p>
+									{role === 'university' && <span className="text-sm text-gray-500 flex items-center gap-1">
+										<span className="material-icons" style={{ fontSize: '16px' }}>inventory_2</span>
+										{quotations.length} offers
+									</span>}
 								</div>
 								{role === 'university' && (
 									<>
 									<div className="mb-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-900">
-										<p className="font-semibold">Best offer based on price</p>
+										<p className="font-semibold flex items-center gap-2">
+											<span className="material-icons" style={{ fontSize: '18px' }}>star</span>
+											Best offer based on price
+										</p>
 										<p className="mt-1">
 											{bestQuotation ? (
 												<>
@@ -413,13 +455,17 @@ function QuotationSystem() {
 										</p>
 									</div>
 									<div className="mb-3 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-900 flex flex-wrap items-center justify-between gap-3">
-										<span>{selectedQuotations.length} of 2 quotations selected for comparison</span>
+										<span className="flex items-center gap-2">
+											<span className="material-icons" style={{ fontSize: '16px' }}>check_circle</span>
+											{selectedQuotations.length} of 2 quotations selected for comparison
+										</span>
 										<button
 											type="button"
 											onClick={compareSelectedQuotations}
 											disabled={selectedQuotations.length !== 2}
-											className={`rounded-lg px-4 py-2 font-semibold text-white transition ${selectedQuotations.length === 2 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-300 cursor-not-allowed'}`}
+											className={`rounded-lg px-4 py-2 font-semibold text-white transition flex items-center gap-2 ${selectedQuotations.length === 2 ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-300 cursor-not-allowed'}`}
 										>
+											<span className="material-icons" style={{ fontSize: '18px' }}>compare</span>
 											Compare Selected
 										</button>
 									</div>
@@ -453,15 +499,17 @@ function QuotationSystem() {
 														<button
 															type="button"
 															onClick={() => toggleQuotationSelection(quotation)}
-															className="mt-2 border border-blue-600 text-xs font-semibold text-blue-600 hover:text-blue-700"
+															className="mt-2 border border-blue-600 text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 px-2 py-1"
 														>
+															<span className="material-icons" style={{ fontSize: '14px' }}>{selectedQuotations.some((item) => item._id === quotation._id) ? 'remove_circle' : 'add_circle'}</span>
 															{selectedQuotations.some((item) => item._id === quotation._id) ? 'Remove from comparison' : 'Select for comparison'}
 														</button>
 														<button
 															type="button"
 															onClick={() => navigate(`/view-and-accept/${quotation._id}`, { state: { quotation } })}
-															className="mt-2 ml-3 border border-green-600 text-xs font-bold text-green-600 hover:text-green-700"
+															className="mt-2 ml-3 border border-green-600 text-xs font-bold text-green-600 hover:text-green-700 flex items-center gap-1 px-2 py-1"
 														>
+															<span className="material-icons" style={{ fontSize: '14px' }}>visibility</span>
 															View & Accept
 														</button>
 													</div>
@@ -480,10 +528,13 @@ function QuotationSystem() {
 											{components.map((component, index) => (
 												<div key={index} className="rounded-xl border border-gray-200 p-4 space-y-3">
 													<div className="flex items-center justify-between gap-3">
-														<p className="font-medium text-gray-900">Component {index + 1}</p>
-														{components.length > 1 && (
-															<button type="button" onClick={() => removeComponent(index)} className="text-sm text-red-600 hover:text-red-700">
-																Remove
+													<p className="font-medium text-gray-900 flex items-center gap-2">
+														<span className="material-icons" style={{ fontSize: '18px', color: '#3b82f6' }}>widgets</span>
+														Component {index + 1}
+													</p>
+													{components.length > 1 && (
+														<button type="button" onClick={() => removeComponent(index)} className="text-sm text-red-600 hover:text-red-700 flex items-center gap-1">
+															<span className="material-icons" style={{ fontSize: '16px' }}>delete</span>
 															</button>
 														)}
 													</div>
@@ -536,21 +587,31 @@ function QuotationSystem() {
 											))}
 										</div>
 
-										<button type="button" onClick={addComponent} className="rounded-lg border border-blue-600 px-4 py-2 text-blue-600 hover:bg-blue-50">
+										<button type="button" onClick={addComponent} className="rounded-lg border border-blue-600 px-4 py-2 text-blue-600 hover:bg-blue-50 flex items-center gap-2">
+											<span className="material-icons" style={{ fontSize: '20px' }}>add</span>
 											Add Component
 										</button>
 
 										<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-											<input
-												type="number"
-												value={bulkDiscount}
-												onChange={(e) => setBulkDiscount(e.target.value)}
-												placeholder="Bulk discount"
-												className="w-full rounded-lg border border-gray-300 px-3 py-2"
-											/>
+											<div>
+												<label className="text-xs text-gray-500 flex items-center gap-1 mb-2">
+													<span className="material-icons" style={{ fontSize: '16px' }}>discount</span>
+													Bulk Discount
+												</label>
+												<input
+													type="number"
+													value={bulkDiscount}
+													onChange={(e) => setBulkDiscount(e.target.value)}
+													placeholder="Bulk discount"
+													className="w-full rounded-lg border border-gray-300 px-3 py-2"
+												/>
+											</div>
 
 											<div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
-												<p className="text-xs uppercase tracking-wide text-gray-500">Current total</p>
+												<p className="text-xs uppercase tracking-wide text-gray-500 flex items-center gap-1">
+													<span className="material-icons" style={{ fontSize: '16px' }}>calculate</span>
+													Current total
+												</p>
 												<p className="text-xl font-bold text-gray-900">{totalPrice}</p>
 											</div>
 										</div>
@@ -558,15 +619,18 @@ function QuotationSystem() {
 										<div className="flex flex-wrap gap-4 text-sm text-gray-700">
 											<label className="flex items-center gap-2">
 												<input type="checkbox" checked={installationIncluded} onChange={(e) => setInstallationIncluded(e.target.checked)} />
+												<span className="material-icons" style={{ fontSize: '16px', color: '#3b82f6' }}>build</span>
 												Installation included
 											</label>
 											<label className="flex items-center gap-2">
 												<input type="checkbox" checked={maintenanceIncluded} onChange={(e) => setMaintenanceIncluded(e.target.checked)} />
+												<span className="material-icons" style={{ fontSize: '16px', color: '#3b82f6' }}>settings</span>
 												Maintenance included
 											</label>
 										</div>
 
-										<button type="submit" className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700">
+										<button type="submit" className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 flex items-center justify-center gap-2">
+											<span className="material-icons" style={{ fontSize: '20px' }}>{editingQuotationId ? 'edit' : 'send'}</span>
 											{editingQuotationId ? 'Update Quotation' : 'Submit Quotation'}
 										</button>
 									</form>
