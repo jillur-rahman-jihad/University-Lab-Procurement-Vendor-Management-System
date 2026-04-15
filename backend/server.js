@@ -12,6 +12,7 @@ const quotationSystemRoutes = require("./routes/QuotationSystemRoutes");
 const consultantRoutes = require('./routes/consultantRoutes');
 const projectAssignmentRoutes = require('./routes/projectAssignmentRoutes');
 const projectProgressRoutes = require('./routes/projectProgressRoutes');
+const universityRoutes = require('./routes/universityRoutes');
 connectDB();
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);
 app.use('/api/consultants', projectAssignmentRoutes);
 app.use('/api/consultants', projectProgressRoutes);
+app.use('/api/university', universityRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");

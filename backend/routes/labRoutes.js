@@ -8,5 +8,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 router.post('/create', authMiddleware, labController.createLabProject);
 router.post('/upload-pdf', authMiddleware, upload.single('document'), labController.uploadAndParsePDF);
+router.get('/user-projects', authMiddleware, labController.getUserLabProjects);
+router.get('/:labProjectId', authMiddleware, labController.getLabProjectById);
 
 module.exports = router;

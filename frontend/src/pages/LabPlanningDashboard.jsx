@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
 const LabPlanningDashboard = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [selectedLabType, setSelectedLabType] = useState(null);
   const [entryMethod, setEntryMethod] = useState('manual');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [originalProjectId, setOriginalProjectId] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     labName: '',
@@ -21,6 +25,59 @@ const LabPlanningDashboard = () => {
     performancePriority: '',
     timeline: ''
   });
+
+  // Check for reorder mode on mount
+  useEffect(() => {
+    const reorderId = searchParams.get('reorder');
+    if (reorderId) {
+      setIsReorderMode(true);
+      setOriginalProjectId(reorderId);
+      fetchProjectForPrefill(reorderId);
+    }
+  }, [searchParams]);
+
+  const fetchProjectForPrefill = async (projectId) => {
+    try {
+      setInitialLoading(true);
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      const token = userInfo?.token;
+
+      if (!token) {
+        setError('Authentication token not found. Please login again.');
+        return;
+      }
+
+      const response = await axios.get(
+        `http://localhost:5001/api/labs/${projectId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      const project = response.data;
+
+      // Prefill the form
+      setSelectedLabType(project.labType);
+      setFormData({
+        labName: project.labName,
+        mainRequirement: project.requirements?.mainRequirement || '',
+        software: (project.requirements?.software || []).join(', '),
+        numberOfSystems: project.requirements?.systems || '',
+        budgetMin: project.requirements?.budgetMin || '',
+        budgetMax: project.requirements?.budgetMax || '',
+        performancePriority: project.requirements?.performancePriority || '',
+        timeline: project.requirements?.timeline || ''
+      });
+
+      setStep(2); // Go directly to form step
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to load project for reordering.');
+    } finally {
+      setInitialLoading(false);
+    }
+  };
   
   const labTypes = [
     { value: 'Normal', label: 'Normal Usage Lab' },
@@ -103,7 +160,7 @@ const LabPlanningDashboard = () => {
           }
         );
 
-        setSuccess('Lab created successfully!');
+        setSuccess(isReorderMode ? 'Reorder created successfully as a new draft!' : 'Lab created successfully!');
         setTimeout(() => {
           navigate('/dashboard');
         }, 2000);
@@ -221,11 +278,25 @@ const LabPlanningDashboard = () => {
   }
 
   // Step 2: Enter Lab Details
+  if (initialLoading && isReorderMode) {
+    return (
+      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <p className="text-gray-600">Loading project for reorder...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-extrabold text-gray-900">Create Lab - {labTypes.find(t => t.value === selectedLabType)?.label}</h1>
-        <p className="mt-2 text-gray-600">Fill in the lab details</p>
+        <h1 className="text-3xl font-extrabold text-gray-900">
+          {isReorderMode ? 'Reorder Lab' : 'Create Lab'} - {labTypes.find(t => t.value === selectedLabType)?.label}
+        </h1>
+        <p className="mt-2 text-gray-600">
+          {isReorderMode ? 'Edit the lab details and create a new draft' : 'Fill in the lab details'}
+        </p>
       </div>
 
       {error && (
@@ -444,7 +515,7 @@ const LabPlanningDashboard = () => {
                   : 'bg-blue-600 hover:bg-blue-700'
               }`}
             >
-              Submit
+              {loading ? 'Creating...' : (isReorderMode ? 'Create Reorder' : 'Create Lab')}
             </button>
           )}
         </div>

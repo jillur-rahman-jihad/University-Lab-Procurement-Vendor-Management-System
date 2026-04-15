@@ -100,3 +100,69 @@ ${text.substring(0, 15000)}
         res.status(500).json({ message: 'Unexpected Error extracting text from PDF', error: error.message });
     }
 };
+
+exports.getUserLabProjects = async (req, res) => {
+    try {
+        const universityId = req.user.id;
+
+        const labProjects = await LabProject.find({ universityId })
+            .sort({ createdAt: -1 })
+            .exec();
+
+        if (labProjects.length === 0) {
+            return res.status(200).json({ message: 'No lab projects found', projects: [] });
+        }
+
+        // Get Quotation model to count quotations per project
+        const Quotation = require('../models/Quotation');
+
+        // Add quotation count to each project
+        const projectsWithQuotationCount = await Promise.all(
+            labProjects.map(async (project) => {
+                const quotationCount = await Quotation.countDocuments({ labProjectId: project._id });
+                return {
+                    _id: project._id,
+                    labName: project.labName,
+                    labType: project.labType,
+                    status: project.status,
+                    createdAt: project.createdAt,
+                    quotationCount
+                };
+            })
+        );
+
+        res.status(200).json({ message: 'Lab projects fetched successfully', projects: projectsWithQuotationCount });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching lab projects', error: error.message });
+    }
+};
+
+exports.getLabProjectById = async (req, res) => {
+    try {
+        const { labProjectId } = req.params;
+        const universityId = req.user.id;
+
+        const labProject = await LabProject.findById(labProjectId);
+
+        if (!labProject) {
+            return res.status(404).json({ message: 'Lab project not found' });
+        }
+
+        // Verify ownership
+        if (labProject.universityId.toString() !== universityId) {
+            return res.status(403).json({ message: 'Access denied. You do not own this project.' });
+        }
+
+        // Return project data for prefill (exclude timestamps and consultantId)
+        res.status(200).json({
+            _id: labProject._id,
+            labName: labProject.labName,
+            labType: labProject.labType,
+            requirements: labProject.requirements,
+            courseOutlineFile: labProject.courseOutlineFile,
+            aiRecommendation: labProject.aiRecommendation
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching lab project', error: error.message });
+    }
+};
