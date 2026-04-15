@@ -17,6 +17,8 @@ const projectProgressRoutes = require('./routes/projectProgressRoutes');
 const hireRoutes = require('./routes/hireRoutes');
 // MODULE 2 - Task 2C: Infrastructure Service Routes
 const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoutes');
+// MODULE 2 - Task 2D: Lab Optimization Routes
+const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
 
 connectDB();
 
@@ -35,10 +37,11 @@ app.use('/api/consultants', consultantRoutes);
 app.use('/api/university', universityRoutes);
 app.use('/api/consultants', projectAssignmentRoutes);
 app.use('/api/consultants', projectProgressRoutes);
-// MODULE 2 - Task 2A: Hire Request Routes  
 app.use('/api/hire', hireRoutes);
 // MODULE 2 - Task 2C: Infrastructure Service Routes
 app.use('/api/infrastructure-services', infrastructureServiceRoutes);
+// MODULE 2 - Task 2D: Lab Optimization Routes (temporarily at /api/optimization for testing)
+app.use('/api/labs/optimization', labOptimizationRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
