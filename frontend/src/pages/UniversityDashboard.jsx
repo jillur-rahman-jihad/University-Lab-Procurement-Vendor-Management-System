@@ -1,9 +1,41 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const UniversityDashboard = () => {
 	const navigate = useNavigate();
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+	const [profile, setProfile] = useState(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
+
+	useEffect(() => {
+		const fetchUniversityProfile = async () => {
+			try {
+				setLoading(true);
+				const response = await fetch('http://localhost:5001/api/university/profile', {
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to fetch university profile');
+				}
+
+				const data = await response.json();
+				setProfile(data);
+			} catch (err) {
+				setError(err.message);
+				console.error('Error fetching profile:', err);
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		if (userInfo?.token) {
+			fetchUniversityProfile();
+		}
+	}, [userInfo?.token]);
 
 	const handleLogout = () => {
 		localStorage.removeItem('userInfo');
@@ -33,6 +65,47 @@ const UniversityDashboard = () => {
 						Logout
 					</button>
 				</div>
+
+				{/* University Profile Section */}
+				{loading ? (
+					<div className="p-6 sm:p-8 text-center text-gray-500">
+						Loading profile...
+					</div>
+				) : error ? (
+					<div className="p-6 sm:p-8 text-center text-red-600">
+						Error: {error}
+					</div>
+				) : profile ? (
+					<div className="px-6 py-5 sm:px-8 border-b border-gray-100 bg-gray-50">
+						<h2 className="text-lg font-semibold text-gray-900 mb-4">University Information</h2>
+						<div className="grid gap-6 md:grid-cols-2">
+							<div>
+								<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">University Name</p>
+								<p className="mt-1 text-sm text-gray-900">{profile.universityInfo?.universityName || 'N/A'}</p>
+							</div>
+							<div>
+								<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Department</p>
+								<p className="mt-1 text-sm text-gray-900">{profile.universityInfo?.department || 'N/A'}</p>
+							</div>
+							<div>
+								<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</p>
+								<p className="mt-1 text-sm text-gray-900">{profile.email || 'N/A'}</p>
+							</div>
+							<div>
+								<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</p>
+								<p className="mt-1 text-sm text-gray-900">{profile.phone || 'N/A'}</p>
+							</div>
+							<div>
+								<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Address</p>
+								<p className="mt-1 text-sm text-gray-900">{profile.universityInfo?.address || 'N/A'}</p>
+							</div>
+							<div>
+								<p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Authorized Representative</p>
+								<p className="mt-1 text-sm text-gray-900">{profile.universityInfo?.representative?.name || 'N/A'}</p>
+							</div>
+						</div>
+					</div>
+				) : null}
 
 				<div className="grid gap-6 md:grid-cols-2 p-6 sm:p-8">
 					<button
