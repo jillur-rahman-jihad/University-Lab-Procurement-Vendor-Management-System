@@ -41,6 +41,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import LabPlanningDashboard from './pages/LabPlanningDashboard';
+import ConsultantDashboard from './pages/ConsultantDashboard';
+import ConsultantSearch from './pages/ConsultantSearch';
 import AvailableLabRequests from './pages/AvailableLabRequests';
 import MyQuotations from './pages/MyQuotations';
 import VendorContracts from './pages/VendorContracts';
@@ -70,6 +72,8 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lab-planning" element={<LabPlanningDashboard />} />
+            <Route path="/consultant-dashboard" element={<ConsultantDashboard />} />
+            <Route path="/search-consultants" element={<ConsultantSearch />} />
             <Route path="/quotation-system" element={<QuotationSystem />} />
             <Route path="/compare-quotation" element={<CompareQuotation />} />
             <Route path="/view-and-accept/:quotationId" element={<ViewAndAccept />} />

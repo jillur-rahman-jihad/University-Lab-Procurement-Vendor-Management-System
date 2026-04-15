@@ -91,3 +91,41 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: "Error updating profile", error: error.message });
   }
 };
+
+// Search consultants by expertise and availability
+// MODULE 2 - Task 1: Search consultants by expertise
+exports.searchConsultants = async (req, res) => {
+  try {
+    const { expertise } = req.query;
+
+    // Build filter query
+    const filterQuery = {
+      role: "consultant",
+      "consultantInfo.availability": true // Only available consultants
+    };
+
+    // If expertise is provided, filter by expertise
+    if (expertise) {
+      filterQuery["consultantInfo.expertise"] = expertise;
+    }
+
+    const consultants = await User.find(filterQuery).select(
+      "name email phone consultantInfo"
+    );
+
+    if (!consultants || consultants.length === 0) {
+      return res.status(200).json({
+        message: "No consultants found matching criteria",
+        consultants: []
+      });
+    }
+
+    res.status(200).json({
+      message: "Consultants retrieved successfully",
+      consultants: consultants
+    });
+  } catch (error) {
+    console.error('[SEARCH] Error:', error);
+    res.status(500).json({ message: "Error searching consultants", error: error.message });
+  }
+};

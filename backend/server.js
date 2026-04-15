@@ -10,6 +10,7 @@ const labRoutes = require('./routes/labRoutes');
 const vendorRoutes = require("./routes/vendorRoutes");
 const quotationSystemRoutes = require("./routes/QuotationSystemRoutes");
 const consultantRoutes = require('./routes/consultantRoutes');
+const universityRoutes = require('./routes/universityRoutes');
 const projectAssignmentRoutes = require('./routes/projectAssignmentRoutes');
 const projectProgressRoutes = require('./routes/projectProgressRoutes');
 connectDB();
@@ -26,6 +27,7 @@ app.use('/api/labs', labRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);
+app.use('/api/university', universityRoutes);
 app.use('/api/consultants', projectAssignmentRoutes);
 app.use('/api/consultants', projectProgressRoutes);
 
