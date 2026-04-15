@@ -36,6 +36,34 @@ const ProcurementSummaryModal = ({ isOpen, projectId, onClose, userToken }) => {
 		}
 	};
 
+	const handleDownload = async () => {
+		try {
+			const response = await fetch(`http://localhost:5001/api/university/procurement/${projectId}/download`, {
+				headers: {
+					'Authorization': `Bearer ${userToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to download procurement summary');
+			}
+
+			// Create blob and trigger download
+			const blob = await response.blob();
+			const url = window.URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = `procurement_summary_${projectId}.csv`;
+			document.body.appendChild(a);
+			a.click();
+			window.URL.revokeObjectURL(url);
+			document.body.removeChild(a);
+		} catch (err) {
+			console.error('Download error:', err);
+			alert('Failed to download summary');
+		}
+	};
+
 	if (!isOpen) return null;
 
 	return (
@@ -196,7 +224,15 @@ const ProcurementSummaryModal = ({ isOpen, projectId, onClose, userToken }) => {
 				</div>
 
 				{/* Footer */}
-				<div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-end">
+				<div className="bg-gray-50 border-t border-gray-200 px-6 py-4 flex justify-between">
+					{summary && (
+						<button
+							onClick={handleDownload}
+							className="px-4 py-2 rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700 transition-colors"
+						>
+							Download Summary (CSV)
+						</button>
+					)}
 					<button
 						onClick={onClose}
 						className="px-4 py-2 rounded-md text-sm font-medium text-white bg-gray-600 hover:bg-gray-700 transition-colors"
