@@ -11,6 +11,11 @@ const UniversityDashboard = () => {
 	const [error, setError] = useState(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedProjectId, setSelectedProjectId] = useState(null);
+	
+	// Search Consultants States
+	const [searchExpertise, setSearchExpertise] = useState('');
+	const [searchResults, setSearchResults] = useState([]);
+	const [searchLoading, setSearchLoading] = useState(false);
 
 	useEffect(() => {
 		const fetchUniversityProfile = async () => {
@@ -69,6 +74,30 @@ const UniversityDashboard = () => {
 	const handleViewSummary = (projectId) => {
 		setSelectedProjectId(projectId);
 		setIsModalOpen(true);
+	};
+
+	const handleSearchConsultants = async (e) => {
+		e.preventDefault();
+		setSearchLoading(true);
+		try {
+			const url = new URL('http://localhost:5000/api/university/search-consultants');
+			if (searchExpertise) {
+				url.searchParams.append('expertise', searchExpertise);
+			}
+			const response = await fetch(url, {
+				headers: {
+					'Authorization': `Bearer ${userInfo?.token}`,
+				},
+			});
+			if (!response.ok) throw new Error('Search failed');
+			const data = await response.json();
+			setSearchResults(data.consultants || []);
+		} catch (err) {
+			console.error('Search error:', err);
+			alert('Failed to search consultants');
+		} finally {
+			setSearchLoading(false);
+		}
 	};
 
 	if (!userInfo) {
@@ -200,6 +229,63 @@ const UniversityDashboard = () => {
 					) : (
 						<p className="text-sm text-gray-500">No lab projects created yet.</p>
 					)}
+				</div>
+
+				{/* Search Consultants Section */}
+				<div className="px-6 py-5 sm:px-8 border-b border-gray-100 bg-white">
+					<h2 className="text-lg font-semibold text-gray-900 mb-4">Search Consultants</h2>
+					<form onSubmit={handleSearchConsultants} className="mb-6">
+						<div className="flex gap-3 flex-col sm:flex-row">
+							<select
+								value={searchExpertise}
+								onChange={(e) => setSearchExpertise(e.target.value)}
+								className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+							>
+								<option value="">-- All Expertise Areas --</option>
+								<option value="Networking">Networking</option>
+								<option value="Graphics">Graphics</option>
+								<option value="Research">Research</option>
+								<option value="AI Infrastructure">AI Infrastructure</option>
+							</select>
+							<button
+								type="submit"
+								disabled={searchLoading}
+								className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+							>
+								{searchLoading ? 'Searching...' : 'Search'}
+							</button>
+						</div>
+					</form>
+
+					{/* Search Results */}
+					{searchResults.length > 0 ? (
+						<div className="overflow-x-auto">
+							<table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+								<thead className="bg-gray-50">
+									<tr>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Name</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Email</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Expertise</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Experience Level</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Rating</th>
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-gray-200">
+									{searchResults.map((consultant) => (
+										<tr key={consultant._id} className="hover:bg-gray-50 transition-colors">
+											<td className="px-6 py-4 text-sm text-gray-900">{consultant.name}</td>
+											<td className="px-6 py-4 text-sm text-gray-600">{consultant.email}</td>
+											<td className="px-6 py-4 text-sm text-gray-600">{consultant.consultantInfo?.expertise?.join(', ') || 'N/A'}</td>
+											<td className="px-6 py-4 text-sm text-gray-600">{consultant.consultantInfo?.experienceLevel || 'N/A'}</td>
+											<td className="px-6 py-4 text-sm text-gray-600">{'⭐'.repeat(Math.ceil(consultant.consultantInfo?.rating || 0))} ({consultant.consultantInfo?.rating || 0})</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : searchResults.length === 0 && searchExpertise ? (
+						<p className="text-sm text-gray-500">No consultants found for this expertise area.</p>
+					) : null}
 				</div>
 
 				<div className="grid gap-6 md:grid-cols-2 p-6 sm:p-8">

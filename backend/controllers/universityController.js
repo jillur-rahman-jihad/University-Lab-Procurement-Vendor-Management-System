@@ -191,3 +191,35 @@ exports.downloadProcurementSummary = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// MODULE 2 - Task 3: Search consultants by expertise
+exports.searchConsultants = async (req, res) => {
+  try {
+    const { expertise } = req.query;
+    const universityId = req.user.id;
+
+    // Verify user is a university
+    const university = await User.findById(universityId);
+    if (!university || university.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can search consultants" });
+    }
+
+    // Build query
+    let query = { role: 'consultant' };
+    if (expertise) {
+      query['consultantInfo.expertise'] = expertise;
+    }
+
+    // Search consultants
+    const consultants = await User.find(query).select(
+      'name email phone consultantInfo.bio consultantInfo.expertise consultantInfo.experienceLevel consultantInfo.rating consultantInfo.completedLabDeployments'
+    );
+
+    res.json({
+      consultants: consultants || [],
+      total: consultants.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -64,7 +64,7 @@ const Register = () => {
         payload.certificationInformation = formData.certificationInformation;
       }
 
-      const response = await axios.post('http://localhost:5001/api/auth/register', payload);
+      const response = await axios.post('http://localhost:5000/api/auth/register', payload);
       localStorage.setItem('userInfo', JSON.stringify(response.data));
       navigate('/dashboard');
     } catch (err) {
