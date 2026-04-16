@@ -223,3 +223,197 @@ exports.searchConsultants = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// MODULE 2 - Task 3: Hire a consultant
+exports.hireConsultant = async (req, res) => {
+  try {
+    const { consultantId, labProjectId, notes } = req.body;
+    const universityId = req.user.id;
+
+    // Validate inputs
+    if (!consultantId) {
+      return res.status(400).json({ message: "Consultant ID is required" });
+    }
+
+    // Verify university exists
+    const university = await User.findById(universityId);
+    if (!university || university.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can hire consultants" });
+    }
+
+    // Verify consultant exists
+    const consultant = await User.findById(consultantId);
+    if (!consultant || consultant.role !== 'consultant') {
+      return res.status(404).json({ message: "Consultant not found" });
+    }
+
+    // Verify lab project if provided
+    if (labProjectId) {
+      const labProject = await LabProject.findById(labProjectId);
+      if (!labProject || labProject.universityId.toString() !== universityId) {
+        return res.status(404).json({ message: "Lab project not found or does not belong to this university" });
+      }
+    }
+
+    // Import Hiring model
+    const Hiring = require("../models/Hiring");
+
+    // Check if already hired
+    const existingHiring = await Hiring.findOne({
+      universityId,
+      consultantId,
+      status: { $in: ['pending', 'accepted', 'active'] }
+    });
+
+    if (existingHiring) {
+      return res.status(400).json({ message: "This consultant is already hired or has a pending hiring request" });
+    }
+
+    // Create hiring record
+    const hiring = new Hiring({
+      universityId,
+      consultantId,
+      labProjectId: labProjectId || null,
+      status: 'pending',
+      proposedBy: 'university',
+      notes
+    });
+
+    await hiring.save();
+
+    // Populate the record
+    const populatedHiring = await Hiring.findById(hiring._id)
+      .populate('universityId', 'name email')
+      .populate('consultantId', 'name email')
+      .populate('labProjectId', 'labName');
+
+    res.status(201).json({
+      message: "Hiring request created successfully",
+      hiring: populatedHiring
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Send a chat message
+exports.sendMessage = async (req, res) => {
+  try {
+    const { hiringId, message } = req.body;
+    const senderId = req.user.id;
+
+    // Validate inputs
+    if (!hiringId || !message) {
+      return res.status(400).json({ message: "Hiring ID and message are required" });
+    }
+
+    // Import Message model
+    const Message = require("../models/Message");
+    const Hiring = require("../models/Hiring");
+
+    // Verify hiring exists and user is part of it
+    const hiring = await Hiring.findById(hiringId);
+    if (!hiring) {
+      return res.status(404).json({ message: "Hiring record not found" });
+    }
+
+    // Verify sender is either university or consultant in this hiring
+    const sender = await User.findById(senderId);
+    if (!sender) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isInvolved = sender._id.toString() === hiring.universityId.toString() || 
+                       sender._id.toString() === hiring.consultantId.toString();
+    if (!isInvolved) {
+      return res.status(403).json({ message: "You are not part of this hiring" });
+    }
+
+    // Create message
+    const newMessage = new Message({
+      hiringId,
+      senderId,
+      senderRole: sender.role,
+      message
+    });
+
+    await newMessage.save();
+
+    // Populate and return
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate('senderId', 'name email');
+
+    res.status(201).json({
+      message: "Message sent successfully",
+      data: populatedMessage
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Get chat messages for a hiring
+exports.getMessages = async (req, res) => {
+  try {
+    const { hiringId } = req.params;
+    const userId = req.user.id;
+
+    // Import models
+    const Message = require("../models/Message");
+    const Hiring = require("../models/Hiring");
+
+    // Verify hiring exists
+    const hiring = await Hiring.findById(hiringId);
+    if (!hiring) {
+      return res.status(404).json({ message: "Hiring record not found" });
+    }
+
+    // Verify user is part of this hiring
+    const isInvolved = userId === hiring.universityId.toString() || 
+                       userId === hiring.consultantId.toString();
+    if (!isInvolved) {
+      return res.status(403).json({ message: "You are not part of this hiring" });
+    }
+
+    // Get messages
+    const messages = await Message.find({ hiringId })
+      .populate('senderId', 'name email role')
+      .sort({ createdAt: 1 });
+
+    res.json({
+      hiringId,
+      messages,
+      total: messages.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Get user's active hirings
+exports.getActiveHirings = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const Hiring = require("../models/Hiring");
+
+    // Get hirings where user is either university or consultant
+    const hirings = await Hiring.find({
+      $or: [
+        { universityId: userId },
+        { consultantId: userId }
+      ],
+      status: { $in: ['pending', 'accepted', 'active'] }
+    })
+      .populate('universityId', 'name email')
+      .populate('consultantId', 'name email')
+      .populate('labProjectId', 'labName')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      hirings,
+      total: hirings.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
