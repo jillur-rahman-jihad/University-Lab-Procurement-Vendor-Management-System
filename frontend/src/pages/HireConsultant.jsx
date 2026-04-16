@@ -17,13 +17,14 @@ const HireConsultant = () => {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-  const token = localStorage.getItem('token');
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+  const token = userInfo.token;
 
   // Fetch available consultants on component mount
   useEffect(() => {
     fetchAvailableConsultants();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchAvailableConsultants = async () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 
 const ConsultantSearchCard = ({ consultant }) => {
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
   const info = consultant.consultantInfo || {};
 
   return (
