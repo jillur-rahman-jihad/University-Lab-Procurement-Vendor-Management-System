@@ -1064,3 +1064,372 @@ exports.exportLabProjectDocumentationPDF = async (req, res) => {
         });
     }
 };
+
+// ============ Export Lab Project Documentation as CSV (Financial Analysis) ============
+exports.exportLabProjectDocumentationCSV = async (req, res) => {
+    try {
+        const { labProjectId } = req.params;
+        const universityId = req.user.id;
+
+        // Fetch lab project
+        const labProject = await LabProject.findById(labProjectId).populate('universityId', 'name email');
+        
+        if (!labProject) {
+            return res.status(404).json({ message: 'Lab project not found' });
+        }
+
+        // Verify ownership
+        if (labProject.universityId._id.toString() !== universityId) {
+            return res.status(403).json({ message: 'Access denied. You do not own this project.' });
+        }
+
+        // Fetch all related data
+        const quotations = await Quotation.find({ labProjectId }).populate('vendorId', 'name email university');
+        const procurements = await Procurement.find({ labProjectId }).populate('selectedVendorIds', 'name email university');
+        const assignments = await LabProjectAssignment.find({ labProjectId }).populate('consultantId', 'name email expertise');
+
+        // Build CSV content
+        let csvContent = 'LAB PROJECT FINANCIAL ANALYSIS - CSV EXPORT\n';
+        csvContent += `Generated: ${new Date().toLocaleString()}\n`;
+        csvContent += `Lab Project ID: ${labProjectId}\n`;
+        csvContent += `Project Name: ${labProject.labName}\n`;
+        csvContent += `University: ${labProject.universityId.name}\n`;
+        csvContent += '\n---\n\n';
+
+        // COMPONENTS BREAKDOWN
+        csvContent += 'SECTION 1: COMPONENTS BREAKDOWN\n';
+        csvContent += 'Vendor Name,Component Name,Category,Unit Price,Quantity,Line Total,Warranty,Delivery Time\n';
+        
+        quotations.forEach((quotation) => {
+            quotation.components?.forEach((comp) => {
+                const lineTotal = (comp.unitPrice || 0) * (comp.quantity || 1);
+                csvContent += `"${quotation.vendorId?.name || 'Unknown'}","${comp.name}","${comp.category}","${comp.unitPrice || 0}","${comp.quantity || 0}","${lineTotal.toFixed(2)}","${comp.warranty || 'N/A'}","${comp.deliveryTime || 'N/A'}"\n`;
+            });
+        });
+        csvContent += '\n---\n\n';
+
+        // VENDOR QUOTATIONS SUMMARY
+        csvContent += 'SECTION 2: VENDOR QUOTATIONS SUMMARY\n';
+        csvContent += 'Vendor Name,Total Components Cost,Bulk Discount %,Discount Amount,Installation Cost,Maintenance Cost,Total Price\n';
+        
+        quotations.forEach((quotation) => {
+            const componentsCost = (quotation.components || []).reduce((sum, c) => sum + ((c.unitPrice || 0) * (c.quantity || 1)), 0);
+            const discountAmount = (componentsCost * (quotation.bulkDiscount || 0)) / 100;
+            const installationCost = quotation.installationIncluded ? componentsCost * 0.1 : 0;
+            const maintenanceCost = quotation.maintenanceIncluded ? componentsCost * 0.05 : 0;
+            
+            csvContent += `"${quotation.vendorId?.name || 'Unknown'}","${componentsCost.toFixed(2)}","${quotation.bulkDiscount || 0}","${discountAmount.toFixed(2)}","${installationCost.toFixed(2)}","${maintenanceCost.toFixed(2)}","${quotation.totalPrice || 0}"\n`;
+        });
+        csvContent += '\n---\n\n';
+
+        // COST BREAKDOWN
+        csvContent += 'SECTION 3: COMPREHENSIVE COST BREAKDOWN\n';
+        csvContent += 'Cost Category,Amount\n';
+        
+        let totalComponentsCost = 0;
+        let totalInstallationCost = 0;
+        let totalMaintenanceCost = 0;
+
+        quotations.forEach((quotation) => {
+            let quotationCost = 0;
+            quotation.components?.forEach((comp) => {
+                quotationCost += (comp.unitPrice || 0) * (comp.quantity || 1);
+            });
+            totalComponentsCost += quotationCost;
+            
+            if (quotation.installationIncluded) totalInstallationCost += quotationCost * 0.1;
+            if (quotation.maintenanceIncluded) totalMaintenanceCost += quotationCost * 0.05;
+        });
+
+        csvContent += `"Total Components Cost","${totalComponentsCost.toFixed(2)}"\n`;
+        csvContent += `"Total Installation Cost","${totalInstallationCost.toFixed(2)}"\n`;
+        csvContent += `"Total Maintenance Cost","${totalMaintenanceCost.toFixed(2)}"\n`;
+        csvContent += `"TOTAL AGGREGATED COST","${(totalComponentsCost + totalInstallationCost + totalMaintenanceCost).toFixed(2)}"\n`;
+        
+        if (quotations.length > 0) {
+            const prices = quotations.map(q => q.totalPrice || 0);
+            csvContent += `"Lowest Quotation","${Math.min(...prices).toFixed(2)}"\n`;
+            csvContent += `"Highest Quotation","${Math.max(...prices).toFixed(2)}"\n`;
+            csvContent += `"Average Quotation","${(prices.reduce((a, b) => a + b, 0) / quotations.length).toFixed(2)}"\n`;
+        }
+        csvContent += '\n---\n\n';
+
+        // PROCUREMENTS
+        csvContent += 'SECTION 4: PROCUREMENTS\n';
+        csvContent += 'Procurement ID,Final Cost,Acceptance Type,Approved by Admin,Created Date\n';
+        
+        procurements.forEach((proc) => {
+            csvContent += `"${proc._id}","${proc.finalCost || 0}","${proc.acceptanceType || 'N/A'}","${proc.approvedByAdmin ? 'Yes' : 'No'}","${new Date(proc.createdAt).toLocaleDateString()}"\n`;
+        });
+        csvContent += '\n---\n\n';
+
+        // CONSULTANT ASSIGNMENTS (if tracking hours for cost analysis)
+        csvContent += 'SECTION 5: CONSULTANT ASSIGNMENTS\n';
+        csvContent += 'Consultant Name,Email,Expertise,Hours Allocated,Status\n';
+        
+        assignments.forEach((assign) => {
+            csvContent += `"${assign.consultantId?.name || 'Unknown'}","${assign.consultantId?.email || 'N/A'}","${assign.consultantId?.expertise || 'N/A'}","${assign.hoursAllocated || 0}","${assign.status || 'N/A'}"\n`;
+        });
+        csvContent += '\n---\n\n';
+
+        // SUMMARY STATISTICS
+        csvContent += 'SECTION 6: SUMMARY STATISTICS\n';
+        csvContent += 'Metric,Value\n';
+        csvContent += `"Total Quotations","${quotations.length}"\n`;
+        csvContent += `"Total Vendors","${new Set(quotations.map(q => q.vendorId?._id)).size}"\n`;
+        csvContent += `"Total Procurements","${procurements.length}"\n`;
+        csvContent += `"Total Consultant Assignments","${assignments.length}"\n`;
+        csvContent += `"Lab Status","${labProject.status}"\n`;
+        csvContent += `"Budget Range","$${labProject.requirements?.budgetMin || 0} - $${labProject.requirements?.budgetMax || 0}"\n`;
+
+        // Set response headers for CSV download
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="Lab_Project_Financial_Analysis_${labProjectId}_${Date.now()}.csv"`);
+
+        res.status(200).send(csvContent);
+
+    } catch (error) {
+        console.error('[LAB] Error exporting CSV documentation:', error);
+        res.status(500).json({ 
+            message: 'Error exporting lab project documentation as CSV', 
+            error: error.message 
+        });
+    }
+};
+
+// ============ Export Procurement Summary Report (PDF for Institutional Approval) ============
+exports.exportLabProjectDocumentationProcurementReport = async (req, res) => {
+    try {
+        const { labProjectId } = req.params;
+        const universityId = req.user.id;
+
+        // Fetch lab project
+        const labProject = await LabProject.findById(labProjectId).populate('universityId', 'name email');
+        
+        if (!labProject) {
+            return res.status(404).json({ message: 'Lab project not found' });
+        }
+
+        // Verify ownership
+        if (labProject.universityId._id.toString() !== universityId) {
+            return res.status(403).json({ message: 'Access denied. You do not own this project.' });
+        }
+
+        // Fetch all related data
+        const quotations = await Quotation.find({ labProjectId }).populate('vendorId', 'name email university');
+        const procurements = await Procurement.find({ labProjectId }).populate('selectedVendorIds', 'name email university');
+
+        // Create PDF document
+        const doc = new PDFDocument({ margin: 50, size: 'A4' });
+        
+        // Set response headers for PDF download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Procurement_Summary_Report_${labProjectId}_${Date.now()}.pdf"`);
+
+        // Pipe the PDF to the response
+        doc.pipe(res);
+
+        // ===== INSTITUTIONAL HEADER =====
+        doc.fontSize(16).font('Helvetica-Bold').text(labProject.universityId.name.toUpperCase(), { align: 'center' });
+        doc.fontSize(10).font('Helvetica').text('Official Procurement Summary Report', { align: 'center' });
+        doc.fontSize(9).text(`Email: ${labProject.universityId.email}`, { align: 'center' });
+        doc.moveDown(1);
+        doc.fontSize(9).text('━'.repeat(90), { align: 'center' });
+        doc.moveDown(2);
+
+        // ===== REPORT TITLE & INFO =====
+        doc.fontSize(14).font('Helvetica-Bold').text('PROCUREMENT SUMMARY REPORT', { align: 'center' });
+        doc.fontSize(12).text(`Lab Project: ${labProject.labName}`, { align: 'center' });
+        doc.fontSize(11).text(`Report Date: ${new Date().toLocaleDateString()}`, { align: 'center' });
+        doc.fontSize(11).text(`Report ID: PRO-${labProjectId.toString().slice(-8)}-${Date.now().toString().slice(-6)}`, { align: 'center' });
+        doc.moveDown(1.5);
+
+        // ===== SECTION 1: PROCUREMENT OVERVIEW =====
+        doc.fontSize(13).font('Helvetica-Bold').text('1. PROCUREMENT OVERVIEW');
+        doc.fontSize(10).font('Helvetica');
+        doc.moveDown(0.5);
+        doc.text(`Lab Project Name: ${labProject.labName}`, { indent: 20 });
+        doc.text(`Lab Type: ${labProject.labType}`, { indent: 20 });
+        doc.text(`Project Status: ${labProject.status}`, { indent: 20 });
+        doc.text(`Project Created: ${new Date(labProject.createdAt).toLocaleDateString()}`, { indent: 20 });
+        doc.moveDown(0.3);
+        doc.text(`Total Quotations Received: ${quotations.length}`, { indent: 20 });
+        doc.text(`Total Procurement Requests: ${procurements.length}`, { indent: 20 });
+        doc.moveDown(1.5);
+
+        // ===== SECTION 2: VENDOR EVALUATIONS =====
+        doc.fontSize(13).font('Helvetica-Bold').text('2. VENDOR EVALUATIONS');
+        doc.fontSize(10).font('Helvetica');
+        doc.moveDown(0.5);
+
+        quotations.forEach((quotation, idx) => {
+            const componentsCost = (quotation.components || []).reduce((sum, c) => sum + ((c.unitPrice || 0) * (c.quantity || 1)), 0);
+            const discountAmount = (componentsCost * (quotation.bulkDiscount || 0)) / 100;
+            const totalPrice = quotation.totalPrice || 0;
+
+            doc.fontSize(11).font('Helvetica-Bold').text(`Vendor ${idx + 1}: ${quotation.vendorId?.name || 'Unknown Vendor'}`, { indent: 10 });
+            doc.fontSize(9).font('Helvetica');
+            doc.text(`Contact: ${quotation.vendorId?.email || 'N/A'}`, { indent: 30 });
+            doc.text(`Total Components Cost: $${componentsCost.toFixed(2)}`, { indent: 30 });
+            doc.text(`Bulk Discount: ${quotation.bulkDiscount || 0}% (Savings: $${discountAmount.toFixed(2)})`, { indent: 30 });
+            doc.text(`Installation Support: ${quotation.installationIncluded ? 'Included' : 'Not Included'}`, { indent: 30 });
+            doc.text(`Maintenance Support: ${quotation.maintenanceIncluded ? 'Included (5% of components cost)' : 'Not Included'}`, { indent: 30 });
+            doc.text(`Final Quotation Price: $${totalPrice.toFixed(2)}`, { indent: 30, bold: true });
+            
+            if (quotation.components && quotation.components.length > 0) {
+                doc.moveDown(0.3);
+                doc.fontSize(9).font('Helvetica-Bold').text('Components Offered:', { indent: 30 });
+                doc.fontSize(8).font('Helvetica');
+                quotation.components.slice(0, 5).forEach((comp, cIdx) => {
+                    doc.text(`• ${comp.name} (${comp.category}) - Qty: ${comp.quantity} @ $${comp.unitPrice}`, { indent: 40 });
+                });
+                if (quotation.components.length > 5) {
+                    doc.text(`... and ${quotation.components.length - 5} more components`, { indent: 40, italic: true });
+                }
+            }
+            doc.moveDown(0.5);
+        });
+        doc.moveDown(0.5);
+
+        // ===== SECTION 3: COST ANALYSIS =====
+        doc.fontSize(13).font('Helvetica-Bold').text('3. COST ANALYSIS');
+        doc.fontSize(10).font('Helvetica');
+        doc.moveDown(0.5);
+
+        let totalComponentsCost = 0;
+        let totalInstallationCost = 0;
+        let totalMaintenanceCost = 0;
+
+        quotations.forEach((quotation) => {
+            let quotationCost = 0;
+            quotation.components?.forEach((comp) => {
+                quotationCost += (comp.unitPrice || 0) * (comp.quantity || 1);
+            });
+            totalComponentsCost += quotationCost;
+            if (quotation.installationIncluded) totalInstallationCost += quotationCost * 0.1;
+            if (quotation.maintenanceIncluded) totalMaintenanceCost += quotationCost * 0.05;
+        });
+
+        doc.text('Cost Breakdown:', { indent: 20, bold: true });
+        doc.moveDown(0.3);
+        doc.text(`Components Cost:        $${totalComponentsCost.toFixed(2)}`, { indent: 30, font: 'Courier' });
+        doc.text(`Installation Cost:      $${totalInstallationCost.toFixed(2)}`, { indent: 30, font: 'Courier' });
+        doc.text(`Maintenance Cost:       $${totalMaintenanceCost.toFixed(2)}`, { indent: 30, font: 'Courier' });
+        doc.fontSize(11).text(`TOTAL PROJECT COST:    $${(totalComponentsCost + totalInstallationCost + totalMaintenanceCost).toFixed(2)}`, { indent: 30, bold: true }).fontSize(10);
+        
+        doc.moveDown(0.5);
+        if (quotations.length > 0) {
+            const prices = quotations.map(q => q.totalPrice || 0);
+            doc.text('Quotation Analysis:', { indent: 20, bold: true });
+            doc.moveDown(0.3);
+            doc.text(`Lowest Quotation:       $${Math.min(...prices).toFixed(2)}`, { indent: 30 });
+            doc.text(`Highest Quotation:      $${Math.max(...prices).toFixed(2)}`, { indent: 30 });
+            doc.text(`Average Quotation:      $${(prices.reduce((a, b) => a + b, 0) / quotations.length).toFixed(2)}`, { indent: 30 });
+        }
+        doc.moveDown(1.5);
+
+        // ===== SECTION 4: PROCUREMENT STATUS =====
+        if (procurements.length > 0) {
+            doc.fontSize(13).font('Helvetica-Bold').text('4. PROCUREMENT STATUS');
+            doc.fontSize(10).font('Helvetica');
+            doc.moveDown(0.5);
+
+            procurements.forEach((proc, pIdx) => {
+                doc.fontSize(10).font('Helvetica-Bold').text(`Procurement ${pIdx + 1}:`, { indent: 10 });
+                doc.fontSize(9).font('Helvetica');
+                doc.text(`Status: ${proc.approvedByAdmin ? '✓ APPROVED' : '⊘ PENDING APPROVAL'}`, { indent: 30 });
+                doc.text(`Final Cost: $${proc.finalCost || 0}`, { indent: 30 });
+                doc.text(`Acceptance Type: ${proc.acceptanceType || 'N/A'}`, { indent: 30 });
+                doc.text(`Processed Date: ${new Date(proc.createdAt).toLocaleDateString()}`, { indent: 30 });
+                doc.moveDown(0.3);
+            });
+            doc.moveDown(0.5);
+        }
+
+        // ===== SECTION 5: RECOMMENDATIONS =====
+        doc.fontSize(13).font('Helvetica-Bold').text('5. RECOMMENDATIONS');
+        doc.fontSize(10).font('Helvetica');
+        doc.moveDown(0.5);
+
+        if (quotations.length > 0) {
+            const bestQuotation = quotations.reduce((best, current) => {
+                return (current.totalPrice || 0) < (best?.totalPrice || Infinity) ? current : best;
+            }, null);
+
+            if (bestQuotation) {
+                doc.text(`Recommended Vendor: ${bestQuotation.vendorId?.name || 'Unknown'}`, { indent: 20 });
+                doc.text(`Recommended Price: $${bestQuotation.totalPrice || 0}`, { indent: 20 });
+                doc.text(`Reason: Lowest total cost with complete service offerings.`, { indent: 20 });
+            }
+        }
+        doc.moveDown(1.5);
+
+        // ===== SECTION 6: INSTITUTIONAL APPROVAL WORKFLOW =====
+        doc.fontSize(13).font('Helvetica-Bold').text('6. INSTITUTIONAL APPROVAL WORKFLOW');
+        doc.fontSize(10).font('Helvetica');
+        doc.moveDown(0.5);
+
+        doc.text('This procurement request requires approval from the following stakeholders:', { indent: 20 });
+        doc.moveDown(0.3);
+        
+        const approvalSteps = [
+            '1. Lab Coordinator Review',
+            '2. Finance Department Approval',
+            '3. Procurement Office Verification',
+            '4. Administration Sign-off',
+            '5. Vendor Confirmation'
+        ];
+
+        approvalSteps.forEach((step) => {
+            doc.text(step, { indent: 30 });
+        });
+        doc.moveDown(1.5);
+
+        // ===== SECTION 7: APPROVAL SIGNATURE BLOCK =====
+        doc.fontSize(13).font('Helvetica-Bold').text('7. APPROVAL SIGN-OFF');
+        doc.fontSize(10).font('Helvetica');
+        doc.moveDown(1.5);
+
+        // Four signature blocks
+        const signatureY = doc.y;
+        const blockWidth = 130;
+        
+        doc.fontSize(9).text('Lab Coordinator', { indent: 20 });
+        doc.moveDown(2.5);
+        doc.text('_________________________', { indent: 20 });
+        doc.fontSize(8).text('Signature & Date', { indent: 20 });
+
+        doc.fontSize(9).text('Finance Director', { x: 270, y: signatureY });
+        doc.moveDown(2.5);
+        doc.text('_________________________', { x: 270 });
+        doc.fontSize(8).text('Signature & Date', { x: 270 });
+
+        doc.moveDown(3);
+        doc.fontSize(9).text('Procurement Officer', { indent: 20 });
+        doc.moveDown(2.5);
+        doc.text('_________________________', { indent: 20 });
+        doc.fontSize(8).text('Signature & Date', { indent: 20 });
+
+        doc.fontSize(9).text('Administrative Head', { x: 270, y: doc.y - 95 });
+        doc.moveDown(2.5);
+        doc.text('_________________________', { x: 270 });
+        doc.fontSize(8).text('Signature & Date', { x: 270 });
+
+        doc.moveDown(3);
+
+        // ===== FOOTER =====
+        doc.fontSize(8).font('Helvetica').text('━'.repeat(90), { align: 'center' });
+        doc.fontSize(8).text(`Official Procurement Summary Report | Confidential`, { align: 'center' });
+        doc.fontSize(7).text(`Generated: ${new Date().toLocaleString()} | Document ID: ${labProjectId}`, { align: 'center' });
+
+        // Finalize PDF
+        doc.end();
+
+    } catch (error) {
+        console.error('[LAB] Error exporting procurement report:', error);
+        res.status(500).json({ 
+            message: 'Error exporting procurement summary report', 
+            error: error.message 
+        });
+    }
+};

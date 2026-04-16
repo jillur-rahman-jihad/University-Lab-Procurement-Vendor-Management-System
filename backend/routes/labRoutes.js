@@ -32,8 +32,10 @@ router.get('/available-lab-projects', authenticateToken, labController.getAvaila
 router.post('/assign-lab-project', authenticateToken, labController.assignProject);
 router.get('/my-lab-projects', authenticateToken, labController.getUniversityProjectAssignments);
 
-// Export Documentation
+// Export Documentation (Multiple Formats)
 router.get('/export-documentation/:labProjectId', authenticateToken, labController.exportLabProjectDocumentation);
 router.get('/export-documentation-pdf/:labProjectId', authenticateToken, labController.exportLabProjectDocumentationPDF);
+router.get('/export-documentation-csv/:labProjectId', authenticateToken, labController.exportLabProjectDocumentationCSV);
+router.get('/export-procurement-report/:labProjectId', authenticateToken, labController.exportLabProjectDocumentationProcurementReport);
 
 module.exports = router;

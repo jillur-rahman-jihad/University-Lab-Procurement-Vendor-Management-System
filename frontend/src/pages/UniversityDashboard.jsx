@@ -155,6 +155,86 @@ const UniversityDashboard = () => {
 		}
 	};
 
+	const handleExportCSV = async (projectId) => {
+		try {
+			setExportingId(projectId);
+			const response = await fetch(
+				`http://localhost:5001/api/labs/export-documentation-csv/${projectId}`,
+				{
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to export CSV');
+			}
+
+			// Get the blob from the response
+			const blob = await response.blob();
+			
+			// Create a download link
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `Lab_Project_Financial_Analysis_${projectId}_${Date.now()}.csv`;
+			
+			// Trigger the download
+			document.body.appendChild(link);
+			link.click();
+			
+			// Cleanup
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			console.error('Error exporting CSV:', err);
+			alert('Failed to export CSV. Please try again.');
+		} finally {
+			setExportingId(null);
+		}
+	};
+
+	const handleExportProcurementReport = async (projectId) => {
+		try {
+			setExportingId(projectId);
+			const response = await fetch(
+				`http://localhost:5001/api/labs/export-procurement-report/${projectId}`,
+				{
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to export procurement report');
+			}
+
+			// Get the blob from the response
+			const blob = await response.blob();
+			
+			// Create a download link
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `Procurement_Summary_Report_${projectId}_${Date.now()}.pdf`;
+			
+			// Trigger the download
+			document.body.appendChild(link);
+			link.click();
+			
+			// Cleanup
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			console.error('Error exporting procurement report:', err);
+			alert('Failed to export procurement report. Please try again.');
+		} finally {
+			setExportingId(null);
+		}
+	};
+
 	if (!userInfo) {
 		navigate('/login');
 		return null;
@@ -292,7 +372,7 @@ const UniversityDashboard = () => {
 														</button>
 														
 														{expandedExportMenu === project._id && (
-															<div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+															<div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
 																<button
 																	onClick={() => {
 																		handleExportDocumentation(project._id);
@@ -304,7 +384,7 @@ const UniversityDashboard = () => {
 																	<span className="material-icons" style={{ fontSize: '16px', color: '#7c3aed' }}>
 																		description
 																	</span>
-																	JSON
+																	<span>JSON Data</span>
 																</button>
 																<div className="border-t border-gray-200"></div>
 																<button
@@ -318,7 +398,35 @@ const UniversityDashboard = () => {
 																	<span className="material-icons" style={{ fontSize: '16px', color: '#dc2626' }}>
 																		picture_as_pdf
 																	</span>
-																	PDF
+																	<span>Technical PDF</span>
+																</button>
+																<div className="border-t border-gray-200"></div>
+																<button
+																	onClick={() => {
+																		handleExportCSV(project._id);
+																		setExpandedExportMenu(null);
+																	}}
+																	disabled={exportingId === project._id}
+																	className="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+																>
+																	<span className="material-icons" style={{ fontSize: '16px', color: '#059669' }}>
+																		table_chart
+																	</span>
+																	<span>Financial CSV</span>
+																</button>
+																<div className="border-t border-gray-200"></div>
+																<button
+																	onClick={() => {
+																		handleExportProcurementReport(project._id);
+																		setExpandedExportMenu(null);
+																	}}
+																	disabled={exportingId === project._id}
+																	className="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+																>
+																	<span className="material-icons" style={{ fontSize: '16px', color: '#0891b2' }}>
+																		approval
+																	</span>
+																	<span>Approval Report</span>
 																</button>
 															</div>
 														)}
