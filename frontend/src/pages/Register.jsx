@@ -78,6 +78,9 @@ const Register = () => {
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gray-50">
       <div className="max-w-2xl w-full space-y-8 bg-white p-10 rounded-xl shadow-lg border border-gray-100">
         <div>
+          <div className="flex justify-center mb-4">
+            <span className="material-icons text-4xl text-blue-600">person_add</span>
+          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Create your account
           </h2>
@@ -90,18 +93,21 @@ const Register = () => {
         </div>
 
         {/* Role Selector Tabs */}
-        <div className="flex justify-center mb-8 border-b">
+        <div className="flex justify-center mb-8 border-b gap-4">
           {['university', 'vendor', 'consultant'].map((r) => (
             <button
               key={r}
               type="button"
               onClick={() => setRole(r)}
-              className={`px-4 py-2 capitalize font-medium text-sm transition-colors ${
+              className={`px-4 py-2 capitalize font-medium text-sm transition-colors flex items-center gap-2 ${
                 role === r
                   ? 'border-b-2 border-blue-600 text-blue-600'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
+              <span className="material-icons" style={{ fontSize: '20px' }}>
+                {r === 'university' ? 'school' : r === 'vendor' ? 'business' : 'engineering'}
+              </span>
               {r}
             </button>
           ))}
@@ -117,27 +123,42 @@ const Register = () => {
           <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-8">
             {/* Common Fields */}
             <div className="sm:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">Account Name</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>badge</span>
+                Account Name
+              </label>
               <input name="name" type="text" required value={formData.name} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder={role === 'university' ? 'University Name' : role === 'vendor' ? 'Company Name' : 'Full Name'} />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>email</span>
+                Email Address
+              </label>
               <input name="email" type="email" required value={formData.email} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>lock</span>
+                Password
+              </label>
               <input name="password" type="password" required value={formData.password} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>phone</span>
+                Phone Number
+              </label>
               <input name="phone" type="text" value={formData.phone} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Physical Address</label>
+              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>location_on</span>
+                Physical Address
+              </label>
               <input name="address" type="text" value={formData.address} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
             </div>
 
@@ -145,23 +166,38 @@ const Register = () => {
             {role === 'university' && (
               <>
                 <div className="sm:col-span-2 pt-4 border-t">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">University Details</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '24px', color: '#3b82f6' }}>school</span>
+                    University Details
+                  </h3>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Department</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>category</span>
+                    Department
+                  </label>
                   <input name="department" type="text" required value={formData.department} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
-                <div className="sm:col-span-2 mt-2"><label className="block text-sm font-medium text-gray-500">Authorized Representative</label></div>
+                <div className="sm:col-span-2 mt-2"><label className="block text-sm font-medium text-gray-500 flex items-center gap-2"><span className="material-icons" style={{ fontSize: '20px', color: '#9ca3af' }}>info</span>Authorized Representative</label></div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Rep Name</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>person</span>
+                    Rep Name
+                  </label>
                   <input name="authRepName" type="text" required value={formData.authRepName} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Rep Email</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>email</span>
+                    Rep Email
+                  </label>
                   <input name="authRepEmail" type="email" required value={formData.authRepEmail} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Rep Phone</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>phone</span>
+                    Rep Phone
+                  </label>
                   <input name="authRepPhone" type="text" required value={formData.authRepPhone} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
               </>
@@ -171,10 +207,16 @@ const Register = () => {
             {role === 'vendor' && (
               <>
                 <div className="sm:col-span-2 pt-4 border-t">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Vendor Details</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '24px', color: '#3b82f6' }}>business</span>
+                    Vendor Details
+                  </h3>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Trade License Number</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>assignment</span>
+                    Trade License Number
+                  </label>
                   <input name="tradeLicenseNumber" type="text" required value={formData.tradeLicenseNumber} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
               </>
@@ -184,18 +226,30 @@ const Register = () => {
             {role === 'consultant' && (
               <>
                 <div className="sm:col-span-2 pt-4 border-t">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Consultant Details</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '24px', color: '#3b82f6' }}>engineering</span>
+                    Consultant Details
+                  </h3>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Professional Credentials</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>card_membership</span>
+                    Professional Credentials
+                  </label>
                   <textarea name="professionalCredentials" required value={formData.professionalCredentials} onChange={handleChange} rows="2" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Relevant Experience</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>work_history</span>
+                    Relevant Experience
+                  </label>
                   <textarea name="relevantExperience" required value={formData.relevantExperience} onChange={handleChange} rows="3" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Certification Information</label>
+                  <label className="block text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>verified</span>
+                    Certification Information
+                  </label>
                   <textarea name="certificationInformation" required value={formData.certificationInformation} onChange={handleChange} rows="2" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
                 </div>
               </>

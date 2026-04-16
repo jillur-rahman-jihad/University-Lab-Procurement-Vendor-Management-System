@@ -141,6 +141,17 @@ exports.submitQuotation = async (req, res) => {
 			deliveryTime: component.deliveryTime || ''
 		}));
 
+		// Validate that all components have required fields (name and unitPrice)
+		const invalidComponents = normalizedComponents.filter(
+			(component) => !component.name || !component.name.trim() || component.unitPrice === 0
+		);
+
+		if (invalidComponents.length > 0) {
+			return res.status(400).json({ 
+				message: 'All components must have a name and unit price. Please remove or complete empty components.' 
+			});
+		}
+
 		const calculatedTotal = normalizedComponents.reduce((sum, component) => sum + (component.unitPrice * component.quantity), 0);
 
 		const quotation = await Quotation.create({

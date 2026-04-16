@@ -26,9 +26,11 @@ router.get("/search-vendors", universityController.searchVendors);
 
 // Profile management
 router.put("/update-profile", universityController.updateUniversityProfile);
+router.get("/profile", universityController.getUniversityProfile);
+router.get("/procurement/:labProjectId", universityController.getProcurementSummary);
+router.get("/procurement/:labProjectId/download", universityController.downloadProcurementSummary);
 
 // Existing route
 router.get("/search-consultants", consultantController.searchConsultants);
 
 module.exports = router;
-

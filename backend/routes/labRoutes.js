@@ -9,6 +9,8 @@ const upload = multer({ storage: multer.memoryStorage() });
 // ============ ORIGINAL ROUTES ============
 router.post('/create', authenticateToken, labController.createLabProject);
 router.post('/upload-pdf', authenticateToken, upload.single('document'), labController.uploadAndParsePDF);
+router.get('/user-projects', authenticateToken, labController.getUserLabProjects);
+router.get('/:labProjectId', authenticateToken, labController.getLabProjectById);
 
 // ============ MODULE 2 - Task 2B: Lab Planning & Procurement Management ============
 // Integrate new routes with simpler endpoint paths for reliability
