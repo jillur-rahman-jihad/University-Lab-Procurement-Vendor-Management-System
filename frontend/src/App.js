@@ -48,6 +48,7 @@ import VendorAnalytics from './pages/VendorAnalytics';
 import QuotationSystem from './pages/QuotationSystem';
 import CompareQuotation from './pages/CompareQuotation';
 import ViewAndAccept from './pages/ViewAndAccept';
+import TechnicalConsultantDashboard from './pages/TechnicalConsultantDashboard';
 
 function App() {
   return (
@@ -70,6 +71,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/lab-planning" element={<LabPlanningDashboard />} />
+            <Route path="/technical-consultant-dashboard" element={<TechnicalConsultantDashboard />} />
             <Route path="/quotation-system" element={<QuotationSystem />} />
             <Route path="/compare-quotation" element={<CompareQuotation />} />
             <Route path="/view-and-accept/:quotationId" element={<ViewAndAccept />} />

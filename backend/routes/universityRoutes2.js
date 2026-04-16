@@ -30,4 +30,3 @@ router.get("/project-suggestions", authMiddleware, universityController.getProje
 router.post("/suggest/:suggestionId/respond", authMiddleware, universityController.respondToSuggestion);
 
 module.exports = router;
-

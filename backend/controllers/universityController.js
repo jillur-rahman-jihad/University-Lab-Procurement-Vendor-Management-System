@@ -605,3 +605,206 @@ exports.acceptInfrastructureQuote = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// MODULE 2 - Task 3: Assign consultant to lab project
+exports.assignConsultantToProject = async (req, res) => {
+  try {
+    const { consultantId, labProjectId, budgetPriority, notes } = req.body;
+    const universityId = req.user.id;
+
+    // Validate inputs
+    if (!consultantId || !labProjectId) {
+      return res.status(400).json({ message: "Consultant ID and Lab Project ID are required" });
+    }
+
+    // Verify user is a university
+    const university = await User.findById(universityId);
+    if (!university || university.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can assign consultants" });
+    }
+
+    // Verify consultant exists
+    const consultant = await User.findById(consultantId);
+    if (!consultant || consultant.role !== 'consultant') {
+      return res.status(404).json({ message: "Consultant not found" });
+    }
+
+    // Verify lab project exists and belongs to university
+    const labProject = await LabProject.findById(labProjectId);
+    if (!labProject || labProject.universityId.toString() !== universityId) {
+      return res.status(404).json({ message: "Lab project not found or does not belong to this university" });
+    }
+
+    // Import ConsultantLabAssignment model
+    const ConsultantLabAssignment = require("../models/ConsultantLabAssignment");
+
+    // Check if already assigned
+    const existingAssignment = await ConsultantLabAssignment.findOne({
+      consultantId,
+      labProjectId
+    });
+
+    if (existingAssignment) {
+      return res.status(400).json({ message: "Consultant is already assigned to this project" });
+    }
+
+    // Create assignment
+    const assignment = new ConsultantLabAssignment({
+      consultantId,
+      labProjectId,
+      universityId,
+      budgetPriority: budgetPriority || 'balanced',
+      notes,
+      status: 'assigned'
+    });
+
+    await assignment.save();
+
+    // Populate and return
+    const populatedAssignment = await ConsultantLabAssignment.findById(assignment._id)
+      .populate('consultantId', 'name email')
+      .populate('labProjectId', 'labName')
+      .populate('universityId', 'name email');
+
+    res.status(201).json({
+      message: "Consultant assigned to project successfully",
+      assignment: populatedAssignment
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Get project assignments for university
+exports.getProjectAssignments = async (req, res) => {
+  try {
+    const universityId = req.user.id;
+    const { labProjectId } = req.query;
+
+    // Verify user is a university
+    const university = await User.findById(universityId);
+    if (!university || university.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can view project assignments" });
+    }
+
+    // Import ConsultantLabAssignment model
+    const ConsultantLabAssignment = require("../models/ConsultantLabAssignment");
+
+    // Build query
+    let query = { universityId };
+    if (labProjectId) {
+      query.labProjectId = labProjectId;
+    }
+
+    // Get assignments
+    const assignments = await ConsultantLabAssignment.find(query)
+      .populate('consultantId', 'name email consultantInfo.expertise consultantInfo.rating')
+      .populate('labProjectId', 'labName status budget')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      assignments,
+      total: assignments.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Get project suggestions for university
+exports.getProjectSuggestions = async (req, res) => {
+  try {
+    const universityId = req.user.id;
+    const { labProjectId } = req.query;
+
+    // Verify user is a university
+    const university = await User.findById(universityId);
+    if (!university || university.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can view project suggestions" });
+    }
+
+    // Import ComponentSuggestion model
+    const ComponentSuggestion = require("../models/ComponentSuggestion");
+
+    // Build query
+    let query = { universityId };
+    if (labProjectId) {
+      query.labProjectId = labProjectId;
+    }
+
+    // Get suggestions
+    const suggestions = await ComponentSuggestion.find(query)
+      .populate('consultantId', 'name email consultantInfo.expertise')
+      .populate('labProjectId', 'labName')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      suggestions,
+      total: suggestions.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Respond to component suggestion
+exports.respondToSuggestion = async (req, res) => {
+  try {
+    const { suggestionId } = req.params;
+    const { responseStatus, responseNotes } = req.body;
+    const universityId = req.user.id;
+
+    // Validate inputs
+    if (!responseStatus || !['accepted', 'rejected', 'under-review'].includes(responseStatus)) {
+      return res.status(400).json({ message: "Valid response status is required (accepted, rejected, under-review)" });
+    }
+
+    // Verify user is a university
+    const university = await User.findById(universityId);
+    if (!university || university.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can respond to suggestions" });
+    }
+
+    // Import ComponentSuggestion model
+    const ComponentSuggestion = require("../models/ComponentSuggestion");
+
+    // Get suggestion
+    const suggestion = await ComponentSuggestion.findById(suggestionId);
+    if (!suggestion) {
+      return res.status(404).json({ message: "Suggestion not found" });
+    }
+
+    if (suggestion.universityId.toString() !== universityId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Update suggestion
+    suggestion.universityResponse = {
+      status: responseStatus,
+      notes: responseNotes || '',
+      respondedAt: new Date()
+    };
+
+    if (responseStatus === 'accepted') {
+      suggestion.status = 'accepted';
+    } else if (responseStatus === 'rejected') {
+      suggestion.status = 'rejected';
+    } else {
+      suggestion.status = 'pending';
+    }
+
+    await suggestion.save();
+
+    // Populate and return
+    const populatedSuggestion = await ComponentSuggestion.findById(suggestion._id)
+      .populate('consultantId', 'name email')
+      .populate('labProjectId', 'labName');
+
+    res.json({
+      message: "Response recorded successfully",
+      suggestion: populatedSuggestion
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
