@@ -29,6 +29,20 @@ const UniversityDashboard = () => {
 	const [newMessage, setNewMessage] = useState('');
 	const [sendingMessage, setSendingMessage] = useState(false);
 
+	// Infrastructure Setup States
+	const [showInfrastructureModal, setShowInfrastructureModal] = useState(false);
+	const [infrastructureRequests, setInfrastructureRequests] = useState([]);
+	const [infrastructureForm, setInfrastructureForm] = useState({
+		serviceType: 'on-site-deployment',
+		description: '',
+		estimatedBudget: '',
+		requiredDate: '',
+		priority: 'medium',
+		location: { address: '', city: '', state: '', zipCode: '' },
+		notes: ''
+	});
+	const [submittingInfra, setSubmittingInfra] = useState(false);
+
 	useEffect(() => {
 		const fetchUniversityProfile = async () => {
 			try {
@@ -91,10 +105,30 @@ const UniversityDashboard = () => {
 			}
 		};
 
+		const fetchInfrastructureRequests = async () => {
+			try {
+				const response = await fetch('http://localhost:5000/api/university/infrastructure-requests', {
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to fetch infrastructure requests');
+				}
+
+				const data = await response.json();
+				setInfrastructureRequests(data.requests || []);
+			} catch (err) {
+				console.error('Error fetching infrastructure requests:', err);
+			}
+		};
+
 		if (userInfo?.token) {
 			fetchUniversityProfile();
 			fetchLabProjects();
 			fetchActiveHirings();
+			fetchInfrastructureRequests();
 		}
 	}, [userInfo?.token]);
 
@@ -232,6 +266,71 @@ const UniversityDashboard = () => {
 			alert('Failed to send message');
 		} finally {
 			setSendingMessage(false);
+		}
+	};
+
+	const handleInfrastructureFormChange = (field, value) => {
+		if (field.includes('.')) {
+			const [parent, child] = field.split('.');
+			setInfrastructureForm(prev => ({
+				...prev,
+				[parent]: { ...prev[parent], [child]: value }
+			}));
+		} else {
+			setInfrastructureForm(prev => ({
+				...prev,
+				[field]: value
+			}));
+		}
+	};
+
+	const handleSubmitInfrastructureRequest = async () => {
+		if (!infrastructureForm.serviceType || !infrastructureForm.description || !infrastructureForm.estimatedBudget) {
+			alert('Please fill in all required fields');
+			return;
+		}
+
+		setSubmittingInfra(true);
+		try {
+			const response = await fetch('http://localhost:5000/api/university/request-infrastructure', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${userInfo?.token}`,
+				},
+				body: JSON.stringify(infrastructureForm)
+			});
+
+			if (!response.ok) {
+				const error = await response.json();
+				throw new Error(error.message || 'Failed to request infrastructure setup');
+			}
+
+			alert('Infrastructure setup request submitted successfully!');
+			setShowInfrastructureModal(false);
+			setInfrastructureForm({
+				serviceType: 'on-site-deployment',
+				description: '',
+				estimatedBudget: '',
+				requiredDate: '',
+				priority: 'medium',
+				location: { address: '', city: '', state: '', zipCode: '' },
+				notes: ''
+			});
+
+			// Refresh requests
+			const infraResponse = await fetch('http://localhost:5000/api/university/infrastructure-requests', {
+				headers: {
+					'Authorization': `Bearer ${userInfo?.token}`,
+				},
+			});
+			const infraData = await infraResponse.json();
+			setInfrastructureRequests(infraData.requests || []);
+		} catch (err) {
+			console.error('Infrastructure error:', err);
+			alert(err.message || 'Failed to request infrastructure setup');
+		} finally {
+			setSubmittingInfra(false);
 		}
 	};
 
@@ -481,6 +580,69 @@ const UniversityDashboard = () => {
 					)}
 				</div>
 
+				{/* Infrastructure Setup Requests Section */}
+				<div className="px-6 py-5 sm:px-8 border-b border-gray-100 bg-white">
+					<div className="flex justify-between items-center mb-4">
+						<h2 className="text-lg font-semibold text-gray-900">Physical Infrastructure Setup Services</h2>
+						<button
+							onClick={() => setShowInfrastructureModal(true)}
+							className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+						>
+							+ Request Service
+						</button>
+					</div>
+					{infrastructureRequests.length > 0 ? (
+						<div className="overflow-x-auto">
+							<table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+								<thead className="bg-gray-50">
+									<tr>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Service Type</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Budget</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Priority</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Created Date</th>
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-gray-200">
+									{infrastructureRequests.map((request) => (
+										<tr key={request._id} className="hover:bg-gray-50 transition-colors">
+											<td className="px-6 py-4 text-sm text-gray-900">{request.serviceType.replace(/-/g, ' ').toUpperCase()}</td>
+											<td className="px-6 py-4 text-sm text-gray-600">${request.estimatedBudget}</td>
+											<td className="px-6 py-4 text-sm">
+												<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+													request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+													request.status === 'quoted' ? 'bg-blue-100 text-blue-800' :
+													request.status === 'accepted' ? 'bg-green-100 text-green-800' :
+													request.status === 'in-progress' ? 'bg-indigo-100 text-indigo-800' :
+													request.status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+													'bg-red-100 text-red-800'
+												}`}>
+													{request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+												</span>
+											</td>
+											<td className="px-6 py-4 text-sm text-gray-600">
+												<span className={`px-2 py-1 rounded text-xs font-medium ${
+													request.priority === 'urgent' ? 'bg-red-100 text-red-800' :
+													request.priority === 'high' ? 'bg-orange-100 text-orange-800' :
+													request.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+													'bg-gray-100 text-gray-800'
+												}`}>
+													{request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}
+												</span>
+											</td>
+											<td className="px-6 py-4 text-sm text-gray-600">
+												{new Date(request.createdAt).toLocaleDateString()}
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<p className="text-sm text-gray-500">No infrastructure setup requests yet.</p>
+					)}
+				</div>
+
 				<div className="grid gap-6 md:grid-cols-2 p-6 sm:p-8">
 					<button
 						onClick={() => navigate('/quotation-system')}
@@ -615,6 +777,139 @@ const UniversityDashboard = () => {
 								className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
 							>
 								{sendingMessage ? '...' : 'Send'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Infrastructure Setup Request Modal */}
+			{showInfrastructureModal && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+					<div className="bg-white rounded-lg max-w-2xl w-full p-6 my-8">
+						<div className="flex justify-between items-center mb-4 pb-4 border-b">
+							<h3 className="text-lg font-semibold text-gray-900">Request Physical Infrastructure Setup</h3>
+							<button
+								onClick={() => setShowInfrastructureModal(false)}
+								className="text-gray-500 hover:text-gray-700"
+							>
+								✕
+							</button>
+						</div>
+
+						{/* Form */}
+						<div className="space-y-4">
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-1">Service Type *</label>
+								<select
+									value={infrastructureForm.serviceType}
+									onChange={(e) => handleInfrastructureFormChange('serviceType', e.target.value)}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+								>
+									<option value="on-site-deployment">On-Site Deployment</option>
+									<option value="hardware-configuration">Hardware Configuration</option>
+									<option value="network-setup">Network Setup</option>
+									<option value="complete-setup">Complete Lab Setup</option>
+								</select>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+								<textarea
+									value={infrastructureForm.description}
+									onChange={(e) => handleInfrastructureFormChange('description', e.target.value)}
+									placeholder="Describe your infrastructure setup requirements..."
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+									rows="4"
+								/>
+							</div>
+
+							<div className="grid grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Estimated Budget ($) *</label>
+									<input
+										type="number"
+										value={infrastructureForm.estimatedBudget}
+										onChange={(e) => handleInfrastructureFormChange('estimatedBudget', e.target.value)}
+										placeholder="0"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+									/>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+									<select
+										value={infrastructureForm.priority}
+										onChange={(e) => handleInfrastructureFormChange('priority', e.target.value)}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+									>
+										<option value="low">Low</option>
+										<option value="medium">Medium</option>
+										<option value="high">High</option>
+										<option value="urgent">Urgent</option>
+									</select>
+								</div>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-1">Required Date</label>
+								<input
+									type="date"
+									value={infrastructureForm.requiredDate}
+									onChange={(e) => handleInfrastructureFormChange('requiredDate', e.target.value)}
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+								/>
+							</div>
+
+							<div className="grid grid-cols-2 gap-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+									<input
+										type="text"
+										value={infrastructureForm.location.address}
+										onChange={(e) => handleInfrastructureFormChange('location.address', e.target.value)}
+										placeholder="Street address"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+									/>
+								</div>
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+									<input
+										type="text"
+										value={infrastructureForm.location.city}
+										onChange={(e) => handleInfrastructureFormChange('location.city', e.target.value)}
+										placeholder="City"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+									/>
+								</div>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+								<textarea
+									value={infrastructureForm.notes}
+									onChange={(e) => handleInfrastructureFormChange('notes', e.target.value)}
+									placeholder="Any additional details..."
+									className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+									rows="2"
+								/>
+							</div>
+						</div>
+
+						{/* Buttons */}
+						<div className="flex gap-3 mt-6">
+							<button
+								onClick={() => setShowInfrastructureModal(false)}
+								disabled={submittingInfra}
+								className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleSubmitInfrastructureRequest}
+								disabled={submittingInfra}
+								className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
+							>
+								{submittingInfra ? 'Submitting...' : 'Submit Request'}
 							</button>
 						</div>
 					</div>

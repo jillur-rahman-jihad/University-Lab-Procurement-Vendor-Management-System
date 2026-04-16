@@ -8,7 +8,11 @@ const {
   hireConsultant,
   sendMessage,
   getMessages,
-  getActiveHirings
+  getActiveHirings,
+  requestInfrastructureSetup,
+  getInfrastructureRequests,
+  getInfrastructureRequest,
+  acceptInfrastructureQuote
 } = require("../controllers/universityController");
 
 const router = express.Router();
@@ -23,5 +27,11 @@ router.post("/hire-consultant", authMiddleware, hireConsultant);
 router.post("/send-message", authMiddleware, sendMessage);
 router.get("/messages/:hiringId", authMiddleware, getMessages);
 router.get("/active-hirings", authMiddleware, getActiveHirings);
+
+// NEW: Infrastructure setup requests
+router.post("/request-infrastructure", authMiddleware, requestInfrastructureSetup);
+router.get("/infrastructure-requests", authMiddleware, getInfrastructureRequests);
+router.get("/infrastructure-requests/:requestId", authMiddleware, getInfrastructureRequest);
+router.post("/infrastructure-requests/:requestId/accept-quote", authMiddleware, acceptInfrastructureQuote);
 
 module.exports = router;

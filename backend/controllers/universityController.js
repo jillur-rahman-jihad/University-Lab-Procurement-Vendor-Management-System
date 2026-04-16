@@ -417,3 +417,191 @@ exports.getActiveHirings = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// MODULE 2 - Task 3: Request physical infrastructure setup
+exports.requestInfrastructureSetup = async (req, res) => {
+  try {
+    const { serviceType, description, estimatedBudget, labProjectId, location, requiredDate, notes, priority } = req.body;
+    const universityId = req.user.id;
+
+    // Validate inputs
+    if (!serviceType || !description || !estimatedBudget) {
+      return res.status(400).json({ message: "Service type, description, and budget are required" });
+    }
+
+    // Verify user is a university
+    const user = await User.findById(universityId);
+    if (!user || user.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can request infrastructure setup" });
+    }
+
+    // Verify lab project if provided
+    if (labProjectId) {
+      const labProject = await LabProject.findById(labProjectId);
+      if (!labProject || labProject.universityId.toString() !== universityId) {
+        return res.status(404).json({ message: "Lab project not found or does not belong to this university" });
+      }
+    }
+
+    // Import InfrastructureSetup model
+    const InfrastructureSetup = require("../models/InfrastructureSetup");
+
+    // Create infrastructure setup request
+    const setupRequest = new InfrastructureSetup({
+      universityId,
+      serviceType,
+      description,
+      estimatedBudget,
+      labProjectId: labProjectId || null,
+      location: location || {},
+      requiredDate: requiredDate ? new Date(requiredDate) : null,
+      notes,
+      priority: priority || 'medium',
+      timeline: [{
+        status: 'pending',
+        notes: 'Request created'
+      }]
+    });
+
+    await setupRequest.save();
+
+    // Populate the record
+    const populatedSetup = await InfrastructureSetup.findById(setupRequest._id)
+      .populate('universityId', 'name email')
+      .populate('labProjectId', 'labName');
+
+    res.status(201).json({
+      message: "Infrastructure setup request created successfully",
+      setupRequest: populatedSetup
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Get all infrastructure setup requests for university
+exports.getInfrastructureRequests = async (req, res) => {
+  try {
+    const universityId = req.user.id;
+    const { status } = req.query;
+
+    // Verify user is a university
+    const user = await User.findById(universityId);
+    if (!user || user.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can view infrastructure requests" });
+    }
+
+    // Import InfrastructureSetup model
+    const InfrastructureSetup = require("../models/InfrastructureSetup");
+
+    // Build query
+    let query = { universityId };
+    if (status) {
+      query.status = status;
+    }
+
+    // Get requests
+    const requests = await InfrastructureSetup.find(query)
+      .populate('universityId', 'name email')
+      .populate('labProjectId', 'labName')
+      .populate('vendorAssignedId', 'name email')
+      .sort({ createdAt: -1 });
+
+    res.json({
+      requests,
+      total: requests.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Get single infrastructure setup request
+exports.getInfrastructureRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const universityId = req.user.id;
+
+    // Import InfrastructureSetup model
+    const InfrastructureSetup = require("../models/InfrastructureSetup");
+
+    // Verify user is a university
+    const user = await User.findById(universityId);
+    if (!user || user.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can view infrastructure requests" });
+    }
+
+    // Get request
+    const setupRequest = await InfrastructureSetup.findById(requestId)
+      .populate('universityId', 'name email')
+      .populate('labProjectId', 'labName')
+      .populate('vendorAssignedId', 'name email');
+
+    if (!setupRequest) {
+      return res.status(404).json({ message: "Infrastructure setup request not found" });
+    }
+
+    if (setupRequest.universityId._id.toString() !== universityId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    res.json(setupRequest);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// MODULE 2 - Task 3: Accept quote for infrastructure setup
+exports.acceptInfrastructureQuote = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const universityId = req.user.id;
+
+    // Import InfrastructureSetup model
+    const InfrastructureSetup = require("../models/InfrastructureSetup");
+
+    // Verify user is a university
+    const user = await User.findById(universityId);
+    if (!user || user.role !== 'university') {
+      return res.status(403).json({ message: "Only universities can accept infrastructure quotes" });
+    }
+
+    // Get request
+    const setupRequest = await InfrastructureSetup.findById(requestId);
+
+    if (!setupRequest) {
+      return res.status(404).json({ message: "Infrastructure setup request not found" });
+    }
+
+    if (setupRequest.universityId.toString() !== universityId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (!setupRequest.quote || setupRequest.quote.quotedStatus !== 'pending') {
+      return res.status(400).json({ message: "No pending quote to accept" });
+    }
+
+    // Update status and quote
+    setupRequest.status = 'accepted';
+    setupRequest.quote.quotedStatus = 'accepted';
+    setupRequest.actualCost = setupRequest.quote.quotedPrice;
+    setupRequest.timeline.push({
+      status: 'accepted',
+      notes: 'Quote accepted by university'
+    });
+
+    await setupRequest.save();
+
+    const populatedSetup = await InfrastructureSetup.findById(setupRequest._id)
+      .populate('universityId', 'name email')
+      .populate('labProjectId', 'labName')
+      .populate('vendorAssignedId', 'name email');
+
+    res.json({
+      message: "Quote accepted successfully",
+      setupRequest: populatedSetup
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
