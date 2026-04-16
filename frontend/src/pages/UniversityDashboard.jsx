@@ -13,6 +13,18 @@ const UniversityDashboard = () => {
 	const [selectedProjectId, setSelectedProjectId] = useState(null);
 	const [exportingId, setExportingId] = useState(null);
 	const [expandedExportMenu, setExpandedExportMenu] = useState(null);
+	const [submissionModalOpen, setSubmissionModalOpen] = useState(false);
+	const [submissionProject, setSubmissionProject] = useState(null);
+	const [submissionForm, setSubmissionForm] = useState({
+		documentType: 'Technical PDF',
+		submittedTo: 'Both',
+		financeOfficeEmails: [],
+		procurementCommitteeEmails: [],
+		notes: '',
+		priority: 'medium'
+	});
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submissions, setSubmissions] = useState([]);
 
 	useEffect(() => {
 		const fetchUniversityProfile = async () => {
@@ -235,6 +247,86 @@ const UniversityDashboard = () => {
 		}
 	};
 
+	const openSubmissionModal = (projectId) => {
+		setSubmissionProject(projectId);
+		setSubmissionModalOpen(true);
+		setSubmissionForm({
+			documentType: 'Technical PDF',
+			submittedTo: 'Both',
+			financeOfficeEmails: [],
+			procurementCommitteeEmails: [],
+			notes: '',
+			priority: 'medium'
+		});
+	};
+
+	const handleSubmitDocument = async () => {
+		try {
+			if (!submissionForm.submittedTo) {
+				alert('Please select a submission recipient (Finance Office, Procurement Committee, or Both)');
+				return;
+			}
+
+			setIsSubmitting(true);
+			const response = await fetch(
+				'http://localhost:5001/api/document-submission/submit-document',
+				{
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						labProjectId: submissionProject,
+						documentType: submissionForm.documentType,
+						submittedTo: submissionForm.submittedTo,
+						financeOfficeEmails: submissionForm.financeOfficeEmails.length > 0 ? submissionForm.financeOfficeEmails : undefined,
+						procurementCommitteeEmails: submissionForm.procurementCommitteeEmails.length > 0 ? submissionForm.procurementCommitteeEmails : undefined,
+						notes: submissionForm.notes,
+						priority: submissionForm.priority
+					})
+				}
+			);
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.message || 'Failed to submit document');
+			}
+
+			const data = await response.json();
+			alert(`Document submitted successfully for ${submissionForm.submittedTo} review and approval`);
+			setSubmissionModalOpen(false);
+			
+			// Fetch updated submissions
+			fetchSubmissions();
+		} catch (err) {
+			console.error('Error submitting document:', err);
+			alert('Failed to submit document: ' + err.message);
+		} finally {
+			setIsSubmitting(false);
+		}
+	};
+
+	const fetchSubmissions = async () => {
+		try {
+			const response = await fetch(
+				'http://localhost:5001/api/document-submission/submissions',
+				{
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				}
+			);
+
+			if (response.ok) {
+				const data = await response.json();
+				setSubmissions(data.submissions || []);
+			}
+		} catch (err) {
+			console.error('Error fetching submissions:', err);
+		}
+	};
+
 	if (!userInfo) {
 		navigate('/login');
 		return null;
@@ -251,12 +343,23 @@ const UniversityDashboard = () => {
 						</p>
 					</div>
 
-					<button
-						onClick={handleLogout}
-						className="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
-					>
-						Logout
-					</button>
+					<div className="flex gap-2">
+						<button
+							onClick={() => navigate('/document-reviewer')}
+							className="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center gap-2"
+						>
+							<span className="material-icons" style={{ fontSize: '18px' }}>
+								assignment_turned_in
+							</span>
+							Review Documents
+						</button>
+						<button
+							onClick={handleLogout}
+							className="px-4 py-2 rounded-md text-sm font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+						>
+							Logout
+						</button>
+					</div>
 				</div>
 
 				{/* University Profile Section */}
@@ -431,6 +534,17 @@ const UniversityDashboard = () => {
 															</div>
 														)}
 													</div>
+
+													{/* Submit for Approval Button */}
+													<button
+														onClick={() => openSubmissionModal(project._id)}
+														className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+													>
+														<span className="material-icons" style={{ fontSize: '14px', marginRight: '4px' }}>
+															send
+														</span>
+														Submit
+													</button>
 												</div>
 											</td>
 										</tr>
@@ -518,6 +632,219 @@ const UniversityDashboard = () => {
 				onClose={() => setIsModalOpen(false)}
 				userToken={userInfo?.token}
 			/>
+
+			{/* Document Submission Modal */}
+			{submissionModalOpen && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+					<div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+						{/* Modal Header */}
+						<div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 flex justify-between items-center border-b">
+							<h2 className="text-xl font-bold text-white">Submit Document for Review & Approval</h2>
+							<button
+								onClick={() => setSubmissionModalOpen(false)}
+								className="text-white hover:text-gray-100"
+							>
+								<span className="material-icons">close</span>
+							</button>
+						</div>
+
+						{/* Modal Content */}
+						<div className="p-6">
+							{/* Document Type Selection */}
+							<div className="mb-6">
+								<label className="block text-sm font-semibold text-gray-900 mb-3">
+									Select Document Format
+								</label>
+								<div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+									{['JSON', 'Technical PDF', 'Financial CSV', 'Procurement Report'].map((type) => (
+										<button
+											key={type}
+											onClick={() => setSubmissionForm({ ...submissionForm, documentType: type })}
+											className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+												submissionForm.documentType === type
+													? 'bg-blue-600 text-white border-2 border-blue-600'
+													: 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-blue-300'
+											}`}
+										>
+											{type}
+										</button>
+									))}
+								</div>
+							</div>
+
+							{/* Submission Recipient Selection */}
+							<div className="mb-6">
+								<label className="block text-sm font-semibold text-gray-900 mb-3">
+									Submit to (Required)
+								</label>
+								<div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+									{['Finance Office', 'Procurement Committee', 'Both'].map((recipient) => (
+										<button
+											key={recipient}
+											onClick={() => setSubmissionForm({ ...submissionForm, submittedTo: recipient })}
+											className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+												submissionForm.submittedTo === recipient
+													? 'bg-green-600 text-white border-2 border-green-600'
+													: 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-green-300'
+											}`}
+										>
+											{recipient}
+										</button>
+									))}
+								</div>
+							</div>
+
+							{/* Finance Office Emails */}
+							{(submissionForm.submittedTo === 'Finance Office' || submissionForm.submittedTo === 'Both') && (
+								<div className="mb-6">
+									<label className="block text-sm font-semibold text-gray-900 mb-2">
+										Finance Office Email(s)
+									</label>
+									<input
+										type="email"
+										placeholder="Enter email address (optional)"
+										className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+										onKeyPress={(e) => {
+											if (e.key === 'Enter' && e.target.value.trim()) {
+												setSubmissionForm({
+													...submissionForm,
+													financeOfficeEmails: [...submissionForm.financeOfficeEmails, e.target.value.trim()]
+												});
+												e.target.value = '';
+											}
+										}}
+									/>
+									<p className="text-xs text-gray-500 mt-1">Press Enter to add email</p>
+									<div className="flex flex-wrap gap-2 mt-2">
+										{submissionForm.financeOfficeEmails.map((email, idx) => (
+											<span key={idx} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs flex items-center gap-2">
+												{email}
+												<button
+													onClick={() => setSubmissionForm({
+														...submissionForm,
+														financeOfficeEmails: submissionForm.financeOfficeEmails.filter((_, i) => i !== idx)
+													})}
+													className="text-blue-700 hover:text-blue-900"
+												>
+													×
+												</button>
+											</span>
+										))}
+									</div>
+								</div>
+							)}
+
+							{/* Procurement Committee Emails */}
+							{(submissionForm.submittedTo === 'Procurement Committee' || submissionForm.submittedTo === 'Both') && (
+								<div className="mb-6">
+									<label className="block text-sm font-semibold text-gray-900 mb-2">
+										Procurement Committee Email(s)
+									</label>
+									<input
+										type="email"
+										placeholder="Enter email address (optional)"
+										className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+										onKeyPress={(e) => {
+											if (e.key === 'Enter' && e.target.value.trim()) {
+												setSubmissionForm({
+													...submissionForm,
+													procurementCommitteeEmails: [...submissionForm.procurementCommitteeEmails, e.target.value.trim()]
+												});
+												e.target.value = '';
+											}
+										}}
+									/>
+									<p className="text-xs text-gray-500 mt-1">Press Enter to add email</p>
+									<div className="flex flex-wrap gap-2 mt-2">
+										{submissionForm.procurementCommitteeEmails.map((email, idx) => (
+											<span key={idx} className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs flex items-center gap-2">
+												{email}
+												<button
+													onClick={() => setSubmissionForm({
+														...submissionForm,
+														procurementCommitteeEmails: submissionForm.procurementCommitteeEmails.filter((_, i) => i !== idx)
+													})}
+													className="text-purple-700 hover:text-purple-900"
+												>
+													×
+												</button>
+											</span>
+										))}
+									</div>
+								</div>
+							)}
+
+							{/* Priority Selection */}
+							<div className="mb-6">
+								<label className="block text-sm font-semibold text-gray-900 mb-3">
+									Priority Level
+								</label>
+								<div className="grid grid-cols-4 gap-3">
+									{['low', 'medium', 'high', 'urgent'].map((p) => (
+										<button
+											key={p}
+											onClick={() => setSubmissionForm({ ...submissionForm, priority: p })}
+											className={`px-3 py-2 rounded-lg text-xs font-medium transition-all capitalize ${
+												submissionForm.priority === p
+													? 'bg-red-600 text-white'
+													: 'bg-gray-100 text-gray-700 border border-gray-200'
+											}`}
+										>
+											{p}
+										</button>
+									))}
+								</div>
+							</div>
+
+							{/* Notes */}
+							<div className="mb-6">
+								<label className="block text-sm font-semibold text-gray-900 mb-2">
+									Additional Notes (Optional)
+								</label>
+								<textarea
+									value={submissionForm.notes}
+									onChange={(e) => setSubmissionForm({ ...submissionForm, notes: e.target.value })}
+									placeholder="Add any additional notes or instructions for reviewers..."
+									className="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+									rows="4"
+								/>
+							</div>
+						</div>
+
+						{/* Modal Footer */}
+						<div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t flex justify-end gap-4">
+							<button
+								onClick={() => setSubmissionModalOpen(false)}
+								disabled={isSubmitting}
+								className="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleSubmitDocument}
+								disabled={isSubmitting || !submissionForm.submittedTo}
+								className="px-6 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+							>
+								{isSubmitting ? (
+									<>
+										<span className="material-icons animate-spin" style={{ fontSize: '16px' }}>
+											hourglass_empty
+										</span>
+										Submitting...
+									</>
+								) : (
+									<>
+										<span className="material-icons" style={{ fontSize: '16px' }}>
+											send
+										</span>
+										Submit for Review
+									</>
+								)}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 };

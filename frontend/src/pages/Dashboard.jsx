@@ -72,6 +72,7 @@ import { useNavigate } from "react-router-dom";
 import VendorDashboard from "./VendorDashboard";
 import UniversityDashboard from "./UniversityDashboard";
 import ConsultantDashboard from "./ConsultantDashboard";
+import ReviewerDashboard from "./ReviewerDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -94,8 +95,13 @@ const Dashboard = () => {
   if (userInfo.role === "university") {
     return <UniversityDashboard />;
   }
+
   if (userInfo.role === "consultant") {
-    return ( <ConsultantDashboard />);
+    return <ConsultantDashboard />;
+  }
+
+  if (userInfo.role === "finance" || userInfo.role === "procurement") {
+    return <ReviewerDashboard />;
   }
   return (
     <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">

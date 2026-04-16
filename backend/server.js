@@ -19,6 +19,8 @@ const hireRoutes = require('./routes/hireRoutes');
 const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoutes');
 // MODULE 2 - Task 2D: Lab Optimization Routes
 const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
+// Document Submission Routes (Finance/Procurement Approval Workflow)
+const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
 
 connectDB();
 
@@ -31,6 +33,7 @@ app.use('/uploads', express.static('uploads'));
 
 app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
+app.use('/api/document-submission', documentSubmissionRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);
