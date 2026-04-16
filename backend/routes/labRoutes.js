@@ -32,4 +32,8 @@ router.get('/available-lab-projects', authenticateToken, labController.getAvaila
 router.post('/assign-lab-project', authenticateToken, labController.assignProject);
 router.get('/my-lab-projects', authenticateToken, labController.getUniversityProjectAssignments);
 
+// Export Documentation
+router.get('/export-documentation/:labProjectId', authenticateToken, labController.exportLabProjectDocumentation);
+router.get('/export-documentation-pdf/:labProjectId', authenticateToken, labController.exportLabProjectDocumentationPDF);
+
 module.exports = router;

@@ -11,6 +11,8 @@ const UniversityDashboard = () => {
 	const [error, setError] = useState(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedProjectId, setSelectedProjectId] = useState(null);
+	const [exportingId, setExportingId] = useState(null);
+	const [expandedExportMenu, setExpandedExportMenu] = useState(null);
 
 	useEffect(() => {
 		const fetchUniversityProfile = async () => {
@@ -69,6 +71,88 @@ const UniversityDashboard = () => {
 	const handleViewSummary = (projectId) => {
 		setSelectedProjectId(projectId);
 		setIsModalOpen(true);
+	};
+
+	const handleExportDocumentation = async (projectId) => {
+		try {
+			setExportingId(projectId);
+			const response = await fetch(
+				`http://localhost:5001/api/labs/export-documentation/${projectId}`,
+				{
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to export documentation');
+			}
+
+			const data = await response.json();
+			
+			// Create a blob from the response data
+			const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+			
+			// Create a download link
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `Lab_Project_Documentation_${projectId}_${Date.now()}.json`;
+			
+			// Trigger the download
+			document.body.appendChild(link);
+			link.click();
+			
+			// Cleanup
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			console.error('Error exporting documentation:', err);
+			alert('Failed to export documentation. Please try again.');
+		} finally {
+			setExportingId(null);
+		}
+	};
+
+	const handleExportPDF = async (projectId) => {
+		try {
+			setExportingId(projectId);
+			const response = await fetch(
+				`http://localhost:5001/api/labs/export-documentation-pdf/${projectId}`,
+				{
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error('Failed to export PDF');
+			}
+
+			// Get the blob from the response
+			const blob = await response.blob();
+			
+			// Create a download link
+			const url = window.URL.createObjectURL(blob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = `Lab_Project_Documentation_${projectId}_${Date.now()}.pdf`;
+			
+			// Trigger the download
+			document.body.appendChild(link);
+			link.click();
+			
+			// Cleanup
+			document.body.removeChild(link);
+			window.URL.revokeObjectURL(url);
+		} catch (err) {
+			console.error('Error exporting PDF:', err);
+			alert('Failed to export PDF. Please try again.');
+		} finally {
+			setExportingId(null);
+		}
 	};
 
 	if (!userInfo) {
@@ -177,7 +261,7 @@ const UniversityDashboard = () => {
 												</span>
 											</td>
 											<td className="px-6 py-4 text-center">
-												<div className="flex items-center justify-center gap-2">
+												<div className="flex items-center justify-center gap-2 flex-wrap">
 													<button
 														onClick={() => handleViewSummary(project._id)}
 														className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
@@ -190,6 +274,55 @@ const UniversityDashboard = () => {
 													>
 														Reorder
 													</button>
+													
+													{/* Export Dropdown */}
+													<div className="relative">
+														<button
+															onClick={() => setExpandedExportMenu(expandedExportMenu === project._id ? null : project._id)}
+															disabled={exportingId === project._id}
+															className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+														>
+															<span className="material-icons" style={{ fontSize: '14px', marginRight: '4px' }}>
+																download
+															</span>
+															Export
+															<span className="material-icons" style={{ fontSize: '14px', marginLeft: '4px' }}>
+																{expandedExportMenu === project._id ? 'expand_less' : 'expand_more'}
+															</span>
+														</button>
+														
+														{expandedExportMenu === project._id && (
+															<div className="absolute right-0 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+																<button
+																	onClick={() => {
+																		handleExportDocumentation(project._id);
+																		setExpandedExportMenu(null);
+																	}}
+																	disabled={exportingId === project._id}
+																	className="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+																>
+																	<span className="material-icons" style={{ fontSize: '16px', color: '#7c3aed' }}>
+																		description
+																	</span>
+																	JSON
+																</button>
+																<div className="border-t border-gray-200"></div>
+																<button
+																	onClick={() => {
+																		handleExportPDF(project._id);
+																		setExpandedExportMenu(null);
+																	}}
+																	disabled={exportingId === project._id}
+																	className="w-full text-left px-4 py-2 text-xs hover:bg-gray-50 flex items-center gap-2 disabled:opacity-50"
+																>
+																	<span className="material-icons" style={{ fontSize: '16px', color: '#dc2626' }}>
+																		picture_as_pdf
+																	</span>
+																	PDF
+																</button>
+															</div>
+														)}
+													</div>
 												</div>
 											</td>
 										</tr>
