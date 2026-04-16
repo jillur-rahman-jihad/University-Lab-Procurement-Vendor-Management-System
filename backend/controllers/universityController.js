@@ -715,7 +715,7 @@ exports.getProjectAssignments = async (req, res) => {
 exports.getProjectSuggestions = async (req, res) => {
   try {
     const universityId = req.user.id;
-    const { labProjectId } = req.query;
+    const { labProjectId } = req.params;
 
     // Verify user is a university
     const university = await User.findById(universityId);
@@ -750,13 +750,12 @@ exports.getProjectSuggestions = async (req, res) => {
 // MODULE 2 - Task 3: Respond to component suggestion
 exports.respondToSuggestion = async (req, res) => {
   try {
-    const { suggestionId } = req.params;
-    const { responseStatus, responseNotes } = req.body;
+    const { suggestionId, status, universityResponse } = req.body;
     const universityId = req.user.id;
 
     // Validate inputs
-    if (!responseStatus || !['accepted', 'rejected', 'under-review'].includes(responseStatus)) {
-      return res.status(400).json({ message: "Valid response status is required (accepted, rejected, under-review)" });
+    if (!suggestionId || !status || !['accepted', 'rejected'].includes(status)) {
+      return res.status(400).json({ message: "Valid suggestionId and status (accepted/rejected) are required" });
     }
 
     // Verify user is a university
@@ -780,17 +779,15 @@ exports.respondToSuggestion = async (req, res) => {
 
     // Update suggestion
     suggestion.universityResponse = {
-      status: responseStatus,
-      notes: responseNotes || '',
+      status: status,
+      notes: universityResponse || '',
       respondedAt: new Date()
     };
 
-    if (responseStatus === 'accepted') {
+    if (status === 'accepted') {
       suggestion.status = 'accepted';
-    } else if (responseStatus === 'rejected') {
+    } else if (status === 'rejected') {
       suggestion.status = 'rejected';
-    } else {
-      suggestion.status = 'pending';
     }
 
     await suggestion.save();

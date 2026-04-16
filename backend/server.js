@@ -26,7 +26,7 @@ app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
-app.use('/api/consultants', consultantRoutes);
+app.use('/api/consultant', consultantRoutes);
 app.use('/api/consultants', projectAssignmentRoutes);
 app.use('/api/consultants', projectProgressRoutes);
 app.use('/api/university', universityRoutes);

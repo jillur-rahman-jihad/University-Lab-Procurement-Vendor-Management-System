@@ -36,6 +36,32 @@ const TechnicalConsultantDashboard = () => {
 	});
 	const [submittingInfra, setSubmittingInfra] = useState(false);
 
+	// Consultant Assignment States
+	const [assignedProjects, setAssignedProjects] = useState([]);
+	const [selectedProject, setSelectedProject] = useState(null);
+	const [showProjectModal, setShowProjectModal] = useState(false);
+	const [consultantSuggestions, setConsultantSuggestions] = useState([]);
+	
+	// Component Suggestion States
+	const [showSuggestionModal, setShowSuggestionModal] = useState(false);
+	const [suggestionForm, setSuggestionForm] = useState({
+		suggestionType: 'component-swap',
+		title: '',
+		description: '',
+		originalComponent: '',
+		suggestedAlternative: '',
+		costImpact: 0,
+		performanceImpactDescription: ''
+	});
+	const [submitingSuggestion, setSubmittingSuggestion] = useState(false);
+
+	// Assign to Project States
+	const [showAssignProjectModal, setShowAssignProjectModal] = useState(false);
+	const [selectedHiringForAssignment, setSelectedHiringForAssignment] = useState(null);
+	const [availableProjects, setAvailableProjects] = useState([]);
+	const [selectedProjectForAssignment, setSelectedProjectForAssignment] = useState(null);
+	const [assigningToProject, setAssigningToProject] = useState(false);
+
 	useEffect(() => {
 		const fetchActiveHirings = async () => {
 			try {
@@ -75,9 +101,49 @@ const TechnicalConsultantDashboard = () => {
 			}
 		};
 
+		const fetchAssignedProjects = async () => {
+			try {
+				const response = await fetch('http://localhost:5000/api/consultant/assigned-projects', {
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to fetch assigned projects');
+				}
+
+				const data = await response.json();
+				setAssignedProjects(data.projects || []);
+			} catch (err) {
+				console.error('Error fetching assigned projects:', err);
+			}
+		};
+
+		const fetchConsultantSuggestions = async () => {
+			try {
+				const response = await fetch('http://localhost:5000/api/consultant/suggestions', {
+					headers: {
+						'Authorization': `Bearer ${userInfo?.token}`,
+					},
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to fetch suggestions');
+				}
+
+				const data = await response.json();
+				setConsultantSuggestions(data.suggestions || []);
+			} catch (err) {
+				console.error('Error fetching suggestions:', err);
+			}
+		};
+
 		if (userInfo?.token) {
 			fetchActiveHirings();
 			fetchInfrastructureRequests();
+			fetchAssignedProjects();
+			fetchConsultantSuggestions();
 		}
 	}, [userInfo?.token]);
 
@@ -278,6 +344,145 @@ const TechnicalConsultantDashboard = () => {
 		}
 	};
 
+	const handleOpenProjectDetails = (project) => {
+		setSelectedProject(project);
+		setShowProjectModal(true);
+	};
+
+	const handleSuggestionFormChange = (field, value) => {
+		setSuggestionForm(prev => ({
+			...prev,
+			[field]: value
+		}));
+	};
+
+	const handleSubmitComponentSuggestion = async () => {
+		if (!selectedProject || !suggestionForm.title || !suggestionForm.description) {
+			alert('Please fill in all required fields');
+			return;
+		}
+
+		setSubmittingSuggestion(true);
+		try {
+			const response = await fetch('http://localhost:5000/api/consultant/submit-suggestion', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${userInfo?.token}`,
+				},
+				body: JSON.stringify({
+					assignmentId: selectedProject._id,
+					suggestionType: suggestionForm.suggestionType,
+					title: suggestionForm.title,
+					description: suggestionForm.description,
+					originalComponent: {
+						name: suggestionForm.originalComponent,
+						category: '',
+						specifications: '',
+						estimatedCost: 0
+					},
+					suggestedComponent: {
+						name: suggestionForm.suggestedAlternative,
+						category: '',
+						specifications: '',
+						estimatedCost: suggestionForm.costImpact,
+						vendor: '',
+						rationale: ''
+					},
+					impactAnalysis: {
+						budgetImpact: suggestionForm.costImpact,
+						performanceImpact: suggestionForm.performanceImpactDescription,
+						compatibilityIssues: '',
+						implementationNotes: ''
+					}
+				})
+			});
+
+			if (!response.ok) throw new Error('Failed to submit suggestion');
+
+			alert('Component suggestion submitted successfully!');
+			setShowSuggestionModal(false);
+			setSuggestionForm({
+				suggestionType: 'component-swap',
+				title: '',
+				description: '',
+				originalComponent: '',
+				suggestedAlternative: '',
+				costImpact: 0,
+				performanceImpactDescription: ''
+			});
+
+			// Refresh suggestions
+			const suggestionsResponse = await fetch('http://localhost:5000/api/consultant/suggestions', {
+				headers: {
+					'Authorization': `Bearer ${userInfo?.token}`,
+				},
+			});
+			const suggestionsData = await suggestionsResponse.json();
+			setConsultantSuggestions(suggestionsData.suggestions || []);
+		} catch (err) {
+			console.error('Suggestion error:', err);
+			alert(err.message || 'Failed to submit suggestion');
+		} finally {
+			setSubmittingSuggestion(false);
+		}
+	};
+
+	const handleOpenAssignProjectModal = async (hiring) => {
+		setSelectedHiringForAssignment(hiring);
+		try {
+			const response = await fetch('http://localhost:5000/api/labs/user-projects', {
+				headers: {
+					'Authorization': `Bearer ${userInfo?.token}`,
+				},
+			});
+
+			if (!response.ok) throw new Error('Failed to fetch projects');
+
+			const data = await response.json();
+			setAvailableProjects(data.projects || []);
+			setShowAssignProjectModal(true);
+		} catch (err) {
+			console.error('Error fetching projects:', err);
+			alert('Failed to fetch available projects');
+		}
+	};
+
+	const handleAssignConsultantToProject = async () => {
+		if (!selectedHiringForAssignment || !selectedProjectForAssignment) {
+			alert('Please select a project');
+			return;
+		}
+
+		setAssigningToProject(true);
+		try {
+			const response = await fetch('http://localhost:5000/api/university/assign-consultant', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${userInfo?.token}`,
+				},
+				body: JSON.stringify({
+					consultantId: selectedHiringForAssignment.consultantId._id,
+					labProjectId: selectedProjectForAssignment._id,
+					budgetPriority: 'balanced'
+				})
+			});
+
+			if (!response.ok) throw new Error('Failed to assign consultant');
+
+			alert('Consultant assigned to project!');
+			setShowAssignProjectModal(false);
+			setSelectedHiringForAssignment(null);
+			setSelectedProjectForAssignment(null);
+		} catch (err) {
+			console.error('Assignment error:', err);
+			alert(err.message || 'Failed to assign consultant');
+		} finally {
+			setAssigningToProject(false);
+		}
+	};
+
 	if (!userInfo) {
 		navigate('/login');
 		return null;
@@ -387,7 +592,7 @@ const TechnicalConsultantDashboard = () => {
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Consultant Name</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
 										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Hired Date</th>
-										<th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Action</th>
+										<th className="px-6 py-3 text-center text-xs font-medium text-gray-700 uppercase tracking-wider">Actions</th>
 									</tr>
 								</thead>
 								<tbody className="divide-y divide-gray-200">
@@ -402,12 +607,18 @@ const TechnicalConsultantDashboard = () => {
 											<td className="px-6 py-3 text-sm text-gray-600">
 												{new Date(hiring.createdAt).toLocaleDateString()}
 											</td>
-											<td className="px-6 py-3 text-center">
+											<td className="px-6 py-3 text-center space-x-2">
 												<button
 													onClick={() => handleOpenChat(hiring)}
 													className="px-3 py-1 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 transition-colors"
 												>
 													Chat
+												</button>
+												<button
+													onClick={() => handleOpenAssignProjectModal(hiring)}
+													className="px-3 py-1 bg-amber-600 text-white rounded text-xs font-medium hover:bg-amber-700 transition-colors"
+												>
+													Assign
 												</button>
 											</td>
 										</tr>
@@ -476,6 +687,109 @@ const TechnicalConsultantDashboard = () => {
 						</div>
 					) : (
 						<p className="text-sm text-gray-500">No infrastructure setup requests yet.</p>
+					)}
+				</div>
+
+				{/* Assigned Lab Projects Section */}
+				<div className="px-6 py-5 sm:px-8 border-b border-gray-100 bg-white">
+					<h2 className="text-lg font-semibold text-gray-900 mb-4">Assigned Lab Projects</h2>
+					{assignedProjects.length > 0 ? (
+						<div className="grid gap-4 md:grid-cols-2">
+							{assignedProjects.map((project) => (
+								<div
+									key={project._id}
+									className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+									onClick={() => handleOpenProjectDetails(project)}
+								>
+									<div className="flex items-start justify-between mb-3">
+										<div>
+											<h3 className="font-semibold text-gray-900">{project.labProjectId?.labName || 'Lab Project'}</h3>
+											<p className="text-xs text-gray-500 mt-1">Project Type: {project.labProjectId?.labType || 'N/A'}</p>
+										</div>
+										<span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+											project.status === 'assigned' ? 'bg-blue-100 text-blue-800' :
+											project.status === 'analyzing' ? 'bg-yellow-100 text-yellow-800' :
+											project.status === 'suggestions-provided' ? 'bg-green-100 text-green-800' :
+											'bg-gray-100 text-gray-800'
+										}`}>
+											{project.status.replace(/-/g, ' ')}
+										</span>
+									</div>
+									<p className="text-sm text-gray-600 mb-3">{project.labProjectId?.description || 'No description'}</p>
+									<div className="grid grid-cols-2 gap-2 text-xs">
+										<div>
+											<p className="text-gray-500">Budget Priority</p>
+											<p className="font-semibold text-gray-900">{project.budgetPriority || 'N/A'}</p>
+										</div>
+										<div>
+											<p className="text-gray-500">Budget</p>
+											<p className="font-semibold text-gray-900">${project.labProjectId?.budget || '0'}</p>
+										</div>
+									</div>
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											handleOpenProjectDetails(project);
+										}}
+										className="mt-3 w-full px-3 py-2 bg-indigo-600 text-white rounded text-xs font-medium hover:bg-indigo-700 transition-colors"
+									>
+										View & Suggest
+									</button>
+								</div>
+							))}
+						</div>
+					) : (
+						<p className="text-sm text-gray-500">No projects assigned to you yet.</p>
+					)}
+				</div>
+
+				{/* Component Suggestions History Section */}
+				<div className="px-6 py-5 sm:px-8 border-b border-gray-100 bg-white">
+					<h2 className="text-lg font-semibold text-gray-900 mb-4">Your Component Suggestions</h2>
+					{consultantSuggestions.length > 0 ? (
+						<div className="overflow-x-auto">
+							<table className="min-w-full divide-y divide-gray-200 border border-gray-200 rounded-lg">
+								<thead className="bg-gray-50">
+									<tr>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Project</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Suggestion Title</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Type</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Cost Impact</th>
+										<th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Status</th>
+									</tr>
+								</thead>
+								<tbody className="divide-y divide-gray-200">
+									{consultantSuggestions.map((suggestion) => (
+										<tr key={suggestion._id} className="hover:bg-gray-50">
+											<td className="px-6 py-3 text-sm text-gray-900">{suggestion.assignmentId?.labProjectId?.labName || 'N/A'}</td>
+											<td className="px-6 py-3 text-sm text-gray-900">{suggestion.title}</td>
+											<td className="px-6 py-3 text-sm text-gray-600">
+												<span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-cyan-100 text-cyan-800">
+													{suggestion.suggestionType.replace(/-/g, ' ')}
+												</span>
+											</td>
+											<td className="px-6 py-3 text-sm text-gray-600">
+												<span className={suggestion.costImpact < 0 ? 'text-green-600 font-semibold' : 'text-orange-600 font-semibold'}>
+													${suggestion.costImpact}
+												</span>
+											</td>
+											<td className="px-6 py-3 text-sm">
+												<span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+													suggestion.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+													suggestion.status === 'accepted' ? 'bg-green-100 text-green-800' :
+													suggestion.status === 'rejected' ? 'bg-red-100 text-red-800' :
+													'bg-gray-100 text-gray-800'
+												}`}>
+													{suggestion.status.charAt(0).toUpperCase() + suggestion.status.slice(1)}
+												</span>
+											</td>
+										</tr>
+									))}
+								</tbody>
+							</table>
+						</div>
+					) : (
+						<p className="text-sm text-gray-500">No suggestions submitted yet.</p>
 					)}
 				</div>
 			</div>
@@ -705,6 +1019,258 @@ const TechnicalConsultantDashboard = () => {
 								className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50"
 							>
 								{submittingInfra ? 'Submitting...' : 'Submit Request'}
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Project Details and Suggestion Modal */}
+			{showProjectModal && selectedProject && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+					<div className="bg-white rounded-lg w-full max-w-2xl my-8">
+						<div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+							<div>
+								<h3 className="text-lg font-semibold text-gray-900">
+									{selectedProject.labProjectId?.labName || 'Lab Project'}
+								</h3>
+								<p className="text-xs text-gray-500 mt-1">Assignment Status: {selectedProject.status.replace(/-/g, ' ')}</p>
+							</div>
+							<button
+								onClick={() => {
+									setShowProjectModal(false);
+									setShowSuggestionModal(false);
+								}}
+								className="text-gray-500 hover:text-gray-700"
+							>
+								✕
+							</button>
+						</div>
+
+						{/* Project Details */}
+						<div className="p-6 border-b border-gray-200">
+							<h4 className="font-semibold text-gray-900 mb-3">Project Information</h4>
+							<div className="grid grid-cols-2 gap-4 mb-4">
+								<div>
+									<p className="text-xs text-gray-500 uppercase">Lab Type</p>
+									<p className="text-sm text-gray-900">{selectedProject.labProjectId?.labType || 'N/A'}</p>
+								</div>
+								<div>
+									<p className="text-xs text-gray-500 uppercase">Budget</p>
+									<p className="text-sm text-gray-900">${selectedProject.labProjectId?.budget || '0'}</p>
+								</div>
+								<div>
+									<p className="text-xs text-gray-500 uppercase">Budget Priority</p>
+									<p className="text-sm text-gray-900 font-semibold">{selectedProject.budgetPriority || 'N/A'}</p>
+								</div>
+								<div>
+									<p className="text-xs text-gray-500 uppercase">Status</p>
+									<p className="text-sm text-gray-900">{selectedProject.labProjectId?.status || 'N/A'}</p>
+								</div>
+							</div>
+							<div>
+								<p className="text-xs text-gray-500 uppercase mb-1">Description</p>
+								<p className="text-sm text-gray-700">{selectedProject.labProjectId?.description || 'No description provided'}</p>
+							</div>
+						</div>
+
+						{/* Component Specifications */}
+						<div className="p-6 border-b border-gray-200">
+							<h4 className="font-semibold text-gray-900 mb-3">Current Components & Specifications</h4>
+							{selectedProject.labProjectId?.components && selectedProject.labProjectId.components.length > 0 ? (
+								<div className="space-y-3">
+									{selectedProject.labProjectId.components.map((comp, idx) => (
+										<div key={idx} className="border border-gray-200 rounded p-3 bg-gray-50">
+											<p className="font-semibold text-sm text-gray-900">{comp.componentName}</p>
+											<p className="text-xs text-gray-600 mt-1">Specification: {comp.specification}</p>
+											<p className="text-xs text-gray-600">Quantity: {comp.quantity}</p>
+										</div>
+									))}
+								</div>
+							) : (
+								<p className="text-sm text-gray-500">No component details available</p>
+							)}
+						</div>
+
+						{/* Submit Suggestion Section */}
+						<div className="p-6">
+							<h4 className="font-semibold text-gray-900 mb-4">Submit Component Suggestion</h4>
+							<div className="space-y-4">
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Suggestion Type *</label>
+									<select
+										value={suggestionForm.suggestionType}
+										onChange={(e) => handleSuggestionFormChange('suggestionType', e.target.value)}
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									>
+										<option value="component-swap">Component Swap</option>
+										<option value="architecture-redesign">Architecture Redesign</option>
+										<option value="optimization">Optimization</option>
+										<option value="cost-reduction">Cost Reduction</option>
+										<option value="performance-enhancement">Performance Enhancement</option>
+									</select>
+								</div>
+
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Suggestion Title *</label>
+									<input
+										type="text"
+										value={suggestionForm.title}
+										onChange={(e) => handleSuggestionFormChange('title', e.target.value)}
+										placeholder="Brief title for your suggestion"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+									/>
+								</div>
+
+								<div>
+									<label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+									<textarea
+										value={suggestionForm.description}
+										onChange={(e) => handleSuggestionFormChange('description', e.target.value)}
+										placeholder="Detailed explanation of your suggestion"
+										className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										rows="3"
+									/>
+								</div>
+
+								<div className="grid grid-cols-2 gap-4">
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">Original Component</label>
+										<input
+											type="text"
+											value={suggestionForm.originalComponent}
+											onChange={(e) => handleSuggestionFormChange('originalComponent', e.target.value)}
+											placeholder="Current component"
+											className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										/>
+									</div>
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">Suggested Alternative</label>
+										<input
+											type="text"
+											value={suggestionForm.suggestedAlternative}
+											onChange={(e) => handleSuggestionFormChange('suggestedAlternative', e.target.value)}
+											placeholder="Alternative component/architecture"
+											className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										/>
+									</div>
+								</div>
+
+								<div className="grid grid-cols-2 gap-4">
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">Cost Impact ($)</label>
+										<input
+											type="number"
+											value={suggestionForm.costImpact}
+											onChange={(e) => handleSuggestionFormChange('costImpact', parseFloat(e.target.value) || 0)}
+											placeholder="Positive = more cost, Negative = saves cost"
+											className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										/>
+										<p className="text-xs text-gray-500 mt-1">Positive = increase, Negative = decrease</p>
+									</div>
+									<div>
+										<label className="block text-sm font-medium text-gray-700 mb-1">Performance Impact</label>
+										<input
+											type="text"
+											value={suggestionForm.performanceImpactDescription}
+											onChange={(e) => handleSuggestionFormChange('performanceImpactDescription', e.target.value)}
+											placeholder="e.g., 20% faster, More reliable"
+											className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										/>
+									</div>
+								</div>
+							</div>
+
+							<div className="flex gap-3 mt-6">
+								<button
+									onClick={() => {
+										setShowProjectModal(false);
+										setShowSuggestionModal(false);
+										setSuggestionForm({
+											suggestionType: 'component-swap',
+											title: '',
+											description: '',
+											originalComponent: '',
+											suggestedAlternative: '',
+											costImpact: 0,
+											performanceImpactDescription: ''
+										});
+									}}
+									disabled={submitingSuggestion}
+									className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+								>
+									Cancel
+								</button>
+								<button
+									onClick={handleSubmitComponentSuggestion}
+									disabled={submitingSuggestion}
+									className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50"
+								>
+									{submitingSuggestion ? 'Submitting...' : 'Submit Suggestion'}
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Assign to Project Modal */}
+			{showAssignProjectModal && selectedHiringForAssignment && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+					<div className="bg-white rounded-lg max-w-md w-full p-6">
+						<h3 className="text-lg font-semibold text-gray-900 mb-4">
+							Assign to Project
+						</h3>
+						<p className="text-sm text-gray-600 mb-4">Consultant: {selectedHiringForAssignment.consultantId?.name}</p>
+
+						{/* Project Selection */}
+						<div className="mb-4">
+							<label className="block text-sm font-medium text-gray-700 mb-2">Select a Project</label>
+							{availableProjects.length > 0 ? (
+								<div className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto space-y-2 p-2">
+									{availableProjects.map((project) => (
+										<div
+											key={project._id}
+											onClick={() => setSelectedProjectForAssignment(project)}
+											className={`p-3 cursor-pointer rounded border-2 transition ${
+												selectedProjectForAssignment?._id === project._id
+													? 'bg-amber-50 border-amber-600'
+													: 'border-gray-200 hover:border-gray-300 bg-white'
+											}`}
+										>
+											<p className="font-medium text-sm text-gray-900">{project.labName}</p>
+											<p className="text-xs text-gray-600 mt-1">Type: {project.labType} | Budget: ${project.budget}</p>
+										</div>
+									))}
+								</div>
+							) : (
+								<div className="p-3 text-center border border-gray-200 rounded-lg">
+									<p className="text-sm text-gray-500">No available projects</p>
+									<p className="text-xs text-gray-400 mt-1">Create a lab project first in Lab Planning</p>
+								</div>
+							)}
+						</div>
+
+						{/* Buttons */}
+						<div className="flex gap-3">
+							<button
+								onClick={() => {
+									setShowAssignProjectModal(false);
+									setSelectedHiringForAssignment(null);
+									setSelectedProjectForAssignment(null);
+									setAvailableProjects([]);
+								}}
+								disabled={assigningToProject}
+								className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+							>
+								Cancel
+							</button>
+							<button
+								onClick={handleAssignConsultantToProject}
+								disabled={assigningToProject || !selectedProjectForAssignment}
+								className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 disabled:opacity-50 transition-colors"
+							>
+								{assigningToProject ? 'Assigning...' : 'Assign'}
 							</button>
 						</div>
 					</div>

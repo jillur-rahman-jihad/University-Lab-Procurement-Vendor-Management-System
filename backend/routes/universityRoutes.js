@@ -26,8 +26,8 @@ router.post("/infrastructure-requests/:requestId/accept-quote", authMiddleware, 
 // NEW: Consultant project assignment and suggestions
 router.post("/assign-consultant", authMiddleware, universityController.assignConsultantToProject);
 router.get("/project-assignments", authMiddleware, universityController.getProjectAssignments);
-router.get("/project-suggestions", authMiddleware, universityController.getProjectSuggestions);
-router.post("/suggest/:suggestionId/respond", authMiddleware, universityController.respondToSuggestion);
+router.get("/project-suggestions/:labProjectId", authMiddleware, universityController.getProjectSuggestions);
+router.post("/respond-suggestion", authMiddleware, universityController.respondToSuggestion);
 
 module.exports = router;
 

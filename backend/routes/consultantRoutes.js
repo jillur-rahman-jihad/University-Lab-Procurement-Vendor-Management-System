@@ -16,4 +16,10 @@ router.get("/profile", consultantController.getProfile);
 // Update consultant profile
 router.patch("/profile", consultantController.updateProfile);
 
+// NEW: Consultant lab project assignment and suggestions
+router.get("/assigned-projects", consultantController.getAssignedProjects);
+router.get("/assigned-projects/:assignmentId", consultantController.getAssignedProject);
+router.post("/submit-suggestion", consultantController.submitComponentSuggestion);
+router.get("/suggestions", consultantController.getConsultantSuggestions);
+
 module.exports = router;
