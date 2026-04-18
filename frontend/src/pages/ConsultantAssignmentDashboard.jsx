@@ -12,11 +12,10 @@ const ConsultantAssignmentDashboard = () => {
   const [successMessage, setSuccessMessage] = useState(null);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const token = userInfo.token;
+  const token = localStorage.getItem('token');
+  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   // Fetch data on component mount and tab change
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (userInfo?.role === 'consultant') {
       fetchData();

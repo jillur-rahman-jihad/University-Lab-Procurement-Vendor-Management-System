@@ -19,6 +19,8 @@ const hireRoutes = require('./routes/hireRoutes');
 const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoutes');
 // MODULE 2 - Task 2D: Lab Optimization Routes
 const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
+// Consultant Rating & Ranking System Routes
+const consultantRRSystemRoutes = require('./routes/consultantRRSystemRoutes');
 
 connectDB();
 
@@ -42,6 +44,8 @@ app.use('/api/hire', hireRoutes);
 app.use('/api/infrastructure-services', infrastructureServiceRoutes);
 // MODULE 2 - Task 2D: Lab Optimization Routes (temporarily at /api/optimization for testing)
 app.use('/api/labs/optimization', labOptimizationRoutes);
+// Consultant Rating & Ranking System Routes
+app.use('/api/consultant-ranking', consultantRRSystemRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
