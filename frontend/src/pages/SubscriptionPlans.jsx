@@ -323,21 +323,14 @@ const SubscriptionPlans = () => {
 									<div className="flex items-start gap-3">
 										<span className="text-amber-600 font-bold text-lg">✓</span>
 										<div>
-											<p className="font-medium text-gray-900">Priority Support</p>
-											<p className="text-sm text-gray-600">24/7 priority email and chat support</p>
-										</div>
-									</div>
-
-									<div className="flex items-start gap-3">
-										<span className="text-amber-600 font-bold text-lg">✓</span>
-										<div>
-											<p className="font-medium text-gray-900">Advanced Analytics</p>
-											<p className="text-sm text-gray-600">Detailed insights and reporting</p>
+											<p className="font-medium text-gray-900">Priority Vendor Visibility</p>
+											<p className="text-sm text-gray-600">Priority visibility of verified high-rated vendor partners for faster procurement</p>
 										</div>
 									</div>
 								</div>
 
 								<button
+									onClick={() => navigate('/premium-payment')}
 									disabled={currentSubscription?.planType === 'premium'}
 									className={`w-full py-3 rounded-lg font-medium transition-colors ${
 										currentSubscription?.planType === 'premium'
@@ -413,11 +406,26 @@ const SubscriptionPlans = () => {
 						</p>
 					</div>
 
-					<div>							<h4 className="font-semibold text-gray-900 mb-2">Do you offer annual discounts?</h4>
-							<p className="text-gray-600 text-sm">
-								Yes! Save 16% when you pay annually ($999/year instead of $1,188/year with monthly billing).
-							</p>
-						</div>
+					<div>
+						<h4 className="font-semibold text-gray-900 mb-2">What can I do with Infrastructure Optimization Reports?</h4>
+						<p className="text-gray-600 text-sm">
+							Infrastructure Optimization Reports (Premium Plan feature) provide detailed analysis of your lab infrastructure. Generate comprehensive reports on energy efficiency, performance optimization, capacity planning, and cost analysis. Receive actionable recommendations with ROI calculations, implementation timelines, and risk assessments to optimize your lab infrastructure and reduce operational costs.
+						</p>
+					</div>
+
+					<div>
+						<h4 className="font-semibold text-gray-900 mb-2">What is Priority Vendor Visibility?</h4>
+						<p className="text-gray-600 text-sm">
+							Priority Vendor Visibility is a Premium Plan feature that gives you preferred visibility of verified, high-rated vendor partners. When you search for vendors, priority partners appear first with special badges, allowing you to quickly identify the most reliable and efficient vendors. This ensures faster and more efficient procurement and deployment processes for your lab projects.
+						</p>
+					</div>
+
+					<div>
+						<h4 className="font-semibold text-gray-900 mb-2">Do you offer annual discounts?</h4>
+						<p className="text-gray-600 text-sm">
+							Yes! Save 16% when you pay annually ($999/year instead of $1,188/year with monthly billing).
+						</p>
+					</div>
 					</div>
 				</div>
 

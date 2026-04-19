@@ -31,6 +31,9 @@ router.get("/check-post-deployment-support", subscriptionController.canAccessPos
 // Check if user can access infrastructure optimization reports (Premium Plan only)
 router.get("/check-infrastructure-optimization", subscriptionController.canAccessInfrastructureOptimizationReports);
 
+// Check if user can access priority vendor visibility (Premium Plan only)
+router.get("/check-priority-vendors", subscriptionController.canAccessPriorityVendors);
+
 // Upgrade subscription
 router.post("/upgrade", subscriptionController.upgradeSubscription);
 

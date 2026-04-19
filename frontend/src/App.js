@@ -56,8 +56,10 @@ import ConsultantAssignmentDashboard from './pages/ConsultantAssignmentDashboard
 import MyHireRequests from './pages/MyHireRequests';
 import ReviewerDashboard from './pages/ReviewerDashboard';
 import SubscriptionPlans from './pages/SubscriptionPlans';
+import PremiumPayment from './pages/PremiumPayment';
 import PostDeploymentSupport from './pages/PostDeploymentSupport';
 import InfrastructureOptimizationReports from './pages/InfrastructureOptimizationReports';
+import VendorSearch from './pages/VendorSearch';
 
 function App() {
   return (
@@ -101,12 +103,16 @@ function App() {
 
             {/* Subscription & Payment Routes */}
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+            <Route path="/premium-payment" element={<PremiumPayment />} />
             
             {/* Post-Deployment Support Route (Premium Plan) */}
             <Route path="/post-deployment-support" element={<PostDeploymentSupport />} />
             
             {/* Infrastructure Optimization Reports Route (Premium Plan) */}
             <Route path="/infrastructure-optimization-reports" element={<InfrastructureOptimizationReports />} />
+            
+            {/* Vendor Search Route (Premium Priority Visibility) */}
+            <Route path="/vendor-search" element={<VendorSearch />} />
           </Routes>
         </main>
       </div>

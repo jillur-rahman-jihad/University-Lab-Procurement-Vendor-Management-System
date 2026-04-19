@@ -23,6 +23,7 @@ router.get("/analytics/planning", universityController.getLabPlanningAnalytics);
 router.get("/search-labs", universityController.searchLabs);
 router.get("/search-consultants", universityController.searchConsultants);
 router.get("/search-vendors", universityController.searchVendors);
+router.get("/search-vendors-priority", universityController.searchVendorsWithPriority);
 
 // Profile management
 router.put("/update-profile", universityController.updateUniversityProfile);

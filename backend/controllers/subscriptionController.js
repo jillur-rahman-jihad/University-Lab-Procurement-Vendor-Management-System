@@ -574,3 +574,49 @@ exports.canAccessInfrastructureOptimizationReports = async (req, res) => {
     res.status(500).json({ error: "Failed to check infrastructure optimization reports access" });
   }
 };
+
+// Check if user can access priority vendor visibility (Premium Plan only)
+exports.canAccessPriorityVendors = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get current subscription
+    let subscription = await Subscription.findOne({
+      userId: userId,
+      status: "active"
+    });
+
+    if (!subscription) {
+      subscription = new Subscription({
+        userId: userId,
+        plan: "free",
+        status: "active",
+        startDate: new Date()
+      });
+      await subscription.save();
+    }
+
+    const planType = subscription.plan;
+
+    if (planType !== "premium") {
+      return res.json({
+        success: false,
+        allowed: false,
+        reason: "premium_required",
+        message: "Priority Vendor Visibility is only available on Premium Plan. Please upgrade to access this feature.",
+        requiredPlan: "premium",
+        plan: planType
+      });
+    }
+
+    res.json({
+      success: true,
+      allowed: true,
+      message: "You have access to Priority Vendor Visibility",
+      plan: planType
+    });
+  } catch (err) {
+    console.error("Error checking priority vendor visibility access:", err);
+    res.status(500).json({ error: "Failed to check priority vendor visibility access" });
+  }
+};
