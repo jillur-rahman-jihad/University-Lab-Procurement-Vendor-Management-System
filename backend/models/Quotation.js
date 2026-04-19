@@ -23,7 +23,11 @@ const quotationSchema = new mongoose.Schema({
   revisionHistory: [{
     updatedAt: Date,
     changes: String
-  }]
+  }],
+  
+  expiryDate: { type: Date }, // For Free Plan: 30 days from creation
+  
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } // University user who created it
   
 }, { timestamps: true });
 

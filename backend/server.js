@@ -21,6 +21,8 @@ const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoute
 const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
 // Document Submission Routes (Finance/Procurement Approval Workflow)
 const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
+// Subscription Routes (Free/Premium Plan Management)
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 connectDB();
 
@@ -34,6 +36,7 @@ app.use('/uploads', express.static('uploads'));
 app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/document-submission', documentSubmissionRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 app.use("/api/vendor", vendorRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);

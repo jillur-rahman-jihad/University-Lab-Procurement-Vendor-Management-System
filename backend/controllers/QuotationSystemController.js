@@ -163,7 +163,9 @@ exports.submitQuotation = async (req, res) => {
 			installationIncluded: Boolean(installationIncluded),
 			maintenanceIncluded: Boolean(maintenanceIncluded),
 			status: 'pending',
-			revisionHistory: []
+			revisionHistory: [],
+			createdBy: req.user.id,
+			expiryDate: null // Vendor quotations don't expire
 		});
 
 		return res.status(201).json({ message: 'Quotation submitted successfully', quotation });
