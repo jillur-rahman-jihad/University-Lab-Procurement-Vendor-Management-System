@@ -54,6 +54,7 @@ import ViewAndAccept from './pages/ViewAndAccept';
 import HireConsultant from './pages/HireConsultant';
 import ConsultantAssignmentDashboard from './pages/ConsultantAssignmentDashboard';
 import MyHireRequests from './pages/MyHireRequests';
+import ReviewerDashboard from './pages/ReviewerDashboard';
 
 function App() {
   return (
@@ -91,6 +92,9 @@ function App() {
             <Route path="/vendor/quotations" element={<MyQuotations />} />
             <Route path="/vendor/contracts" element={<VendorContracts />} />
             <Route path="/vendor/analytics" element={<VendorAnalytics />} />
+            
+            {/* Document Submission & Review Routes */}
+            <Route path="/document-reviewer" element={<ReviewerDashboard />} />
           </Routes>
         </main>
       </div>
