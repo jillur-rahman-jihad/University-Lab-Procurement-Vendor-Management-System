@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const ConsultantRRSystem = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('leaderboard');
   const [leaderboard, setLeaderboard] = useState([]);
   const [consultantStats, setConsultantStats] = useState(null);
@@ -11,9 +13,24 @@ const ConsultantRRSystem = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const API_BASE_URL = 'http://localhost:5001/api/consultant-ranking';
   const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+
+  // Check access on component mount
+  useEffect(() => {
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    const allowedRoles = ['consultant', 'university'];
+    if (!allowedRoles.includes(userRole)) {
+      setAccessDenied(true);
+    }
+  }, [token, userRole, navigate]);
 
   // Fetch leaderboard
   const fetchLeaderboard = async (limit = 10, offset = 0) => {
@@ -204,6 +221,28 @@ const ConsultantRRSystem = () => {
         return 'bg-gray-500';
     }
   };
+
+  if (accessDenied) {
+    return (
+      <div className="min-h-screen bg-gray-50 p-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="mt-16 text-center">
+            <div className="inline-block bg-red-100 border-2 border-red-400 rounded-lg p-8">
+              <h1 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h1>
+              <p className="text-gray-700 mb-6">This system can only be accessed by Consultants and University users.</p>
+              <p className="text-gray-600 mb-6">Your current role: <span className="font-semibold text-gray-900">{userRole}</span></p>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                Return to Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

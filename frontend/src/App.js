@@ -54,6 +54,7 @@ import ViewAndAccept from './pages/ViewAndAccept';
 import HireConsultant from './pages/HireConsultant';
 import ConsultantAssignmentDashboard from './pages/ConsultantAssignmentDashboard';
 import MyHireRequests from './pages/MyHireRequests';
+import ConsultantRRSystem from './pages/ConsultantRRSystem';
 
 function App() {
   return (
@@ -91,6 +92,9 @@ function App() {
             <Route path="/vendor/quotations" element={<MyQuotations />} />
             <Route path="/vendor/contracts" element={<VendorContracts />} />
             <Route path="/vendor/analytics" element={<VendorAnalytics />} />
+            
+            {/* Consultant Rating & Ranking System */}
+            <Route path="/consultant-rr-system" element={<ConsultantRRSystem />} />
           </Routes>
         </main>
       </div>

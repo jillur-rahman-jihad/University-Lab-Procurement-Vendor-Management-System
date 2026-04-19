@@ -267,6 +267,19 @@ const UniversityDashboard = () => {
 							Track and manage all your consultant hire requests and assignments.
 						</p>
 					</button>
+
+					<button
+						onClick={() => navigate('/consultant-rr-system')}
+						className="text-left rounded-2xl border border-orange-100 bg-orange-50 hover:bg-orange-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-orange-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 6
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Consultant Rating & Ranking</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							View and manage consultant performance ratings and rankings.
+						</p>
+					</button>
 				</div>
 			</div>
 
