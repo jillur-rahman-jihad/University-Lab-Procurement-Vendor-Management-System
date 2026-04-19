@@ -16,8 +16,15 @@ const ConsultantRRSystem = () => {
   const [accessDenied, setAccessDenied] = useState(false);
 
   const API_BASE_URL = 'http://localhost:5001/api/consultant-ranking';
-  const token = localStorage.getItem('token');
-  const userRole = localStorage.getItem('userRole');
+  let userInfo = null;
+  try {
+    userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  } catch (e) {
+    userInfo = null;
+  }
+
+  const token = userInfo?.token || localStorage.getItem('token');
+  const userRole = userInfo?.role || localStorage.getItem('userRole');
 
   // Check access on component mount
   useEffect(() => {
