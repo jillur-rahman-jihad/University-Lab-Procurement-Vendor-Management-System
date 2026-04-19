@@ -22,6 +22,12 @@ router.post("/check-lab-project", subscriptionController.canCreateLabProject);
 // Check if user can hire consultant
 router.post("/check-consultant-hire", subscriptionController.canHireConsultant);
 
+// Check if user can hire specific consultant type
+router.post("/check-consultant-type", subscriptionController.canHireConsultantType);
+
+// Check if user can access post-deployment support (Premium Plan only)
+router.get("/check-post-deployment-support", subscriptionController.canAccessPostDeploymentSupport);
+
 // Upgrade subscription
 router.post("/upgrade", subscriptionController.upgradeSubscription);
 

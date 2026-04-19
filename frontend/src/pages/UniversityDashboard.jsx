@@ -635,6 +635,19 @@ const UniversityDashboard = () => {
 							Manage your subscription plan and payment information.
 						</p>
 					</button>
+
+					<button
+						onClick={() => navigate('/post-deployment-support')}
+						className="text-left rounded-2xl border border-teal-100 bg-teal-50 hover:bg-teal-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-teal-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 7
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Post-Deployment Support</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							Submit and track post-deployment support requests (Premium Plan).
+						</p>
+					</button>
 				</div>
 			</div>
 

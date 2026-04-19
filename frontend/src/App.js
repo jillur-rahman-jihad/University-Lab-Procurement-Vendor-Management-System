@@ -56,6 +56,7 @@ import ConsultantAssignmentDashboard from './pages/ConsultantAssignmentDashboard
 import MyHireRequests from './pages/MyHireRequests';
 import ReviewerDashboard from './pages/ReviewerDashboard';
 import SubscriptionPlans from './pages/SubscriptionPlans';
+import PostDeploymentSupport from './pages/PostDeploymentSupport';
 
 function App() {
   return (
@@ -99,6 +100,9 @@ function App() {
 
             {/* Subscription & Payment Routes */}
             <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+            
+            {/* Post-Deployment Support Route (Premium Plan) */}
+            <Route path="/post-deployment-support" element={<PostDeploymentSupport />} />
           </Routes>
         </main>
       </div>

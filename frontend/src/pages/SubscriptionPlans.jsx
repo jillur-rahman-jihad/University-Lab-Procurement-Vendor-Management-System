@@ -275,6 +275,14 @@ const SubscriptionPlans = () => {
 									<div className="flex items-start gap-3">
 										<span className="text-amber-600 font-bold text-lg">✓</span>
 										<div>
+											<p className="font-medium text-gray-900">Hire All Consultant Types</p>
+											<p className="text-sm text-gray-600">Hire General, Certified, and Professional consultants</p>
+										</div>
+									</div>
+
+									<div className="flex items-start gap-3">
+										<span className="text-amber-600 font-bold text-lg">✓</span>
+										<div>
 											<p className="font-medium text-gray-900">All Export Formats</p>
 											<p className="text-sm text-gray-600">JSON, PDF, CSV, and Procurement Reports</p>
 										</div>
@@ -293,6 +301,14 @@ const SubscriptionPlans = () => {
 										<div>
 											<p className="font-medium text-gray-900">Document Submission & Approval</p>
 											<p className="text-sm text-gray-600">Full workflow with Finance/Procurement review</p>
+										</div>
+									</div>
+
+									<div className="flex items-start gap-3">
+										<span className="text-amber-600 font-bold text-lg">✓</span>
+										<div>
+											<p className="font-medium text-gray-900">Post-Deployment Support</p>
+											<p className="text-sm text-gray-600">Create and track post-deployment support tickets</p>
 										</div>
 									</div>
 
@@ -341,6 +357,14 @@ const SubscriptionPlans = () => {
 						</div>
 
 						<div>
+							<h4 className="font-semibold text-gray-900 mb-2">What consultant types can I hire on each plan?</h4>
+							<p className="text-gray-600 text-sm">
+								<strong>Free Plan:</strong> You can only hire General consultants (max 5). You can view Certified and Professional consultants, but cannot hire them.<br/><br/>
+								<strong>Premium Plan:</strong> You can hire unlimited consultants of all types - General, Certified, and Professional consultants with no restrictions.
+							</p>
+						</div>
+
+						<div>
 							<h4 className="font-semibold text-gray-900 mb-2">Can I change my plan anytime?</h4>
 							<p className="text-gray-600 text-sm">
 								Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately.
@@ -365,6 +389,13 @@ const SubscriptionPlans = () => {
 							<h4 className="font-semibold text-gray-900 mb-2">What happens if I reach my project/consultant limits?</h4>
 							<p className="text-gray-600 text-sm">
 								When you reach the Free Plan limits, you'll be unable to create more lab projects or hire more consultants until you upgrade to Premium Plan.
+							</p>
+						</div>
+
+						<div>
+							<h4 className="font-semibold text-gray-900 mb-2">What is Post-Deployment Support?</h4>
+							<p className="text-gray-600 text-sm">
+								Post-Deployment Support is a Premium Plan feature that allows you to create and track support tickets for your deployed lab systems. You can submit technical issues, maintenance requests, training needs, and optimization requests. Each ticket is tracked from creation to resolution with full activity logging.
 							</p>
 						</div>
 

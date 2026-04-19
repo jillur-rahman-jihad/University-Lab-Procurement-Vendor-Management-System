@@ -21,20 +21,37 @@ const ConsultantSearchCard = ({ consultant }) => {
         )}
       </div>
 
-      {/* Consultant Name */}
-      <h3 className="text-lg font-semibold text-center mb-2">{consultant.name}</h3>
+      {/* Consultant Name and Type Badge */}
+      <div className="text-center mb-3">
+        <h3 className="text-lg font-semibold mb-2">{consultant.name}</h3>
+        {/* Consultant Type Badge */}
+        <div className="flex justify-center mb-2">
+          {(() => {
+            const level = info.experienceLevel || 'General';
+            let badgeColor = 'bg-blue-100 text-blue-800';
+            let badgeEmoji = '👤';
+            
+            if (level === 'Certified') {
+              badgeColor = 'bg-amber-100 text-amber-800';
+              badgeEmoji = '⭐';
+            } else if (level === 'Professional') {
+              badgeColor = 'bg-purple-100 text-purple-800';
+              badgeEmoji = '💎';
+            }
+            
+            return (
+              <span className={`px-3 py-1 rounded-full text-sm font-semibold ${badgeColor}`}>
+                {badgeEmoji} {level}
+              </span>
+            );
+          })()}
+        </div>
+      </div>
 
       {/* Email and Phone */}
       <div className="text-sm text-gray-600 space-y-1 mb-3 border-b pb-3">
         <p><strong>Email:</strong> {consultant.email}</p>
         <p><strong>Phone:</strong> {consultant.phone || 'N/A'}</p>
-      </div>
-
-      {/* Experience Level */}
-      <div className="mb-3">
-        <p className="text-sm font-medium text-gray-700">
-          <strong>Experience:</strong> <span className="text-blue-600">{info.experienceLevel || 'Not Set'}</span>
-        </p>
       </div>
 
       {/* Expertise */}

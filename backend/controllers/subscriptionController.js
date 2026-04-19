@@ -323,6 +323,95 @@ exports.canCreateLabProject = async (req, res) => {
   }
 };
 
+// Check if user can hire consultant of specific type (for free plan)
+exports.canHireConsultantType = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { consultantId } = req.body;
+
+    if (!consultantId) {
+      return res.status(400).json({ error: "consultantId is required" });
+    }
+
+    // Get current subscription
+    let subscription = await Subscription.findOne({
+      userId: userId,
+      status: "active"
+    });
+
+    if (!subscription) {
+      subscription = new Subscription({
+        userId: userId,
+        plan: "free",
+        status: "active",
+        startDate: new Date()
+      });
+      await subscription.save();
+    }
+
+    const planType = subscription.plan;
+
+    // Get consultant info
+    const User = require("../models/User");
+    const consultant = await User.findById(consultantId).select('consultantInfo.experienceLevel');
+
+    if (!consultant) {
+      return res.json({
+        success: false,
+        allowed: false,
+        reason: "consultant_not_found",
+        message: "Consultant not found"
+      });
+    }
+
+    const consultantLevel = consultant.consultantInfo?.experienceLevel || 'General';
+
+    // Free Plan restrictions
+    if (planType === "free") {
+      if (consultantLevel !== 'General') {
+        return res.json({
+          success: false,
+          allowed: false,
+          reason: "consultant_type_not_allowed",
+          message: `Free Plan only allows hiring General consultants. This is a ${consultantLevel} consultant. Please upgrade to Premium Plan to hire ${consultantLevel} consultants.`,
+          consultantType: consultantLevel,
+          allowedTypes: ["General"],
+          requiredPlan: "premium"
+        });
+      }
+
+      // Still check max consultant limit for Free Plan
+      const ConsultantAssignment = require("../models/ConsultantAssignment");
+      const consultantCount = await ConsultantAssignment.countDocuments({
+        universityId: userId,
+        status: { $in: ["pending", "accepted", "active"] }
+      });
+
+      if (consultantCount >= 5) {
+        return res.json({
+          success: false,
+          allowed: false,
+          reason: "consultant_limit_reached",
+          message: "Free Plan allows maximum 5 active consultant hires",
+          currentCount: consultantCount,
+          limit: 5
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      allowed: true,
+      message: `You can hire this ${consultantLevel} consultant (Plan: ${planType})`,
+      consultantType: consultantLevel,
+      plan: planType
+    });
+  } catch (err) {
+    console.error("Error checking consultant type hiring:", err);
+    res.status(500).json({ error: "Failed to check consultant type hiring limits" });
+  }
+};
+
 // Check if user can hire consultant (for free plan)
 exports.canHireConsultant = async (req, res) => {
   try {
@@ -391,5 +480,51 @@ exports.getSubscriptionHistory = async (req, res) => {
   } catch (err) {
     console.error("Error fetching subscription history:", err);
     res.status(500).json({ error: "Failed to fetch subscription history" });
+  }
+};
+
+// Check if user can access post-deployment support (Premium Plan only)
+exports.canAccessPostDeploymentSupport = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get current subscription
+    let subscription = await Subscription.findOne({
+      userId: userId,
+      status: "active"
+    });
+
+    if (!subscription) {
+      subscription = new Subscription({
+        userId: userId,
+        plan: "free",
+        status: "active",
+        startDate: new Date()
+      });
+      await subscription.save();
+    }
+
+    const planType = subscription.plan;
+
+    if (planType !== "premium") {
+      return res.json({
+        success: false,
+        allowed: false,
+        reason: "premium_required",
+        message: "Post-Deployment Support is only available on Premium Plan. Please upgrade to access this feature.",
+        requiredPlan: "premium",
+        plan: planType
+      });
+    }
+
+    res.json({
+      success: true,
+      allowed: true,
+      message: "You have access to Post-Deployment Support",
+      plan: planType
+    });
+  } catch (err) {
+    console.error("Error checking post-deployment support access:", err);
+    res.status(500).json({ error: "Failed to check post-deployment support access" });
   }
 };

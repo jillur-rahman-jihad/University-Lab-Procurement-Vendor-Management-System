@@ -16,6 +16,9 @@ const HireConsultant = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [selectedConsultantType, setSelectedConsultantType] = useState(null);
+  const [typeValidation, setTypeValidation] = useState(null);
+  const [typeCheckLoading, setTypeCheckLoading] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -46,6 +49,35 @@ const HireConsultant = () => {
       [name]: value
     }));
     setError(null); // Clear error when user starts typing
+
+    // If consultant is selected, validate the consultant type
+    if (name === 'consultantId' && value) {
+      validateConsultantType(value);
+    } else if (name === 'consultantId') {
+      setSelectedConsultantType(null);
+      setTypeValidation(null);
+    }
+  };
+
+  // Validate if current subscription allows hiring this consultant type
+  const validateConsultantType = async (consultantId) => {
+    setTypeCheckLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/subscription/check-consultant-type`,
+        { consultantId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const selectedConsultant = consultants.find(c => c._id === consultantId);
+      setSelectedConsultantType(selectedConsultant?.consultantInfo?.experienceLevel || 'General');
+      setTypeValidation(response.data);
+    } catch (err) {
+      console.error('Error validating consultant type:', err);
+      setTypeValidation(null);
+    } finally {
+      setTypeCheckLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -171,7 +203,7 @@ const HireConsultant = () => {
                 <option value="">-- Choose a consultant --</option>
                 {consultants.map((consultant) => (
                   <option key={consultant._id} value={consultant._id}>
-                    {consultant.name} - {consultant.consultantInfo?.expertise?.join(", ") || "No expertise"}
+                    {consultant.name} - {consultant.consultantInfo?.expertise?.join(", ") || "No expertise"} ({consultant.consultantInfo?.experienceLevel || 'General'})
                   </option>
                 ))}
               </select>
@@ -179,6 +211,54 @@ const HireConsultant = () => {
                 {consultants.length} available consultants
               </p>
             </div>
+
+            {/* Consultant Type Badge and Validation */}
+            {selectedConsultantType && (
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-gray-900">Consultant Type</h4>
+                  {typeCheckLoading ? (
+                    <span className="text-sm text-gray-500">Validating...</span>
+                  ) : (
+                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                      selectedConsultantType === 'General' ? 'bg-blue-100 text-blue-800' :
+                      selectedConsultantType === 'Certified' ? 'bg-amber-100 text-amber-800' :
+                      'bg-purple-100 text-purple-800'
+                    }`}>
+                      {selectedConsultantType === 'General' && '👤'}
+                      {selectedConsultantType === 'Certified' && '⭐'}
+                      {selectedConsultantType === 'Professional' && '💎'}
+                      {' '}{selectedConsultantType}
+                    </span>
+                  )}
+                </div>
+
+                {/* Validation Status */}
+                {typeValidation && (
+                  <>
+                    {typeValidation.allowed ? (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
+                        ✓ You can hire this {selectedConsultantType} consultant on your current plan
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded mb-3">
+                        <p className="text-amber-800 text-sm font-medium mb-2">⚠️ Upgrade Required</p>
+                        <p className="text-amber-700 text-sm mb-3">
+                          Your Free Plan only allows hiring <strong>General</strong> consultants. This is a <strong>{selectedConsultantType}</strong> consultant.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/subscription-plans')}
+                          className="inline-block px-3 py-2 bg-amber-600 text-white rounded text-sm font-medium hover:bg-amber-700 transition"
+                        >
+                          Upgrade to Premium Plan
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
 
             {/* Project Name */}
             <div>
@@ -250,24 +330,28 @@ const HireConsultant = () => {
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (typeValidation && !typeValidation.allowed)}
                 className={`flex-1 px-6 py-3 rounded-lg font-semibold text-white transition ${
-                  loading
+                  loading || (typeValidation && !typeValidation.allowed)
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
-                {loading ? 'Sending...' : 'Send Hire Request'}
+                {loading ? 'Sending...' : (typeValidation && !typeValidation.allowed ? 'Upgrade Required' : 'Send Hire Request')}
               </button>
               <button
                 type="button"
-                onClick={() => setFormData({
-                  consultantId: '',
-                  projectName: '',
-                  projectDescription: '',
-                  startDate: '',
-                  endDate: ''
-                })}
+                onClick={() => {
+                  setFormData({
+                    consultantId: '',
+                    projectName: '',
+                    projectDescription: '',
+                    startDate: '',
+                    endDate: ''
+                  });
+                  setSelectedConsultantType(null);
+                  setTypeValidation(null);
+                }}
                 className="flex-1 px-6 py-3 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition"
               >
                 Clear
