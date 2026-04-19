@@ -315,6 +315,14 @@ const SubscriptionPlans = () => {
 									<div className="flex items-start gap-3">
 										<span className="text-amber-600 font-bold text-lg">✓</span>
 										<div>
+											<p className="font-medium text-gray-900">Infrastructure Optimization Reports</p>
+											<p className="text-sm text-gray-600">Detailed analysis and optimization recommendations for your labs</p>
+										</div>
+									</div>
+
+									<div className="flex items-start gap-3">
+										<span className="text-amber-600 font-bold text-lg">✓</span>
+										<div>
 											<p className="font-medium text-gray-900">Priority Support</p>
 											<p className="text-sm text-gray-600">24/7 priority email and chat support</p>
 										</div>
@@ -399,8 +407,13 @@ const SubscriptionPlans = () => {
 							</p>
 						</div>
 
-						<div>
-							<h4 className="font-semibold text-gray-900 mb-2">Do you offer annual discounts?</h4>
+						<div>						<h4 className="font-semibold text-gray-900 mb-2">What can I do with Infrastructure Optimization Reports?</h4>
+						<p className="text-gray-600 text-sm">
+							Infrastructure Optimization Reports (Premium Plan feature) provide detailed analysis of your lab infrastructure. Generate comprehensive reports on energy efficiency, performance optimization, capacity planning, and cost analysis. Receive actionable recommendations with ROI calculations, implementation timelines, and risk assessments to optimize your lab infrastructure and reduce operational costs.
+						</p>
+					</div>
+
+					<div>							<h4 className="font-semibold text-gray-900 mb-2">Do you offer annual discounts?</h4>
 							<p className="text-gray-600 text-sm">
 								Yes! Save 16% when you pay annually ($999/year instead of $1,188/year with monthly billing).
 							</p>

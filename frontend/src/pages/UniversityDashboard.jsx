@@ -648,6 +648,19 @@ const UniversityDashboard = () => {
 							Submit and track post-deployment support requests (Premium Plan).
 						</p>
 					</button>
+
+					<button
+						onClick={() => navigate('/infrastructure-optimization-reports')}
+						className="text-left rounded-2xl border border-cyan-100 bg-cyan-50 hover:bg-cyan-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-cyan-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 8
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Infrastructure Optimization Reports</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							Generate and analyze detailed infrastructure optimization reports (Premium Plan).
+						</p>
+					</button>
 				</div>
 			</div>
 

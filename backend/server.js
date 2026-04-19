@@ -25,6 +25,8 @@ const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 // Post-Deployment Support Routes (Premium Plan Feature)
 const postDeploymentRoutes = require('./routes/postDeploymentRoutes');
+// Infrastructure Optimization Reports Routes (Premium Plan Feature)
+const infrastructureOptimizationRoutes = require('./routes/infrastructureOptimizationRoutes');
 
 connectDB();
 
@@ -39,8 +41,7 @@ app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/document-submission', documentSubmissionRoutes);
 app.use('/api/subscription', subscriptionRoutes);
-app.use('/api/post-deployment-support', postDeploymentRoutes);
-app.use("/api/vendor", vendorRoutes);
+app.use('/api/post-deployment-support', postDeploymentRoutes);app.use('/api/infrastructure-optimization', infrastructureOptimizationRoutes);app.use("/api/vendor", vendorRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);
 app.use('/api/university', universityRoutes);

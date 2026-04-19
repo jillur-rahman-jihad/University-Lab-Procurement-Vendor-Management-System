@@ -28,6 +28,9 @@ router.post("/check-consultant-type", subscriptionController.canHireConsultantTy
 // Check if user can access post-deployment support (Premium Plan only)
 router.get("/check-post-deployment-support", subscriptionController.canAccessPostDeploymentSupport);
 
+// Check if user can access infrastructure optimization reports (Premium Plan only)
+router.get("/check-infrastructure-optimization", subscriptionController.canAccessInfrastructureOptimizationReports);
+
 // Upgrade subscription
 router.post("/upgrade", subscriptionController.upgradeSubscription);
 
