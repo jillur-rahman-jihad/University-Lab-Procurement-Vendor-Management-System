@@ -3,7 +3,7 @@ const Quotation = require('../models/Quotation');
 const Procurement = require('../models/Procurement');
 const User = require('../models/User');
 
-const populateUniversity = 'name email universityInfo.universityName universityInfo.department';
+const populateUniversity = 'name email location universityInfo.universityName universityInfo.department';
 
 const getRole = async (userId) => {
 	const user = await User.findById(userId).select('role');
@@ -13,6 +13,7 @@ const getRole = async (userId) => {
 const mapLab = (lab) => ({
 	...lab.toObject(),
 	universityName: lab.universityId?.universityInfo?.universityName || lab.universityId?.name || 'University',
+	universityLocation: lab.universityId?.location || null,
 	minBudget: lab.requirements?.budgetMin ?? 0,
 	maxBudget: lab.requirements?.budgetMax ?? 0
 });
@@ -93,13 +94,13 @@ exports.getLabQuotations = async (req, res) => {
 
 		if (role === 'vendor') {
 			const myQuotation = await Quotation.findOne({ labProjectId: req.params.id, vendorId: req.user.id })
-				.populate('vendorId', 'name vendorInfo.shopName email');
+				.populate('vendorId', 'name email phone address location vendorInfo.shopName vendorInfo.location');
 
 			return res.status(200).json(myQuotation ? [myQuotation] : []);
 		}
 
 		const quotations = await Quotation.find({ labProjectId: req.params.id })
-			.populate('vendorId', 'name vendorInfo.shopName email')
+			.populate('vendorId', 'name email phone address location vendorInfo.shopName vendorInfo.location')
 			.sort({ createdAt: -1 });
 
 		return res.status(200).json(quotations);

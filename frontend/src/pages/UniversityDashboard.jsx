@@ -172,9 +172,13 @@ const UniversityDashboard = () => {
 												{new Date(project.createdAt).toLocaleDateString()}
 											</td>
 											<td className="px-6 py-4 text-sm text-gray-900">
-												<span className="inline-flex items-center justify-center h-6 w-6 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">
+												<button
+													onClick={() => navigate(`/quotation-system?labId=${project._id}&view=map`)}
+													className="inline-flex items-center justify-center h-6 min-w-6 px-2 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold hover:bg-blue-200 transition-colors"
+													title="View vendor quotations on map"
+												>
 													{project.quotationCount}
-												</span>
+												</button>
 											</td>
 											<td className="px-6 py-4 text-center">
 												<div className="flex items-center justify-center gap-2">
