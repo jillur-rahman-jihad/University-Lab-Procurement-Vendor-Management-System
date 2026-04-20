@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProcurementSummaryModal from '../components/ProcurementSummaryModal';
+import NotificationBell from '../components/NotificationBell';
 
 const UniversityDashboard = () => {
 	const navigate = useNavigate();
@@ -343,7 +344,8 @@ const UniversityDashboard = () => {
 						</p>
 					</div>
 
-					<div className="flex gap-2">
+					<div className="flex gap-2 items-center">
+						<NotificationBell />
 						<button
 							onClick={() => navigate('/document-reviewer')}
 							className="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors flex items-center gap-2"

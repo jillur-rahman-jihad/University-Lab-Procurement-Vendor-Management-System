@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import NotificationBell from '../components/NotificationBell';
 
 const ReviewerDashboard = () => {
 	const navigate = useNavigate();
@@ -293,12 +294,15 @@ const ReviewerDashboard = () => {
 							<h1 className="text-3xl font-bold text-white">Document Review Dashboard</h1>
 							<p className="text-blue-100 mt-1">Review and approve submitted lab project documentation</p>
 						</div>
-						<button
-							onClick={() => navigate('/dashboard')}
-							className="px-4 py-2 rounded-md text-sm font-medium text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
-						>
-							Back to Dashboard
-						</button>
+						<div className="flex gap-2 items-center">
+							<NotificationBell />
+							<button
+								onClick={() => navigate('/dashboard')}
+								className="px-4 py-2 rounded-md text-sm font-medium text-white bg-white bg-opacity-20 hover:bg-opacity-30 transition-all"
+							>
+								Back to Dashboard
+							</button>
+						</div>
 					</div>
 				</div>
 
