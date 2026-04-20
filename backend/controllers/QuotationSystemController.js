@@ -2,6 +2,7 @@ const LabProject = require('../models/LabProject');
 const Quotation = require('../models/Quotation');
 const Procurement = require('../models/Procurement');
 const User = require('../models/User');
+const notificationService = require('../services/notificationService');
 
 const populateUniversity = 'name email universityInfo.universityName universityInfo.department';
 
@@ -165,6 +166,34 @@ exports.submitQuotation = async (req, res) => {
 			status: 'pending',
 			revisionHistory: []
 		});
+
+		// Send notification to university about new quotation (non-blocking)
+		(async () => {
+			try {
+				const lab = await LabProject.findById(labProjectId).populate('universityId', 'name email');
+				const vendor = await User.findById(req.user.id).select('name vendorInfo.shopName');
+				const vendorName = vendor?.vendorInfo?.shopName || vendor?.name || 'Vendor';
+
+				if (lab && lab.universityId) {
+					await notificationService.createNotification({
+						userId: lab.universityId._id.toString(),
+						type: 'quotation',
+						category: 'quotation_submitted',
+						message: `New quotation received from ${vendorName} for "${lab.labName}" - Total: $${quotation.totalPrice}`,
+						referenceData: {
+							resourceType: 'Quotation',
+							resourceId: quotation._id,
+							resourceName: lab.labName
+						},
+						actionUrl: `/quotation-system?lab=${labProjectId}`,
+						sendEmail: true,
+						priority: 'normal'
+					});
+				}
+			} catch (notifError) {
+				console.error('[QUOTATION] Error sending notification:', notifError.message);
+			}
+		})();
 
 		return res.status(201).json({ message: 'Quotation submitted successfully', quotation });
 	} catch (error) {
@@ -347,6 +376,34 @@ exports.acceptQuotation = async (req, res) => {
 
 		await quotation.save();
 		await LabProject.findByIdAndUpdate(quotation.labProjectId._id, { status: 'approved' });
+
+		// Send notification to vendor about quotation acceptance (non-blocking)
+		(async () => {
+			try {
+				const lab = await LabProject.findById(quotation.labProjectId._id).select('labName');
+				const vendor = await User.findById(vendorId).select('email name vendorInfo.shopName');
+
+				if (vendor) {
+					const procurementId = existingProcurement?._id || (await Procurement.findOne({ quotationId: quotation._id }))._id;
+					await notificationService.createNotification({
+						userId: vendorId.toString(),
+						type: 'approval',
+						category: 'quotation_accepted',
+						message: `Your quotation has been accepted for "${lab?.labName || 'Lab Project'}"! Final cost: $${finalCost}. Acceptance type: ${acceptanceType}`,
+						referenceData: {
+							resourceType: 'Procurement',
+							resourceId: procurementId,
+							resourceName: lab?.labName || 'Lab Project'
+						},
+						actionUrl: `/vendor/procurements/${procurementId}`,
+						sendEmail: true,
+						priority: 'high'
+					});
+				}
+			} catch (notifError) {
+				console.error('[QUOTATION] Error sending acceptance notification:', notifError.message);
+			}
+		})();
 
 		return res.status(200).json({
 			message: 'Quotation accepted successfully',
