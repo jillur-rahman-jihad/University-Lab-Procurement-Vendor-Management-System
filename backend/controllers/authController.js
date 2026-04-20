@@ -11,7 +11,7 @@ const generateToken = (id) => {
 exports.registerUser = async (req, res) => {
   try {
     const { 
-      name, email, password, role, phone, address, 
+      name, email, password, role, phone, address, location,
       department, authorizedRepresentative,
       tradeLicenseNumber,
       professionalCredentials, relevantExperience, certificationInformation 
@@ -37,6 +37,8 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
       role,
       phone,
+      address,
+      location,
       ...(role === "university" && { 
         universityInfo: {
           universityName: name,
