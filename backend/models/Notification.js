@@ -18,7 +18,12 @@ const notificationSchema = new mongoose.Schema({
       sent: { type: Boolean, default: false },
       sentAt: Date,
       failureReason: String,
-      retryCount: { type: Number, default: 0 }
+      retryCount: { type: Number, default: 0 },
+      // Phase 5: Queue tracking
+      status: { type: String, enum: ["pending", "sending", "sent", "failed"], default: "pending" },
+      queueJobId: String,
+      lastAttempt: Date,
+      lastError: String
     }
   },
   
