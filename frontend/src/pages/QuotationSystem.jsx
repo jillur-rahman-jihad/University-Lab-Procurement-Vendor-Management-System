@@ -214,6 +214,12 @@ function QuotationSystem() {
 			const distanceText = quotation._distanceKm !== null ? `${quotation._distanceKm.toFixed(2)} km away` : 'Distance unavailable';
 
 			window.L.marker([quotation._vendorCoordinates.lat, quotation._vendorCoordinates.lng])
+				.bindTooltip(vendorName, {
+					permanent: true,
+					direction: 'top',
+					offset: [0, -12],
+					className: 'vendor-name-tooltip'
+				})
 				.bindPopup(`<strong>${vendorName}</strong><br/>Total: ${quotation.totalPrice}<br/>${distanceText}`)
 				.addTo(markerLayer);
 
