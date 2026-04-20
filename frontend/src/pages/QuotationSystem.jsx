@@ -201,7 +201,19 @@ function QuotationSystem() {
 				map.removeLayer(universityMarkerRef.current);
 			}
 
-			universityMarkerRef.current = window.L.marker([universityCoordinates.lat, universityCoordinates.lng])
+			const universityIcon = window.L.divIcon({
+				className: '',
+				html: '<div style="width:30px;height:30px;border-radius:50%;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.28);border:2px solid #ffffff;">🎓</div>',
+				iconSize: [30, 30],
+				iconAnchor: [15, 15]
+			});
+
+			universityMarkerRef.current = window.L.marker([universityCoordinates.lat, universityCoordinates.lng], { icon: universityIcon })
+				.bindTooltip('University', {
+					permanent: true,
+					direction: 'top',
+					offset: [0, -16]
+				})
 				.bindPopup('University Location')
 				.addTo(map);
 			bounds.push([universityCoordinates.lat, universityCoordinates.lng]);
