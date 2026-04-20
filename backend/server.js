@@ -23,6 +23,8 @@ const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
 const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
 // Notification Routes (Module 3 - Feature 2.1)
 const notificationRoutes = require('./routes/notificationRoutes');
+// MODULE 3 - Feature 2.1: Cron Jobs for Notifications
+const { initializeCronJobs, stopCronJobs } = require('./jobs/cronJobs');
 
 connectDB();
 
@@ -55,7 +57,34 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 5001;
+const ENABLE_CRON = process.env.ENABLE_CRON !== "false"; // Default: enabled
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+
+  // Initialize cron jobs if enabled
+  if (ENABLE_CRON) {
+    initializeCronJobs();
+  } else {
+    console.log("[CRON] Cron jobs are disabled (set ENABLE_CRON=true to enable)");
+  }
+});
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("\n[SERVER] SIGTERM signal received: closing HTTP server");
+  stopCronJobs();
+  server.close(() => {
+    console.log("[SERVER] HTTP server closed");
+    process.exit(0);
+  });
+});
+
+process.on("SIGINT", () => {
+  console.log("\n[SERVER] SIGINT signal received: closing HTTP server");
+  stopCronJobs();
+  server.close(() => {
+    console.log("[SERVER] HTTP server closed");
+    process.exit(0);
+  });
 });
