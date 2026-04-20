@@ -21,6 +21,8 @@ const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoute
 const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
 // Document Submission Routes (Finance/Procurement Approval Workflow)
 const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
+// Notification Routes (Module 3 - Feature 2.1)
+const notificationRoutes = require('./routes/notificationRoutes');
 
 connectDB();
 
@@ -45,6 +47,8 @@ app.use('/api/hire', hireRoutes);
 app.use('/api/infrastructure-services', infrastructureServiceRoutes);
 // MODULE 2 - Task 2D: Lab Optimization Routes (temporarily at /api/optimization for testing)
 app.use('/api/labs/optimization', labOptimizationRoutes);
+// MODULE 3 - Feature 2.1: Notification Routes
+app.use('/api/notifications', notificationRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
