@@ -25,8 +25,6 @@ const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 // MODULE 3 - Feature 2.1: Cron Jobs for Notifications
 const { initializeCronJobs, stopCronJobs } = require('./jobs/cronJobs');
-// Phase 5: Email Queue for Async Delivery
-const { initializeEmailQueue, closeEmailQueue } = require('./queue/emailQueue');
 
 connectDB();
 
@@ -60,17 +58,9 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 5001;
 const ENABLE_CRON = process.env.ENABLE_CRON !== "false"; // Default: enabled
-const ENABLE_QUEUE = process.env.ENABLE_QUEUE !== "false"; // Default: enabled (Phase 5)
 
 const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-
-  // Initialize email queue if enabled (Phase 5)
-  if (ENABLE_QUEUE) {
-    initializeEmailQueue();
-  } else {
-    console.log("[QUEUE] Email queue is disabled (set ENABLE_QUEUE=true to enable)");
-  }
 
   // Initialize cron jobs if enabled
   if (ENABLE_CRON) {
@@ -84,7 +74,6 @@ const server = app.listen(PORT, () => {
 process.on("SIGTERM", () => {
   console.log("\n[SERVER] SIGTERM signal received: closing HTTP server");
   stopCronJobs();
-  closeEmailQueue();
   server.close(() => {
     console.log("[SERVER] HTTP server closed");
     process.exit(0);
@@ -94,7 +83,6 @@ process.on("SIGTERM", () => {
 process.on("SIGINT", () => {
   console.log("\n[SERVER] SIGINT signal received: closing HTTP server");
   stopCronJobs();
-  closeEmailQueue();
   server.close(() => {
     console.log("[SERVER] HTTP server closed");
     process.exit(0);
