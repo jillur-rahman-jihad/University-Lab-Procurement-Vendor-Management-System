@@ -21,6 +21,12 @@ const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoute
 const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
 // Document Submission Routes (Finance/Procurement Approval Workflow)
 const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
+// Notification Routes (Module 3 - Feature 2.1)
+const notificationRoutes = require('./routes/notificationRoutes');
+// MODULE 3 - Feature 2.1: Cron Jobs for Notifications
+const { initializeCronJobs, stopCronJobs } = require('./jobs/cronJobs');
+// Phase 5: Email Queue for Async Delivery
+const { initializeEmailQueue, closeEmailQueue } = require('./queue/emailQueue');
 
 connectDB();
 
@@ -45,13 +51,52 @@ app.use('/api/hire', hireRoutes);
 app.use('/api/infrastructure-services', infrastructureServiceRoutes);
 // MODULE 2 - Task 2D: Lab Optimization Routes (temporarily at /api/optimization for testing)
 app.use('/api/labs/optimization', labOptimizationRoutes);
+// MODULE 3 - Feature 2.1: Notification Routes
+app.use('/api/notifications', notificationRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
 });
 
 const PORT = process.env.PORT || 5001;
+const ENABLE_CRON = process.env.ENABLE_CRON !== "false"; // Default: enabled
+const ENABLE_QUEUE = process.env.ENABLE_QUEUE !== "false"; // Default: enabled (Phase 5)
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+
+  // Initialize email queue if enabled (Phase 5)
+  if (ENABLE_QUEUE) {
+    initializeEmailQueue();
+  } else {
+    console.log("[QUEUE] Email queue is disabled (set ENABLE_QUEUE=true to enable)");
+  }
+
+  // Initialize cron jobs if enabled
+  if (ENABLE_CRON) {
+    initializeCronJobs();
+  } else {
+    console.log("[CRON] Cron jobs are disabled (set ENABLE_CRON=true to enable)");
+  }
+});
+
+// Graceful shutdown
+process.on("SIGTERM", () => {
+  console.log("\n[SERVER] SIGTERM signal received: closing HTTP server");
+  stopCronJobs();
+  closeEmailQueue();
+  server.close(() => {
+    console.log("[SERVER] HTTP server closed");
+    process.exit(0);
+  });
+});
+
+process.on("SIGINT", () => {
+  console.log("\n[SERVER] SIGINT signal received: closing HTTP server");
+  stopCronJobs();
+  closeEmailQueue();
+  server.close(() => {
+    console.log("[SERVER] HTTP server closed");
+    process.exit(0);
+  });
 });

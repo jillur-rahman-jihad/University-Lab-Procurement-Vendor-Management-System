@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const DocumentSubmission = require('../models/DocumentSubmission');
 const LabProject = require('../models/LabProject');
 const User = require('../models/User');
+const notificationService = require('../services/notificationService');
 
 // ============ Submit Document to Finance/Procurement ============
 exports.submitDocument = async (req, res) => {
@@ -305,6 +306,35 @@ exports.approveDocument = async (req, res) => {
 
         submission.updatedAt = new Date();
         await submission.save();
+
+        // Send notification to university when document is fully approved
+        if (financeComplete && procurementComplete) {
+            (async () => {
+                try {
+                    const lab = await LabProject.findById(submission.labProjectId).select('labName');
+                    const university = await User.findById(submission.universityId).select('email name');
+
+                    if (university) {
+                        await notificationService.createNotification({
+                            userId: submission.universityId.toString(),
+                            type: 'approval',
+                            category: 'document_approved',
+                            message: `Your "${submission.documentType}" submission for "${lab?.labName || 'Lab Project'}" has been fully approved by both Finance and Procurement departments!`,
+                            referenceData: {
+                                resourceType: 'DocumentSubmission',
+                                resourceId: submission._id,
+                                resourceName: lab?.labName || 'Lab Project'
+                            },
+                            actionUrl: `/document-submission/${submission._id}`,
+                            sendEmail: true,
+                            priority: 'high'
+                        });
+                    }
+                } catch (notifError) {
+                    console.error('[SUBMISSION] Error sending approval notification:', notifError.message);
+                }
+            })();
+        }
 
         res.status(200).json({
             message: 'Document approved successfully',

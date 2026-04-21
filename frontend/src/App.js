@@ -55,6 +55,8 @@ import HireConsultant from './pages/HireConsultant';
 import ConsultantAssignmentDashboard from './pages/ConsultantAssignmentDashboard';
 import MyHireRequests from './pages/MyHireRequests';
 import ReviewerDashboard from './pages/ReviewerDashboard';
+// MODULE 3 - Feature 2.1: Notifications
+import NotificationCenter from './pages/NotificationCenter';
 
 function App() {
   return (
@@ -95,6 +97,9 @@ function App() {
             
             {/* Document Submission & Review Routes */}
             <Route path="/document-reviewer" element={<ReviewerDashboard />} />
+            
+            {/* MODULE 3 - Feature 2.1: Notification Routes */}
+            <Route path="/notification-center" element={<NotificationCenter />} />
           </Routes>
         </main>
       </div>
