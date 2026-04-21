@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ConsultantProfile from '../components/ConsultantProfile';
-import AssignedProjects from '../components/AssignedProjects';
 import ProjectProgress from '../components/ProjectProgress';
 
 const ConsultantDashboard = () => {
@@ -49,16 +48,6 @@ const ConsultantDashboard = () => {
             Profile
           </button>
           <button
-            onClick={() => setActiveTab('projects')}
-            className={`py-4 px-2 font-semibold border-b-2 transition ${
-              activeTab === 'projects'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Assigned Projects
-          </button>
-          <button
             onClick={() => setActiveTab('progress')}
             className={`py-4 px-2 font-semibold border-b-2 transition ${
               activeTab === 'progress'
@@ -74,7 +63,6 @@ const ConsultantDashboard = () => {
       {/* Tab Content */}
       <div className="p-6">
         {activeTab === 'profile' && <ConsultantProfile />}
-        {activeTab === 'projects' && <AssignedProjects />}
         {activeTab === 'progress' && <ProjectProgress />}
       </div>
     </div>

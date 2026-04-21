@@ -10,19 +10,39 @@ const PERFORMANCE_POINTS = {
 
 // Ranking thresholds
 const RANKING_THRESHOLDS = {
-  'General Consultant': 0,
-  'Certified Consultant': 100,
-  'Professional Consultant': 300
+  General: 0,
+  Certified: 100,
+  Professional: 300
+};
+
+const LEGACY_RANK_MAP = {
+  'General Consultant': 'General',
+  'Certified Consultant': 'Certified',
+  'Professional Consultant': 'Professional'
+};
+
+const normalizeRank = (rank) => LEGACY_RANK_MAP[rank] || rank;
+
+const getRecentReviews = (reviews = [], limit = 2) => {
+  return [...reviews]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, limit)
+    .map((review) => ({
+      reviewer: review.reviewer,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt
+    }));
 };
 
 // Calculate consultant rank based on points
 const calculateRank = (points) => {
-  if (points >= RANKING_THRESHOLDS['Professional Consultant']) {
-    return 'Professional Consultant';
-  } else if (points >= RANKING_THRESHOLDS['Certified Consultant']) {
-    return 'Certified Consultant';
+  if (points >= RANKING_THRESHOLDS.Professional) {
+    return 'Professional';
+  } else if (points >= RANKING_THRESHOLDS.Certified) {
+    return 'Certified';
   } else {
-    return 'General Consultant';
+    return 'General';
   }
 };
 
@@ -85,12 +105,12 @@ exports.getConsultantRanking = async (req, res) => {
     let pointsToNextRank = 0;
     let nextRank = null;
 
-    if (currentRank === 'General Consultant') {
-      nextRank = 'Certified Consultant';
-      pointsToNextRank = RANKING_THRESHOLDS['Certified Consultant'] - currentPoints;
-    } else if (currentRank === 'Certified Consultant') {
-      nextRank = 'Professional Consultant';
-      pointsToNextRank = RANKING_THRESHOLDS['Professional Consultant'] - currentPoints;
+    if (currentRank === 'General') {
+      nextRank = 'Certified';
+      pointsToNextRank = RANKING_THRESHOLDS.Certified - currentPoints;
+    } else if (currentRank === 'Certified') {
+      nextRank = 'Professional';
+      pointsToNextRank = RANKING_THRESHOLDS.Professional - currentPoints;
     }
 
     res.status(200).json({
@@ -194,7 +214,7 @@ exports.recordLabCompletion = async (req, res) => {
 // Update consultant rating and award points
 exports.updateConsultantRating = async (req, res) => {
   try {
-    const { consultantId, rating, review, universityId } = req.body;
+    const { consultantId, rating, review, universityId, universityName } = req.body;
 
     if (!consultantId || rating === undefined) {
       return res.status(400).json({ error: 'Consultant ID and rating are required' });
@@ -209,9 +229,24 @@ exports.updateConsultantRating = async (req, res) => {
       return res.status(404).json({ error: 'Consultant not found' });
     }
 
+    const isIdLike = (value) => (
+      typeof value === 'string' && (
+        /^[a-f\d]{24}$/i.test(value) ||
+        /^university-/i.test(value)
+      )
+    );
+
+    const reviewerName = req.user?.role === 'university'
+      ? req.user.name
+      : (typeof universityName === 'string' && universityName.trim())
+        ? universityName.trim()
+        : (typeof universityId === 'string' && !isIdLike(universityId) && universityId.trim())
+          ? universityId.trim()
+          : 'University';
+
     // Add review
     const newReview = {
-      reviewer: universityId || 'Anonymous University',
+      reviewer: reviewerName,
       rating,
       comment: review || '',
       createdAt: new Date()
@@ -356,6 +391,7 @@ exports.getLeaderboard = async (req, res) => {
       points: consultant.consultantInfo.points,
       rating: consultant.consultantInfo.rating,
       reviewsCount: consultant.consultantInfo.reviews.length,
+      recentReviews: getRecentReviews(consultant.consultantInfo.reviews),
       completedLabDeployments: consultant.consultantInfo.completedLabDeployments
     }));
 
@@ -376,8 +412,9 @@ exports.getLeaderboard = async (req, res) => {
 // Filter consultants by rank
 exports.getConsultantsByRank = async (req, res) => {
   try {
-    const { rank } = req.params;
-    const validRanks = ['General Consultant', 'Certified Consultant', 'Professional Consultant'];
+    const requestedRank = req.params.rank;
+    const rank = normalizeRank(requestedRank);
+    const validRanks = ['General', 'Certified', 'Professional'];
 
     if (!validRanks.includes(rank)) {
       return res.status(400).json({ error: `Invalid rank. Valid ranks: ${validRanks.join(', ')}` });
@@ -391,7 +428,7 @@ exports.getConsultantsByRank = async (req, res) => {
     );
 
     if (!consultants || consultants.length === 0) {
-      return res.status(404).json({ error: `No consultants found with rank: ${rank}` });
+      return res.status(404).json({ error: `No consultants found with rank: ${requestedRank}` });
     }
 
     const consultantsList = consultants.map(consultant => ({
@@ -402,11 +439,12 @@ exports.getConsultantsByRank = async (req, res) => {
       points: consultant.consultantInfo.points,
       rating: consultant.consultantInfo.rating,
       reviewsCount: consultant.consultantInfo.reviews.length,
+      recentReviews: getRecentReviews(consultant.consultantInfo.reviews),
       completedLabDeployments: consultant.consultantInfo.completedLabDeployments
     }));
 
     res.status(200).json({
-      message: `Consultants with rank: ${rank}`,
+      message: `Consultants with rank: ${requestedRank}`,
       rank,
       consultants: consultantsList,
       totalCount: consultantsList.length
@@ -436,12 +474,12 @@ exports.getPerformanceStats = async (req, res) => {
     let percentToNextRank = 0;
     let nextRank = null;
 
-    if (currentRank === 'General Consultant') {
-      nextRank = 'Certified Consultant';
-      percentToNextRank = (totalPoints / RANKING_THRESHOLDS['Certified Consultant']) * 100;
-    } else if (currentRank === 'Certified Consultant') {
-      nextRank = 'Professional Consultant';
-      percentToNextRank = (totalPoints / RANKING_THRESHOLDS['Professional Consultant']) * 100;
+    if (currentRank === 'General') {
+      nextRank = 'Certified';
+      percentToNextRank = (totalPoints / RANKING_THRESHOLDS.Certified) * 100;
+    } else if (currentRank === 'Certified') {
+      nextRank = 'Professional';
+      percentToNextRank = (totalPoints / RANKING_THRESHOLDS.Professional) * 100;
     } else {
       percentToNextRank = 100;
     }

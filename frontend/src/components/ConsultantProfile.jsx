@@ -26,6 +26,12 @@ const ConsultantProfile = () => {
   const EXPERTISE_OPTIONS = ["Networking", "Graphics", "Research", "AI Infrastructure"];
   const EXPERIENCE_LEVEL_OPTIONS = ["General", "Certified", "Professional"];
 
+  const formatReviewerName = (reviewer) => {
+    if (!reviewer || typeof reviewer !== 'string') return 'University';
+    if (/^[a-f\d]{24}$/i.test(reviewer) || /^university-/i.test(reviewer)) return 'University';
+    return reviewer;
+  };
+
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
   const stored = localStorage.getItem('userInfo');
   let token = null;
@@ -440,7 +446,7 @@ const ConsultantProfile = () => {
                 </div>
                 <div className="flex justify-between">
                   <span><strong>Overall Rating:</strong></span>
-                  <span className="text-lg font-semibold text-blue-600">{profile.consultantInfo?.rating || 0} ⭐</span>
+                  <span className="text-lg font-semibold text-blue-600">{Number(profile.consultantInfo?.rating || 0).toFixed(2)} ⭐</span>
                 </div>
                 <div className="flex justify-between">
                   <span><strong>Average Response Time:</strong></span>
@@ -528,15 +534,15 @@ const ConsultantProfile = () => {
             <h2 className="text-xl font-semibold mb-4">Reviews from Universities</h2>
             <div className="space-y-4">
               {profile.consultantInfo?.reviews && profile.consultantInfo.reviews.length > 0 ? (
-                profile.consultantInfo.reviews.map((review, idx) => (
+                [...profile.consultantInfo.reviews].reverse().map((review, idx) => (
                   <div key={idx} className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-600">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-blue-900">{review.universityName}</h3>
+                      <h3 className="font-semibold text-blue-900">{formatReviewerName(review.reviewer || review.universityName)}</h3>
                       <span className="text-yellow-500 font-semibold">{review.rating} ⭐</span>
                     </div>
-                    <p className="text-gray-700">{review.reviewText}</p>
+                    <p className="text-gray-700">{review.comment || review.reviewText || 'No comment provided.'}</p>
                     <p className="text-sm text-gray-500 mt-2">
-                      {new Date(review.date).toLocaleDateString()}
+                      {new Date(review.createdAt || review.date).toLocaleDateString()}
                     </p>
                   </div>
                 ))

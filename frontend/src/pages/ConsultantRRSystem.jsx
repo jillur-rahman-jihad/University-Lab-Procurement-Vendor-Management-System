@@ -220,10 +220,15 @@ const ConsultantRRSystem = () => {
 
   const rankBadgeColor = (rank) => {
     switch (rank) {
+      case 'Professional':
       case 'Professional Consultant':
         return 'bg-yellow-500';
+      case 'Certified':
       case 'Certified Consultant':
         return 'bg-blue-500';
+      case 'General':
+      case 'General Consultant':
+        return 'bg-gray-500';
       default:
         return 'bg-gray-500';
     }

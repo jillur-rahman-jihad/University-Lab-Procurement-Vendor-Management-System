@@ -6,6 +6,7 @@ const HireConsultant = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     consultantId: '',
+    projectId: '',
     projectName: '',
     projectDescription: '',
     startDate: '',
@@ -13,6 +14,7 @@ const HireConsultant = () => {
   });
 
   const [consultants, setConsultants] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
@@ -24,6 +26,7 @@ const HireConsultant = () => {
   // Fetch available consultants on component mount
   useEffect(() => {
     fetchAvailableConsultants();
+    fetchAvailableProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -36,6 +39,18 @@ const HireConsultant = () => {
     } catch (err) {
       console.error('Error fetching consultants:', err);
       setError('Failed to load available consultants');
+    }
+  };
+
+  const fetchAvailableProjects = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/labs/user-projects`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProjects(response.data.projects || []);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      setError('Failed to load available projects');
     }
   };
 
@@ -58,7 +73,7 @@ const HireConsultant = () => {
     e.preventDefault();
     
     // Validation
-    if (!formData.consultantId || !formData.projectName || !formData.startDate || !formData.endDate) {
+    if (!formData.consultantId || !formData.projectId || !formData.projectName || !formData.startDate || !formData.endDate) {
       setError('Please fill in all required fields');
       return;
     }
@@ -76,6 +91,7 @@ const HireConsultant = () => {
         `${API_URL}/api/hire/create`,
         {
           consultantId: formData.consultantId,
+          projectId: formData.projectId,
           projectName: formData.projectName,
           projectDescription: formData.projectDescription,
           startDate: formData.startDate,
@@ -87,6 +103,7 @@ const HireConsultant = () => {
       setSuccessMessage(`Hire request sent successfully to ${response.data.hireRequest.consultantId.name}!`);
       setFormData({
         consultantId: '',
+        projectId: '',
         projectName: '',
         projectDescription: '',
         startDate: '',
@@ -180,21 +197,33 @@ const HireConsultant = () => {
               </p>
             </div>
 
-            {/* Project Name */}
+            {/* Select Project */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Project Name <span className="text-red-600">*</span>
+                Select Project <span className="text-red-600">*</span>
               </label>
-              <input
-                type="text"
-                name="projectName"
-                value={formData.projectName}
-                onChange={handleInputChange}
-                placeholder="e.g., Network Infrastructure Setup"
-                maxLength="100"
+              <select
+                name="projectId"
+                value={formData.projectId}
+                onChange={(e) => {
+                  const projectId = e.target.value;
+                  const selectedProject = projects.find((p) => p._id === projectId);
+                  setFormData((prev) => ({
+                    ...prev,
+                    projectId,
+                    projectName: selectedProject?.labName || ''
+                  }));
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-              />
+              >
+                <option value="">-- Choose a project --</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project._id}>
+                    {project.labName} - {project.labType}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Project Description */}
@@ -263,6 +292,7 @@ const HireConsultant = () => {
                 type="button"
                 onClick={() => setFormData({
                   consultantId: '',
+                  projectId: '',
                   projectName: '',
                   projectDescription: '',
                   startDate: '',
