@@ -234,54 +234,15 @@ const UniversityDashboard = () => {
 					</button>
 
 					<button
-						onClick={() => navigate('/search-consultants')}
-						className="text-left rounded-2xl border border-purple-100 bg-purple-50 hover:bg-purple-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
-					>
-						<span className="inline-flex items-center rounded-full bg-purple-600 px-3 py-1 text-xs font-semibold text-white">
-							Option 3
-						</span>
-						<h2 className="mt-4 text-xl font-semibold text-gray-900">Search Consultants</h2>
-						<p className="mt-2 text-sm text-gray-600">
-							Find and view available technical consultants by expertise.
-						</p>
-					</button>
-
-					<button
-						onClick={() => navigate('/hire-consultant')}
-						className="text-left rounded-2xl border border-pink-100 bg-pink-50 hover:bg-pink-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
-					>
-						<span className="inline-flex items-center rounded-full bg-pink-600 px-3 py-1 text-xs font-semibold text-white">
-							Option 4
-						</span>
-						<h2 className="mt-4 text-xl font-semibold text-gray-900">Hire Consultant</h2>
-						<p className="mt-2 text-sm text-gray-600">
-							Create hire requests for consultants for specific lab projects.
-						</p>
-					</button>
-
-					<button
-						onClick={() => navigate('/my-hire-requests')}
+						onClick={() => navigate('/consultant-management')}
 						className="text-left rounded-2xl border border-indigo-100 bg-indigo-50 hover:bg-indigo-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
 					>
 						<span className="inline-flex items-center rounded-full bg-indigo-600 px-3 py-1 text-xs font-semibold text-white">
-							Option 5
+							Option 3
 						</span>
-						<h2 className="mt-4 text-xl font-semibold text-gray-900">My Hire Requests</h2>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Consultant Management System</h2>
 						<p className="mt-2 text-sm text-gray-600">
-							Track and manage all your consultant hire requests and assignments.
-						</p>
-					</button>
-
-					<button
-						onClick={() => navigate('/consultant-rr-system')}
-						className="text-left rounded-2xl border border-orange-100 bg-orange-50 hover:bg-orange-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
-					>
-						<span className="inline-flex items-center rounded-full bg-orange-600 px-3 py-1 text-xs font-semibold text-white">
-							Option 6
-						</span>
-						<h2 className="mt-4 text-xl font-semibold text-gray-900">Consultant Rating & Ranking</h2>
-						<p className="mt-2 text-sm text-gray-600">
-							View and manage consultant performance ratings and rankings.
+							Central system for consultant search, hiring, request tracking, suggestion review, and rankings.
 						</p>
 					</button>
 				</div>

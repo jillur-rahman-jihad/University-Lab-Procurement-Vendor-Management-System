@@ -55,6 +55,8 @@ import HireConsultant from './pages/HireConsultant';
 import ConsultantAssignmentDashboard from './pages/ConsultantAssignmentDashboard';
 import MyHireRequests from './pages/MyHireRequests';
 import ConsultantRRSystem from './pages/ConsultantRRSystem';
+import UniversityConsultantSuggestions from './pages/UniversityConsultantSuggestions';
+import ConsultantManagementSystem from './pages/ConsultantManagementSystem';
 
 function App() {
   return (
@@ -83,6 +85,8 @@ function App() {
             <Route path="/hire-consultant" element={<HireConsultant />} />
             <Route path="/my-hire-requests" element={<MyHireRequests />} />
             <Route path="/my-assignments" element={<ConsultantAssignmentDashboard />} />
+            <Route path="/university/consultant-suggestions" element={<UniversityConsultantSuggestions />} />
+            <Route path="/consultant-management" element={<ConsultantManagementSystem />} />
             <Route path="/quotation-system" element={<QuotationSystem />} />
             <Route path="/compare-quotation" element={<CompareQuotation />} />
             <Route path="/view-and-accept/:quotationId" element={<ViewAndAccept />} />
