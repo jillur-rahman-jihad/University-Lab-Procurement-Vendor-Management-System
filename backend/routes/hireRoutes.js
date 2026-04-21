@@ -24,6 +24,14 @@ router.get('/consultant/pending', consultantHireController.getPendingHireRequest
 // GET /api/hire/consultant/active
 router.get('/consultant/active', consultantHireController.getActiveAssignments);
 
+// Consultant: Get project workspace for an active assignment (quotations + procurement + suggestions)
+// GET /api/hire/consultant/assignment/:requestId/work-details
+router.get('/consultant/assignment/:requestId/work-details', consultantHireController.getConsultantProjectWorkspace);
+
+// Consultant: Submit suggestion for active assignment project
+// POST /api/hire/consultant/assignment/:requestId/suggestions
+router.post('/consultant/assignment/:requestId/suggestions', consultantHireController.submitConsultantProjectSuggestion);
+
 // Get hire request details (both consultant and university can view)
 // GET /api/hire/:requestId
 router.get('/:requestId', consultantHireController.getHireRequestDetails);

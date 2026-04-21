@@ -1,5 +1,9 @@
 const ConsultantHireRequest = require("../models/ConsultantHireRequest");
 const User = require("../models/User");
+const LabProject = require("../models/LabProject");
+const LabProjectAssignment = require("../models/LabProjectAssignment");
+const Quotation = require("../models/Quotation");
+const Procurement = require("../models/Procurement");
 
 // MODULE 2 - Task 2A: Consultant Hire Request Management
 
@@ -7,13 +11,22 @@ const User = require("../models/User");
 exports.createHireRequest = async (req, res) => {
   try {
     const universityId = req.user.id;
-    const { consultantId, projectName, projectDescription, startDate, endDate } = req.body;
+    const { consultantId, projectId, projectName, projectDescription, startDate, endDate } = req.body;
 
     // Validate required fields
-    if (!consultantId || !projectName || !startDate || !endDate) {
+    if (!consultantId || !projectId || !projectName || !startDate || !endDate) {
       return res.status(400).json({ 
-        message: "Missing required fields: consultantId, projectName, startDate, endDate" 
+        message: "Missing required fields: consultantId, projectId, projectName, startDate, endDate" 
       });
+    }
+
+    const project = await LabProject.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Lab project not found" });
+    }
+
+    if (project.universityId.toString() !== universityId) {
+      return res.status(403).json({ message: "This project does not belong to your university" });
     }
 
     // Validate dates
@@ -54,6 +67,7 @@ exports.createHireRequest = async (req, res) => {
     const hireRequest = new ConsultantHireRequest({
       universityId,
       consultantId,
+      projectId,
       projectName,
       projectDescription,
       startDate: new Date(startDate),
@@ -131,6 +145,36 @@ exports.acceptHireRequest = async (req, res) => {
     hireRequest.respondedAt = new Date();
     hireRequest.responseMessage = responseMessage || "Request accepted";
 
+    // Ensure a lab assignment exists so consultant can work and submit suggestions
+    if (hireRequest.projectId) {
+      let assignment = await LabProjectAssignment.findOne({
+        projectId: hireRequest.projectId,
+        universityId: hireRequest.universityId,
+        consultantId: hireRequest.consultantId,
+        assignmentStatus: { $ne: "Cancelled" }
+      });
+
+      if (!assignment) {
+        const project = await LabProject.findById(hireRequest.projectId);
+        assignment = await LabProjectAssignment.create({
+          projectId: hireRequest.projectId,
+          universityId: hireRequest.universityId,
+          consultantId: hireRequest.consultantId,
+          projectName: hireRequest.projectName || project?.labName || "Lab Project",
+          description: hireRequest.projectDescription || `Consultant support for ${hireRequest.projectName || project?.labName || "project"}`,
+          currentConfiguration: {
+            hardware: project?.requirements?.mainRequirement ? [project.requirements.mainRequirement] : [],
+            software: project?.requirements?.software || [],
+            budget: project?.requirements?.budgetMin || 0,
+            timeline: project?.requirements?.timeline ? project.requirements.timeline.toString() : ""
+          },
+          assignmentStatus: "Assigned"
+        });
+      }
+
+      hireRequest.labAssignmentId = assignment._id;
+    }
+
     const updatedRequest = await hireRequest.save();
     
     await updatedRequest.populate("universityId", "name email phone");
@@ -205,6 +249,8 @@ exports.getActiveAssignments = async (req, res) => {
       status: { $in: ["accepted", "in-progress"] }
     })
       .populate("universityId", "name email phone universityInfo")
+      .populate("projectId", "labName labType status")
+      .populate("labAssignmentId", "assignmentStatus configurationSuggestions")
       .sort({ startDate: 1 });
 
     res.status(200).json({
@@ -216,6 +262,156 @@ exports.getActiveAssignments = async (req, res) => {
     res.status(500).json({ 
       message: "Error fetching active assignments", 
       error: error.message 
+    });
+  }
+};
+
+// Consultant: Get project workspace details (quotations + procurement + current suggestions)
+exports.getConsultantProjectWorkspace = async (req, res) => {
+  try {
+    const consultantId = req.user.id;
+    const { requestId } = req.params;
+
+    const hireRequest = await ConsultantHireRequest.findOne({
+      _id: requestId,
+      consultantId,
+      status: { $in: ["accepted", "in-progress", "completed"] }
+    })
+      .populate("projectId", "labName labType status requirements")
+      .populate("universityId", "name email phone")
+      .populate("labAssignmentId");
+
+    if (!hireRequest) {
+      return res.status(404).json({ message: "Active assignment not found" });
+    }
+
+    if (!hireRequest.projectId) {
+      return res.status(400).json({ message: "No linked project found for this assignment" });
+    }
+
+    const quotations = await Quotation.find({ labProjectId: hireRequest.projectId._id })
+      .populate("vendorId", "name email phone vendorInfo.shopName vendorInfo.location")
+      .sort({ createdAt: -1 });
+
+    const procurement = await Procurement.findOne({ labProjectId: hireRequest.projectId._id })
+      .populate("quotationId")
+      .populate("selectedVendorIds", "name email vendorInfo.shopName");
+
+    res.status(200).json({
+      message: "Project workspace loaded successfully",
+      assignment: hireRequest,
+      quotations,
+      procurement,
+      suggestions: hireRequest.labAssignmentId?.configurationSuggestions || []
+    });
+  } catch (error) {
+    console.error("[HIRE] Error loading consultant project workspace:", error);
+    res.status(500).json({
+      message: "Error loading project workspace",
+      error: error.message
+    });
+  }
+};
+
+// Consultant: Submit suggestion for active hire assignment project
+exports.submitConsultantProjectSuggestion = async (req, res) => {
+  try {
+    const consultantId = req.user.id;
+    const { requestId } = req.params;
+    const {
+      title,
+      description,
+      category,
+      estimatedBudgetImpact,
+      performanceImprovement,
+      priority
+    } = req.body;
+
+    if (!title || !description || !category) {
+      return res.status(400).json({ message: "Missing required fields: title, description, category" });
+    }
+
+    const hireRequest = await ConsultantHireRequest.findOne({
+      _id: requestId,
+      consultantId,
+      status: { $in: ["accepted", "in-progress", "completed"] }
+    }).populate("projectId", "labName requirements");
+
+    if (!hireRequest) {
+      return res.status(404).json({ message: "Active assignment not found" });
+    }
+
+    if (!hireRequest.projectId) {
+      return res.status(400).json({ message: "No linked project found for this assignment" });
+    }
+
+    let assignment = null;
+
+    if (hireRequest.labAssignmentId) {
+      assignment = await LabProjectAssignment.findById(hireRequest.labAssignmentId);
+    }
+
+    if (!assignment) {
+      assignment = await LabProjectAssignment.findOne({
+        projectId: hireRequest.projectId._id,
+        universityId: hireRequest.universityId,
+        consultantId: hireRequest.consultantId,
+        assignmentStatus: { $ne: "Cancelled" }
+      });
+    }
+
+    if (!assignment) {
+      assignment = await LabProjectAssignment.create({
+        projectId: hireRequest.projectId._id,
+        universityId: hireRequest.universityId,
+        consultantId: hireRequest.consultantId,
+        projectName: hireRequest.projectName || hireRequest.projectId.labName || "Lab Project",
+        description: hireRequest.projectDescription || `Consultant support for ${hireRequest.projectName || hireRequest.projectId.labName || "project"}`,
+        currentConfiguration: {
+          hardware: hireRequest.projectId?.requirements?.mainRequirement ? [hireRequest.projectId.requirements.mainRequirement] : [],
+          software: hireRequest.projectId?.requirements?.software || [],
+          budget: hireRequest.projectId?.requirements?.budgetMin || 0,
+          timeline: hireRequest.projectId?.requirements?.timeline ? hireRequest.projectId.requirements.timeline.toString() : ""
+        },
+        assignmentStatus: "In Progress"
+      });
+    }
+
+    assignment.configurationSuggestions.push({
+      title,
+      description,
+      category,
+      estimatedBudgetImpact: Number(estimatedBudgetImpact || 0),
+      performanceImprovement: performanceImprovement || "",
+      priority: priority || "Medium",
+      status: "Pending",
+      createdBy: consultantId,
+      createdAt: new Date()
+    });
+
+    if (assignment.assignmentStatus === "Assigned") {
+      assignment.assignmentStatus = "In Progress";
+    }
+
+    await assignment.save();
+
+    if (!hireRequest.labAssignmentId || hireRequest.labAssignmentId.toString() !== assignment._id.toString()) {
+      hireRequest.labAssignmentId = assignment._id;
+      await hireRequest.save();
+    }
+
+    const suggestion = assignment.configurationSuggestions[assignment.configurationSuggestions.length - 1];
+
+    res.status(201).json({
+      message: "Suggestion submitted successfully",
+      suggestion,
+      labAssignmentId: assignment._id
+    });
+  } catch (error) {
+    console.error("[HIRE] Error submitting consultant suggestion:", error);
+    res.status(500).json({
+      message: "Error submitting suggestion",
+      error: error.message
     });
   }
 };
