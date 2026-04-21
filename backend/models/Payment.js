@@ -18,7 +18,7 @@ const PaymentSchema = new mongoose.Schema({
 	},
 	paymentMethod: {
 		type: String,
-		enum: ['bkash', 'institutional_billing'],
+		enum: ['bkash', 'institutional_billing', 'direct'],
 		required: true
 	},
 	amount: {

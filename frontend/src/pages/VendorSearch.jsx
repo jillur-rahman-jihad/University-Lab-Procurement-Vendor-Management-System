@@ -13,6 +13,8 @@ const VendorSearch = () => {
 	const [searched, setSearched] = useState(false);
 	const [isPremium, setIsPremium] = useState(false);
 	const [checkingSubscription, setCheckingSubscription] = useState(true);
+	const [selectedVendor, setSelectedVendor] = useState(null);
+	const [showDetailsModal, setShowDetailsModal] = useState(false);
 
 	const [filters, setFilters] = useState({
 		name: '',
@@ -109,7 +111,7 @@ const VendorSearch = () => {
 				</div>
 				<div className="flex gap-3">
 					<button
-						onClick={() => navigate('/university-dashboard')}
+						onClick={() => navigate('/dashboard')}
 						className="px-4 py-2 bg-gray-400 text-white rounded-md hover:bg-gray-500 transition font-medium"
 					>
 						Back
@@ -127,7 +129,7 @@ const VendorSearch = () => {
 			<div className="max-w-7xl mx-auto p-6">
 				{/* Search Section */}
 				<div className="bg-white rounded-lg shadow p-6 mb-6">
-					<h2 className="text-xl font-semibold mb-4">Find and Compare Vendors</h2>
+					<h2 className="text-xl font-semibold mb-4">Find Vendors</h2>
 
 					<form onSubmit={handleSearch} className="space-y-4">
 						<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -246,8 +248,10 @@ const VendorSearch = () => {
 																<VendorCard
 																	key={vendor._id}
 																	vendor={vendor}
-																	isPremium={isPremium}
-																/>
+																	isPremium={isPremium}																onViewDetails={() => {
+																	setSelectedVendor(vendor);
+																	setShowDetailsModal(true);
+																}}																/>
 															))}
 													</div>
 												</div>
@@ -266,8 +270,10 @@ const VendorSearch = () => {
 																<VendorCard
 																	key={vendor._id}
 																	vendor={vendor}
-																	isPremium={isPremium}
-																/>
+																	isPremium={isPremium}																onViewDetails={() => {
+																	setSelectedVendor(vendor);
+																	setShowDetailsModal(true);
+																}}																/>
 															))}
 													</div>
 												</div>
@@ -283,6 +289,10 @@ const VendorSearch = () => {
 													key={vendor._id}
 													vendor={vendor}
 													isPremium={isPremium}
+													onViewDetails={() => {
+														setSelectedVendor(vendor);
+														setShowDetailsModal(true);
+													}}
 												/>
 											))}
 										</div>
@@ -297,6 +307,107 @@ const VendorSearch = () => {
 						</>
 					)}
 				</div>
+
+				{/* Vendor Details Modal */}
+				{showDetailsModal && selectedVendor && (
+					<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+						<div className="bg-white rounded-lg shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+							{/* Header */}
+							<div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 flex justify-between items-center">
+								<div>
+									<h2 className="text-2xl font-bold">{selectedVendor.vendorInfo?.shopName || selectedVendor.name}</h2>
+									<p className="text-blue-100 mt-1">Contact: {selectedVendor.name}</p>
+								</div>
+								<button
+									onClick={() => setShowDetailsModal(false)}
+									className="text-white hover:text-blue-100 font-bold text-2xl"
+								>
+									×
+								</button>
+							</div>
+
+							{/* Content */}
+							<div className="p-6 space-y-6">
+								{/* Rating */}
+								<div>
+									<h3 className="text-lg font-semibold text-gray-800 mb-2">Rating</h3>
+									<div className="flex items-center gap-3">
+										<span className="text-yellow-500 text-2xl">
+											{'\u2605'.repeat(Math.floor(selectedVendor.vendorInfo?.rating || 0)) + '\u2606'.repeat(5 - Math.floor(selectedVendor.vendorInfo?.rating || 0))}
+										</span>
+										<span className="text-lg font-semibold text-gray-700">
+											{(selectedVendor.vendorInfo?.rating || 0).toFixed(1)}/5
+										</span>
+									</div>
+								</div>
+
+								{/* Contact Information */}
+								<div className="border-t pt-6">
+									<h3 className="text-lg font-semibold text-gray-800 mb-3">Contact Information</h3>
+									<div className="space-y-3">
+										<div>
+											<p className="text-sm font-medium text-gray-600">Email</p>
+											<a href={`mailto:${selectedVendor.email}`} className="text-blue-600 hover:underline text-lg">
+												{selectedVendor.email}
+											</a>
+										</div>
+										{selectedVendor.phone && (
+											<div>
+												<p className="text-sm font-medium text-gray-600">Phone</p>
+												<p className="text-lg font-medium text-gray-800">{selectedVendor.phone}</p>
+											</div>
+										)}
+										{selectedVendor.vendorInfo?.address && (
+											<div>
+												<p className="text-sm font-medium text-gray-600">Address</p>
+												<p className="text-gray-800">{selectedVendor.vendorInfo.address}</p>
+											</div>
+										)}
+									</div>
+								</div>
+
+								{/* Service Types */}
+								{selectedVendor.vendorInfo?.serviceTypes && selectedVendor.vendorInfo.serviceTypes.length > 0 && (
+									<div className="border-t pt-6">
+										<h3 className="text-lg font-semibold text-gray-800 mb-3">Service Types</h3>
+										<div className="flex flex-wrap gap-2">
+											{selectedVendor.vendorInfo.serviceTypes.map((service, idx) => (
+												<span key={idx} className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+													{service}
+												</span>
+											))}
+										</div>
+									</div>
+								)}
+
+								{/* Priority Score (Premium only) */}
+								{isPremium && selectedVendor.priorityScore !== undefined && (
+									<div className="border-t pt-6 bg-green-50 p-4 rounded-lg">
+										<h3 className="text-lg font-semibold text-gray-800 mb-2">Premium Information</h3>
+										<p className="text-gray-700 mb-2">
+											Priority Score: <span className="font-bold text-green-700">{Math.round(selectedVendor.priorityScore)}/100</span>
+										</p>
+										{selectedVendor.isPriority ? (
+											<p className="text-green-700 font-semibold">✓ Meets premium partnership standards</p>
+										) : (
+											<p className="text-green-700">Meets basic vendor standards</p>
+										)}
+									</div>
+								)}
+							</div>
+
+							{/* Footer */}
+							<div className="border-t p-6 bg-gray-50">
+								<button
+									onClick={() => setShowDetailsModal(false)}
+									className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+								>
+									Close
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -305,7 +416,7 @@ const VendorSearch = () => {
 /**
  * Vendor Card Component
  */
-const VendorCard = ({ vendor, isPremium }) => {
+const VendorCard = ({ vendor, isPremium, onViewDetails }) => {
 	const rating = vendor.vendorInfo?.rating || 0;
 	const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
 
@@ -382,7 +493,10 @@ const VendorCard = ({ vendor, isPremium }) => {
 				)}
 
 				{/* Action Button */}
-				<button className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+				<button
+					onClick={onViewDetails}
+					className="w-full mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+				>
 					View Details
 				</button>
 			</div>

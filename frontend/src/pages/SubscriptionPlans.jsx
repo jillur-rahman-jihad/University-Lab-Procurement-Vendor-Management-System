@@ -7,6 +7,9 @@ const SubscriptionPlans = () => {
 	const [currentSubscription, setCurrentSubscription] = useState(null);
 	const [planLimits, setPlanLimits] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [downgrading, setDowngrading] = useState(false);
+	const [downgradeMessage, setDowngradeMessage] = useState('');
+	const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 	useEffect(() => {
 		// Fetch current subscription and limits
@@ -45,6 +48,43 @@ const SubscriptionPlans = () => {
 			fetchSubscriptionData();
 		}
 	}, [userInfo?.token]);
+
+	// Handle downgrade to free
+	const handleDowngradeToFree = async () => {
+		if (!window.confirm('Are you sure you want to downgrade to Free Plan? You will lose access to premium features.')) {
+			return;
+		}
+
+		setDowngrading(true);
+		setDowngradeMessage('');
+
+		try {
+			const response = await fetch(`${API_URL}/api/subscription/downgrade`, {
+				method: 'POST',
+				headers: {
+					'Authorization': `Bearer ${userInfo?.token}`,
+					'Content-Type': 'application/json'
+				}
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				setDowngradeMessage('Successfully downgraded to Free Plan');
+				// Refresh subscription data
+				setTimeout(() => {
+					window.location.reload();
+				}, 1500);
+			} else {
+				const errorData = await response.json();
+				setDowngradeMessage(errorData.message || 'Error downgrading to Free Plan');
+			}
+		} catch (err) {
+			console.error('Error downgrading to free:', err);
+			setDowngradeMessage('Error downgrading to Free Plan. Please try again.');
+		} finally {
+			setDowngrading(false);
+		}
+	};
 
 	if (!userInfo) {
 		navigate('/login');
@@ -217,15 +257,25 @@ const SubscriptionPlans = () => {
 							</div>
 
 								<button
-									disabled={currentSubscription?.planType === 'free'}
-									className={`w-full py-3 rounded-lg font-medium transition-colors ${
-										currentSubscription?.planType === 'free'
-											? 'bg-gray-200 text-gray-600 cursor-not-allowed'
-											: 'bg-gray-600 text-white hover:bg-gray-700'
-									}`}
-								>
-									{currentSubscription?.planType === 'free' ? 'Current Plan' : 'Switch to Free'}
-								</button>
+								onClick={handleDowngradeToFree}
+								disabled={currentSubscription?.planType === 'free' || downgrading}
+								className={`w-full py-3 rounded-lg font-medium transition-colors ${
+									currentSubscription?.planType === 'free' || downgrading
+										? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+										: 'bg-gray-600 text-white hover:bg-gray-700'
+								}`}
+							>
+								{downgrading ? 'Processing...' : currentSubscription?.planType === 'free' ? 'Current Plan' : 'Switch to Free'}
+							</button>
+							{downgradeMessage && (
+								<div className={`mt-3 p-3 rounded text-sm ${
+									downgradeMessage.includes('Successfully') 
+										? 'bg-green-100 text-green-700' 
+										: 'bg-red-100 text-red-700'
+								}`}>
+									{downgradeMessage}
+								</div>
+							)}
 							</div>
 
 							{/* Premium Plan */}
@@ -338,7 +388,7 @@ const SubscriptionPlans = () => {
 											: 'bg-amber-600 text-white hover:bg-amber-700'
 									}`}
 								>
-									{currentSubscription?.planType === 'premium' ? 'Current Plan' : 'Upgrade to Premium'}
+									{currentSubscription?.planType === 'premium' ? 'Current Plan' : 'Pay'}
 								</button>
 							</div>
 						</div>

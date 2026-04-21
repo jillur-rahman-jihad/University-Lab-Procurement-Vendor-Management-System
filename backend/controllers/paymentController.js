@@ -99,12 +99,13 @@ exports.verifyBkashPayment = async (req, res) => {
 		const subscription = await Subscription.findByIdAndUpdate(
 			payment.subscriptionId,
 			{
-				planType: 'premium',
+				plan: 'premium',
 				startDate: new Date(),
-				expiryDate: new Date(payment.billingCycle === 'monthly'
+				endDate: new Date(payment.billingCycle === 'monthly'
 					? Date.now() + 30 * 24 * 60 * 60 * 1000
 					: Date.now() + 365 * 24 * 60 * 60 * 1000
-				)
+				),
+				paymentMethod: 'bkash'
 			},
 			{ new: true }
 		);
@@ -325,6 +326,97 @@ exports.cancelPayment = async (req, res) => {
 	} catch (error) {
 		res.status(500).json({
 			message: 'Error cancelling payment',
+			error: error.message
+		});
+	}
+};
+
+// Direct payment - immediately complete payment and upgrade subscription
+exports.completePaymentDirect = async (req, res) => {
+	try {
+		console.log('[PAYMENT] Complete direct payment request received');
+		console.log('[PAYMENT] req.user:', req.user);
+		console.log('[PAYMENT] req.body:', req.body);
+
+		const { billingCycle } = req.body;
+		const userId = req.user.id;
+
+		if (!['monthly', 'annual'].includes(billingCycle)) {
+			console.log('[PAYMENT] Invalid billing cycle:', billingCycle);
+			return res.status(400).json({ message: 'Invalid billing cycle' });
+		}
+
+		console.log('[PAYMENT] Processing payment for user:', userId, 'billingCycle:', billingCycle);
+
+		// Get user's subscription or create one if doesn't exist
+		let subscription = await Subscription.findOne({ userId });
+		console.log('[PAYMENT] Subscription lookup:', subscription ? 'Found' : 'Not found');
+		
+		if (!subscription) {
+			console.log('[PAYMENT] Creating new subscription for user:', userId);
+			// Create a free subscription if one doesn't exist
+			subscription = new Subscription({
+				userId,
+				plan: 'free',
+				status: 'active',
+				startDate: new Date()
+			});
+			await subscription.save();
+			console.log('[PAYMENT] New subscription created:', subscription._id);
+		}
+
+		const amount = PREMIUM_PLAN_PRICING[billingCycle];
+		console.log('[PAYMENT] Amount:', amount, 'BDT');
+
+		// Create and immediately complete payment record
+		const payment = new Payment({
+			userId,
+			subscriptionId: subscription._id,
+			planType: 'premium',
+			paymentMethod: 'direct',
+			amount,
+			currency: 'BDT',
+			status: 'completed',
+			billingCycle,
+			invoiceNumber: `INV-${Date.now()}`,
+			paymentDate: new Date()
+		});
+
+		await payment.save();
+		console.log('[PAYMENT] Payment record created:', payment._id);
+
+		// Update subscription to premium
+		const updatedSubscription = await Subscription.findByIdAndUpdate(
+			payment.subscriptionId,
+			{
+				plan: 'premium',
+				startDate: new Date(),
+				endDate: new Date(billingCycle === 'monthly'
+					? Date.now() + 30 * 24 * 60 * 60 * 1000
+					: Date.now() + 365 * 24 * 60 * 60 * 1000
+				),
+				paymentMethod: 'direct'
+			},
+			{ new: true }
+		);
+
+		console.log('[PAYMENT] Subscription updated to premium');
+
+		res.status(200).json({
+			success: true,
+			message: 'Payment completed successfully! Premium plan is now active.',
+			payment: {
+				paymentId: payment._id,
+				invoiceNumber: payment.invoiceNumber,
+				status: payment.status,
+				amount: payment.amount
+			},
+			subscription: updatedSubscription
+		});
+	} catch (error) {
+		console.error('[PAYMENT] Error:', error);
+		res.status(500).json({
+			message: 'Error completing payment',
 			error: error.message
 		});
 	}

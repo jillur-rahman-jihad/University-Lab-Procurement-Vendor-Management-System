@@ -4,576 +4,264 @@ import { useNavigate } from 'react-router-dom';
 
 const PremiumPayment = () => {
 	const navigate = useNavigate();
-	const [paymentMethod, setPaymentMethod] = useState('bkash');
 	const [billingCycle, setBillingCycle] = useState('monthly');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 	const [success, setSuccess] = useState('');
 	const [pricing, setPricing] = useState(null);
+	const [token, setToken] = useState(null);
+	const [currentSubscription, setCurrentSubscription] = useState(null);
+	const [isPremium, setIsPremium] = useState(false);
+	const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
-	// Bkash form state
-	const [bkashPhone, setBkashPhone] = useState('');
-	const [bkashTransactionId, setBkashTransactionId] = useState('');
-	const [bkashStep, setBkashStep] = useState('phone'); // phone or verify
-
-	// Institutional billing form state
-	const [institutionalData, setInstitutionalData] = useState({
-		institutionName: '',
-		billingDepartment: '',
-		purchaseOrderNumber: '',
-		costCenter: '',
-		billingContact: {
-			name: '',
-			email: '',
-			phone: ''
-		}
-	});
-
-	const [paymentId, setPaymentId] = useState('');
-	const [paymentHistory, setPaymentHistory] = useState([]);
-
-	// Fetch pricing on mount
+	// Get token from userInfo and check authentication
 	useEffect(() => {
-		const fetchPricing = async () => {
+		try {
+			const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+			const authToken = userInfo?.token || localStorage.getItem('token');
+			
+			console.log('[PREMIUM PAYMENT] Authentication check:');
+			console.log('  - userInfo found:', !!userInfo);
+			console.log('  - token from userInfo:', authToken ? 'Yes' : 'No');
+			console.log('  - direct token found:', !!localStorage.getItem('token'));
+			
+			if (authToken) {
+				console.log('[PREMIUM PAYMENT] ✅ Authenticated - setting token');
+				setToken(authToken);
+				setError(''); // Clear any previous errors
+			} else {
+				console.log('[PREMIUM PAYMENT] ❌ Not authenticated - redirecting to login');
+				setError('Please login first to upgrade your subscription');
+				// Give user time to read the message before redirecting
+				const timer = setTimeout(() => navigate('/login'), 2500);
+				return () => clearTimeout(timer);
+			}
+		} catch (err) {
+			console.error('[PREMIUM PAYMENT] Error parsing userInfo:', err);
+			setError('Authentication error. Please login again.');
+			const timer = setTimeout(() => navigate('/login'), 2500);
+			return () => clearTimeout(timer);
+		}
+	}, [navigate]);
+
+	// Fetch pricing and current subscription on mount (only when token is available)
+	useEffect(() => {
+		if (!token) return;
+
+		const fetchData = async () => {
 			try {
-				const response = await axios.get('/api/payment/pricing', {
+				console.log('[PREMIUM PAYMENT] Fetching pricing and subscription status...');
+				
+				// Fetch pricing
+				const pricingResponse = await axios.get(`${API_URL}/api/payment/pricing`, {
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
+						Authorization: `Bearer ${token}`
 					}
 				});
-				setPricing(response.data.pricing);
-			} catch (err) {
-				console.error('Error fetching pricing:', err);
-			}
-		};
+				console.log('[PREMIUM PAYMENT] Pricing fetched:', pricingResponse.data);
+				setPricing(pricingResponse.data.pricing);
 
-		const fetchPaymentHistory = async () => {
-			try {
-				const response = await axios.get('/api/payment/history', {
+				// Fetch current subscription status
+				const subscriptionResponse = await axios.get(`${API_URL}/api/subscription/current`, {
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
-					},
-					params: { limit: 5 }
+						Authorization: `Bearer ${token}`
+					}
 				});
-				setPaymentHistory(response.data.payments);
+				console.log('[PREMIUM PAYMENT] Current subscription:', subscriptionResponse.data);
+				const subscription = subscriptionResponse.data.subscription;
+				setCurrentSubscription(subscription);
+				setIsPremium(subscription.plan === 'premium');
 			} catch (err) {
-				console.error('Error fetching payment history:', err);
+				console.error('[PREMIUM PAYMENT] Error fetching data:', err.response?.data || err.message);
+				setError(err.response?.data?.message || 'Error loading information');
 			}
 		};
 
-		fetchPricing();
-		fetchPaymentHistory();
-	}, []);
-
-	const getAmount = () => {
-		if (!pricing) return 0;
-		const amount = pricing.premium[billingCycle];
-		return amount;
-	};
+		fetchData();
+}, [token, API_URL]);
 
 	const getDiscount = () => {
 		if (billingCycle === 'annual') {
-			// Annual price is $999 vs monthly $99 * 12 = $1188, so 16% discount
 			return '16%';
 		}
 		return '0%';
 	};
 
-	// Handle Bkash payment initiation
-	const handleBkashInitiate = async (e) => {
-		e.preventDefault();
-		setLoading(true);
-		setError('');
-
-		try {
-			const response = await axios.post(
-				'/api/payment/bkash/initiate',
-				{
-					billingCycle,
-					bkashPhoneNumber: bkashPhone
-				},
-				{
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
-					}
-				}
-			);
-
-			setPaymentId(response.data.payment.paymentId);
-			setBkashStep('verify');
-			setSuccess(`Payment initiated. Instructions: ${response.data.payment.instructions}`);
-		} catch (err) {
-			setError(err.response?.data?.message || 'Error initiating Bkash payment');
-		} finally {
-			setLoading(false);
+	const getAmount = () => {
+		if (!pricing) return 0;
+		const premiumPricing = pricing.premium || pricing;
+		if (billingCycle === 'annual') {
+			return premiumPricing.annual || 0;
 		}
+		return premiumPricing.monthly || 0;
 	};
 
-	// Handle Bkash verification
-	const handleBkashVerify = async (e) => {
-		e.preventDefault();
-		setLoading(true);
-		setError('');
-
-		try {
-			const response = await axios.post(
-				'/api/payment/bkash/verify',
-				{
-					paymentId,
-					transactionId: bkashTransactionId
-				},
-				{
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
-					}
-				}
-			);
-
-			setSuccess('Payment verified! Your premium subscription is now active.');
-			setTimeout(() => {
-				navigate('/university-dashboard');
-			}, 2000);
-		} catch (err) {
-			setError(err.response?.data?.message || 'Error verifying Bkash payment');
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	// Handle institutional billing submission
-	const handleInstitutionalBilling = async (e) => {
-		e.preventDefault();
-		setLoading(true);
-		setError('');
-
-		// Validate required fields
-		if (!institutionalData.institutionName || !institutionalData.billingDepartment ||
-			!institutionalData.billingContact.name || !institutionalData.billingContact.email) {
-			setError('Please fill in all required fields');
-			setLoading(false);
+	// Handle direct payment
+	const handlePay = async () => {
+		if (!token) {
+			setError('Session expired. Please login again to complete the payment.');
+			setTimeout(() => navigate('/login'), 1500);
 			return;
 		}
 
+		if (!billingCycle) {
+			setError('Please select a billing cycle before paying');
+			return;
+		}
+
+		if (getAmount() === 0) {
+			setError('Pricing not loaded. Please refresh the page.');
+			return;
+		}
+
+		setLoading(true);
+		setError('');
+
 		try {
+			console.log('[PREMIUM PAYMENT] Initiating payment...');
+			console.log('[PREMIUM PAYMENT] Token:', token.substring(0, 20) + '...');
+			console.log('[PREMIUM PAYMENT] Billing cycle:', billingCycle);
+			console.log('[PREMIUM PAYMENT] Amount:', getAmount());
+
 			const response = await axios.post(
-				'/api/payment/institutional-billing/initiate',
+				`${API_URL}/api/payment/complete/direct`,
 				{
-					billingCycle,
-					...institutionalData
+					billingCycle
 				},
 				{
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem('token')}`
+						Authorization: `Bearer ${token}`,
+						'Content-Type': 'application/json'
 					}
 				}
 			);
 
-			setSuccess(`Institutional billing request submitted! Invoice: ${response.data.payment.invoiceNumber}`);
-			setPaymentId(response.data.payment.paymentId);
+			console.log('[PREMIUM PAYMENT] Payment response:', response.data);
+			setSuccess('Payment completed! Your premium subscription is now active.');
+			setIsPremium(true);
+			setCurrentSubscription(response.data.subscription);
 			setTimeout(() => {
-				navigate('/university-dashboard');
+				navigate('/dashboard');
 			}, 2000);
 		} catch (err) {
-			setError(err.response?.data?.message || 'Error submitting institutional billing request');
+			console.error('[PREMIUM PAYMENT] Payment error:', {
+				status: err.response?.status,
+				message: err.response?.data?.message,
+				error: err.response?.data?.error,
+				fullError: err.message
+			});
+			setError(err.response?.data?.message || err.response?.data?.error || 'Error processing payment. Please try again.');
 		} finally {
 			setLoading(false);
-		}
-	};
-
-	const handleInstitutionalChange = (e) => {
-		const { name, value } = e.target;
-		if (name.includes('contact_')) {
-			const contactField = name.replace('contact_', '');
-			setInstitutionalData({
-				...institutionalData,
-				billingContact: {
-					...institutionalData.billingContact,
-					[contactField]: value
-				}
-			});
-		} else {
-			setInstitutionalData({
-				...institutionalData,
-				[name]: value
-			});
 		}
 	};
 
 	return (
 		<div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4">
-			<div className="max-w-6xl mx-auto">
+			<div className="max-w-2xl mx-auto">
 				{/* Header */}
 				<div className="text-center mb-12">
 					<h1 className="text-4xl font-bold text-gray-900 mb-4">Upgrade to Premium</h1>
-					<p className="text-xl text-gray-600">Choose your payment method and billing cycle</p>
+					<p className="text-xl text-gray-600">Get access to all premium features</p>
 				</div>
 
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-					{/* Left: Payment Options */}
-					<div className="lg:col-span-2">
-						{/* Billing Cycle Selection */}
-						<div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-							<h2 className="text-2xl font-bold text-gray-900 mb-4">Select Billing Cycle</h2>
-							<div className="grid grid-cols-2 gap-4">
-								<label className="relative">
-									<input
-										type="radio"
-										value="monthly"
-										checked={billingCycle === 'monthly'}
-										onChange={(e) => setBillingCycle(e.target.value)}
-										className="hidden"
-									/>
-									<div className={`p-4 border-2 rounded-lg cursor-pointer transition ${
-										billingCycle === 'monthly'
-											? 'border-blue-600 bg-blue-50'
-											: 'border-gray-300 bg-white'
-									}`}>
-										<div className="font-bold text-lg">${getAmount()}</div>
-										<div className="text-gray-600">per month</div>
-										<div className="text-sm text-gray-500 mt-2">Billed monthly</div>
-									</div>
-								</label>
-
-								<label className="relative">
-									<input
-										type="radio"
-										value="annual"
-										checked={billingCycle === 'annual'}
-										onChange={(e) => setBillingCycle(e.target.value)}
-										className="hidden"
-									/>
-									<div className={`p-4 border-2 rounded-lg cursor-pointer transition relative ${
-										billingCycle === 'annual'
-											? 'border-green-600 bg-green-50'
-											: 'border-gray-300 bg-white'
-									}`}>
-										<div className="absolute -top-3 -right-3 bg-green-500 text-white px-3 py-1 rounded text-sm font-bold">
-											Save {getDiscount()}
-										</div>
-										<div className="font-bold text-lg">${getAmount()}</div>
-										<div className="text-gray-600">per year</div>
-										<div className="text-sm text-gray-500 mt-2">Billed once yearly</div>
-									</div>
-								</label>
+				<div className="bg-white rounded-lg shadow-lg p-8">
+					{/* Billing Cycle Selection */}
+					<h2 className="text-2xl font-bold text-gray-900 mb-6">Select Billing Cycle</h2>
+					<div className="grid grid-cols-2 gap-4 mb-8">
+						<label className="relative">
+							<input
+								type="radio"
+								value="monthly"
+								checked={billingCycle === 'monthly'}
+								onChange={(e) => setBillingCycle(e.target.value)}
+								className="hidden"
+							/>
+							<div className={`p-6 border-2 rounded-lg cursor-pointer transition ${
+								billingCycle === 'monthly'
+									? 'border-blue-600 bg-blue-50'
+									: 'border-gray-300 bg-white'
+							}`}>
+								<div className="font-bold text-3xl text-blue-600">${getAmount()}</div>
+								<div className="text-gray-600 text-lg">per month</div>
+								<div className="text-sm text-gray-500 mt-2">Billed monthly</div>
 							</div>
-						</div>
+						</label>
 
-						{/* Payment Method Selection */}
-						<div className="bg-white rounded-lg shadow-lg p-6">
-							<h2 className="text-2xl font-bold text-gray-900 mb-6">Select Payment Method</h2>
-
-							{/* Bkash Payment */}
-							<div className="mb-8">
-								<label className="flex items-center cursor-pointer mb-4">
-									<input
-										type="radio"
-										value="bkash"
-										checked={paymentMethod === 'bkash'}
-										onChange={(e) => setPaymentMethod(e.target.value)}
-										className="w-4 h-4"
-									/>
-									<span className="ml-3 text-lg font-semibold flex items-center">
-										📱 Bkash
-										<span className="text-sm text-gray-500 ml-2">(Mobile Banking)</span>
-									</span>
-								</label>
-
-								{paymentMethod === 'bkash' && (
-									<form onSubmit={bkashStep === 'phone' ? handleBkashInitiate : handleBkashVerify}
-										className="bg-blue-50 p-6 rounded-lg ml-8">
-										{bkashStep === 'phone' ? (
-											<div>
-												<label className="block text-sm font-medium text-gray-700 mb-2">
-													Bkash Phone Number (01XXXXXXXXX)
-												</label>
-												<input
-													type="tel"
-													value={bkashPhone}
-													onChange={(e) => setBkashPhone(e.target.value)}
-													placeholder="01XXXXXXXXX"
-													pattern="^01[3-9]\d{8}$"
-													required
-													className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-												/>
-												<p className="text-sm text-gray-600 mt-2">
-													💡 Amount to pay: {getAmount()} BDT ({billingCycle})
-												</p>
-												<button
-													type="submit"
-													disabled={loading}
-													className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition disabled:opacity-50"
-												>
-													{loading ? 'Processing...' : 'Continue to Bkash'}
-												</button>
-											</div>
-										) : (
-											<div>
-												<p className="text-gray-700 mb-4">
-													✅ Please complete payment of {getAmount()} BDT on your Bkash app using the provided reference.
-												</p>
-												<label className="block text-sm font-medium text-gray-700 mb-2">
-													Enter Bkash Transaction ID
-												</label>
-												<input
-													type="text"
-													value={bkashTransactionId}
-													onChange={(e) => setBkashTransactionId(e.target.value)}
-													placeholder="e.g., TXN123456789"
-													required
-													className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-												/>
-												<button
-													type="submit"
-													disabled={loading}
-													className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition disabled:opacity-50"
-												>
-													{loading ? 'Verifying...' : 'Verify Payment'}
-												</button>
-												<button
-													type="button"
-													onClick={() => {
-														setBkashStep('phone');
-														setBkashPhone('');
-														setBkashTransactionId('');
-														setSuccess('');
-													}}
-													className="mt-2 w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition"
-												>
-													Back
-												</button>
-											</div>
-										)}
-									</form>
-								)}
+						<label className="relative">
+							<input
+								type="radio"
+								value="annual"
+								checked={billingCycle === 'annual'}
+								onChange={(e) => setBillingCycle(e.target.value)}
+								className="hidden"
+							/>
+							<div className={`p-6 border-2 rounded-lg cursor-pointer relative ${
+								billingCycle === 'annual'
+									? 'border-green-600 bg-green-50'
+									: 'border-gray-300 bg-white'
+							}`}>
+								<div className="absolute -top-3 -right-3 bg-green-500 text-white px-3 py-1 rounded text-sm font-bold">
+									Save {getDiscount()}
+								</div>
+								<div className="font-bold text-3xl text-green-600">${getAmount()}</div>
+								<div className="text-gray-600 text-lg">per year</div>
+								<div className="text-sm text-gray-500 mt-2">Billed once yearly</div>
 							</div>
-
-							{/* Institutional Billing Payment */}
-							<div>
-								<label className="flex items-center cursor-pointer mb-4">
-									<input
-										type="radio"
-										value="institutional"
-										checked={paymentMethod === 'institutional'}
-										onChange={(e) => setPaymentMethod(e.target.value)}
-										className="w-4 h-4"
-									/>
-									<span className="ml-3 text-lg font-semibold flex items-center">
-										🏛️ Institutional Billing
-										<span className="text-sm text-gray-500 ml-2">(Invoice-based)</span>
-									</span>
-								</label>
-
-								{paymentMethod === 'institutional' && (
-									<form onSubmit={handleInstitutionalBilling}
-										className="bg-indigo-50 p-6 rounded-lg ml-8">
-										<div className="space-y-4">
-											<div>
-												<label className="block text-sm font-medium text-gray-700 mb-1">
-													Institution Name *
-												</label>
-												<input
-													type="text"
-													name="institutionName"
-													value={institutionalData.institutionName}
-													onChange={handleInstitutionalChange}
-													placeholder="e.g., University of Dhaka"
-													required
-													className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-												/>
-											</div>
-
-											<div>
-												<label className="block text-sm font-medium text-gray-700 mb-1">
-													Billing Department *
-												</label>
-												<input
-													type="text"
-													name="billingDepartment"
-													value={institutionalData.billingDepartment}
-													onChange={handleInstitutionalChange}
-													placeholder="e.g., Finance & Procurement"
-													required
-													className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-												/>
-											</div>
-
-											<div className="grid grid-cols-2 gap-4">
-												<div>
-													<label className="block text-sm font-medium text-gray-700 mb-1">
-														Purchase Order Number
-													</label>
-													<input
-														type="text"
-														name="purchaseOrderNumber"
-														value={institutionalData.purchaseOrderNumber}
-														onChange={handleInstitutionalChange}
-														placeholder="Optional - PO#"
-														className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-													/>
-												</div>
-
-												<div>
-													<label className="block text-sm font-medium text-gray-700 mb-1">
-														Cost Center
-													</label>
-													<input
-														type="text"
-														name="costCenter"
-														value={institutionalData.costCenter}
-														onChange={handleInstitutionalChange}
-														placeholder="Optional - Cost center"
-														className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-													/>
-												</div>
-											</div>
-
-											<div className="border-t pt-4 mt-4">
-												<h3 className="font-semibold text-gray-900 mb-3">Billing Contact</h3>
-
-												<div>
-													<label className="block text-sm font-medium text-gray-700 mb-1">
-														Contact Name *
-													</label>
-													<input
-														type="text"
-														name="contact_name"
-														value={institutionalData.billingContact.name}
-														onChange={handleInstitutionalChange}
-														placeholder="Full name"
-														required
-														className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-													/>
-												</div>
-
-												<div className="mt-3">
-													<label className="block text-sm font-medium text-gray-700 mb-1">
-														Contact Email *
-													</label>
-													<input
-														type="email"
-														name="contact_email"
-														value={institutionalData.billingContact.email}
-														onChange={handleInstitutionalChange}
-														placeholder="email@institution.edu"
-														required
-														className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-													/>
-												</div>
-
-												<div className="mt-3">
-													<label className="block text-sm font-medium text-gray-700 mb-1">
-														Contact Phone
-													</label>
-													<input
-														type="tel"
-														name="contact_phone"
-														value={institutionalData.billingContact.phone}
-														onChange={handleInstitutionalChange}
-														placeholder="+880XXXXXXXXX"
-														className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-													/>
-												</div>
-											</div>
-
-											<p className="text-sm text-gray-600 mt-4">
-												💡 Amount to pay: {getAmount()} BDT ({billingCycle})
-											</p>
-
-											<button
-												type="submit"
-												disabled={loading}
-												className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition disabled:opacity-50"
-											>
-												{loading ? 'Processing...' : 'Submit Billing Request'}
-											</button>
-										</div>
-									</form>
-								)}
-							</div>
-						</div>
+						</label>
 					</div>
 
-					{/* Right: Summary and History */}
-					<div className="lg:col-span-1">
-						{/* Payment Summary */}
-						<div className="bg-white rounded-lg shadow-lg p-6 mb-6 sticky top-4">
-							<h3 className="text-xl font-bold text-gray-900 mb-4">Payment Summary</h3>
-
-							<div className="space-y-3 mb-6">
-								<div className="flex justify-between">
-									<span className="text-gray-600">Premium Plan</span>
-									<span className="font-semibold">${getAmount()}</span>
-								</div>
-								<div className="flex justify-between">
-									<span className="text-gray-600">Billing Cycle</span>
-									<span className="font-semibold capitalize">{billingCycle}</span>
-								</div>
-								{billingCycle === 'annual' && (
-									<div className="flex justify-between text-green-600">
-										<span>Savings (16%)</span>
-										<span className="font-semibold">${(1188 - getAmount()).toFixed(0)}</span>
-									</div>
-								)}
-								<div className="border-t pt-3 flex justify-between text-lg font-bold">
-									<span>Total</span>
-									<span>${getAmount()}</span>
-								</div>
-							</div>
-
-							<div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-								<h4 className="font-semibold text-green-900 mb-2">Benefits Included:</h4>
-								<ul className="text-sm text-green-800 space-y-1">
-									<li>✅ Unlimited projects & quotations</li>
-									<li>✅ Priority vendor visibility</li>
-									<li>✅ Post-deployment support</li>
-									<li>✅ Infrastructure reports</li>
-									<li>✅ And 7 more premium features</li>
-								</ul>
-							</div>
-						</div>
-
-						{/* Recent Payments */}
-						{paymentHistory.length > 0 && (
-							<div className="bg-white rounded-lg shadow-lg p-6">
-								<h3 className="text-lg font-bold text-gray-900 mb-4">Recent Payments</h3>
-								<div className="space-y-3">
-									{paymentHistory.map((payment) => (
-										<div key={payment._id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-											<div>
-												<div className="text-sm font-semibold">
-													{payment.paymentMethod === 'bkash' ? '📱 Bkash' : '🏛️ Institutional'}
-												</div>
-												<div className="text-xs text-gray-500">
-													{new Date(payment.createdAt).toLocaleDateString()}
-												</div>
-											</div>
-											<div className="text-right">
-												<div className="text-sm font-semibold">{payment.amount} BDT</div>
-												<div className={`text-xs font-semibold ${
-													payment.status === 'completed' ? 'text-green-600' :
-													payment.status === 'pending' ? 'text-yellow-600' :
-													'text-gray-600'
-												}`}>
-													{payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
-												</div>
-											</div>
-										</div>
-									))}
-								</div>
-							</div>
-						)}
+					{/* Benefits */}
+					<div className="bg-blue-50 border border-blue-200 p-6 rounded-lg mb-8">
+						<h3 className="font-bold text-gray-900 mb-3">Premium Plan Benefits:</h3>
+						<ul className="space-y-2 text-gray-700">
+							<li>✅ Unlimited lab projects & quotations</li>
+							<li>✅ Unlimited consultant hiring (all types)</li>
+							<li>✅ Priority vendor visibility & search</li>
+							<li>✅ Post-deployment support requests</li>
+							<li>✅ Infrastructure optimization reports</li>
+							<li>✅ Extended quotation validity periods</li>
+							<li>✅ All export formats available</li>
+							<li>✅ Document submission workflow</li>
+							<li>✅ And more...</li>
+						</ul>
 					</div>
+
+					{/* Pay Button */}
+					<button
+						onClick={handlePay}
+					disabled={loading || isPremium}
+					className={`w-full py-4 rounded-lg font-bold text-lg text-white transition mb-4 ${
+						isPremium
+							? 'bg-green-500 cursor-not-allowed'
+							: loading
+							? 'bg-gray-400 cursor-not-allowed'
+							: 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700'
+					}`}
+				>
+					{isPremium ? 'You are in premium plan now' : loading ? 'Processing...' : 'Pay Now'}
+				</button>
+
+				{/* Cancel Link */}
+				<button
+					onClick={() => navigate('/subscription-plans')}
+					disabled={loading}
+					className="w-full py-2 rounded-lg font-semibold text-gray-700 hover:bg-gray-100 transition"
+				>
+					Back to Subscription Plans
+				</button>
+			</div>
+
+			{/* Messages */}
+			{error && (
+				<div className="mt-8 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
+					❌ {error}
 				</div>
-
-				{/* Messages */}
-				{error && (
-					<div className="mt-8 max-w-6xl mx-auto bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-						❌ {error}
-					</div>
+			)}
 				)}
 
 				{success && (
-					<div className="mt-8 max-w-6xl mx-auto bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
+					<div className="mt-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
 						✅ {success}
 					</div>
 				)}

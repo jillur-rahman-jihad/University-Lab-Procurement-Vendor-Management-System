@@ -11,11 +11,11 @@ exports.checkInfrastructureReportsAccess = async (req, res) => {
     // Get user's subscription
     const subscription = await Subscription.findOne({ userId });
 
-    if (!subscription || subscription.planType !== 'premium') {
+    if (!subscription || subscription.plan !== 'premium') {
       return res.status(403).json({
         allowed: false,
         message: 'Infrastructure Optimization Reports are only available on Premium Plan',
-        currentPlan: subscription?.planType || 'free'
+        currentPlan: subscription?.plan || 'free'
       });
     }
 
@@ -47,7 +47,7 @@ exports.generateReport = async (req, res) => {
 
     // Verify subscription
     const subscription = await Subscription.findOne({ userId });
-    if (!subscription || subscription.planType !== 'premium' || subscription.status !== 'active') {
+    if (!subscription || subscription.plan !== 'premium' || subscription.status !== 'active') {
       return res.status(403).json({
         message: 'Premium Plan subscription required to generate reports'
       });
@@ -144,7 +144,7 @@ exports.getUserReports = async (req, res) => {
 
     // Verify subscription
     const subscription = await Subscription.findOne({ userId });
-    if (!subscription || subscription.planType !== 'premium' || subscription.status !== 'active') {
+    if (!subscription || subscription.plan !== 'premium' || subscription.status !== 'active') {
       return res.status(403).json({
         message: 'Premium Plan subscription required to access reports'
       });
@@ -190,7 +190,7 @@ exports.getReportDetails = async (req, res) => {
 
     // Verify subscription
     const subscription = await Subscription.findOne({ userId });
-    if (!subscription || subscription.planType !== 'premium' || subscription.status !== 'active') {
+    if (!subscription || subscription.plan !== 'premium' || subscription.status !== 'active') {
       return res.status(403).json({
         message: 'Premium Plan subscription required to view reports'
       });
@@ -226,7 +226,7 @@ exports.updateReport = async (req, res) => {
 
     // Verify subscription
     const subscription = await Subscription.findOne({ userId });
-    if (!subscription || subscription.planType !== 'premium' || subscription.status !== 'active') {
+    if (!subscription || subscription.plan !== 'premium' || subscription.status !== 'active') {
       return res.status(403).json({
         message: 'Premium Plan subscription required to update reports'
       });
@@ -288,7 +288,7 @@ exports.deleteReport = async (req, res) => {
 
     // Verify subscription
     const subscription = await Subscription.findOne({ userId });
-    if (!subscription || subscription.planType !== 'premium' || subscription.status !== 'active') {
+    if (!subscription || subscription.plan !== 'premium' || subscription.status !== 'active') {
       return res.status(403).json({
         message: 'Premium Plan subscription required to manage reports'
       });
@@ -327,7 +327,7 @@ exports.getReportStatistics = async (req, res) => {
 
     // Verify subscription
     const subscription = await Subscription.findOne({ userId });
-    if (!subscription || subscription.planType !== 'premium' || subscription.status !== 'active') {
+    if (!subscription || subscription.plan !== 'premium' || subscription.status !== 'active') {
       return res.status(403).json({
         message: 'Premium Plan subscription required to view statistics'
       });
@@ -389,7 +389,7 @@ exports.exportReport = async (req, res) => {
 
     // Verify subscription
     const subscription = await Subscription.findOne({ userId });
-    if (!subscription || subscription.planType !== 'premium' || subscription.status !== 'active') {
+    if (!subscription || subscription.plan !== 'premium' || subscription.status !== 'active') {
       return res.status(403).json({
         message: 'Premium Plan subscription required to export reports'
       });

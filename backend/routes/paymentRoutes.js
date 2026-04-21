@@ -23,4 +23,7 @@ router.get('/:paymentId', paymentController.getPaymentDetails);
 // Cancel payment
 router.post('/:paymentId/cancel', paymentController.cancelPayment);
 
+// Direct payment - immediate premium upgrade
+router.post('/complete/direct', paymentController.completePaymentDirect);
+
 module.exports = router;

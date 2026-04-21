@@ -327,7 +327,7 @@ const InfrastructureOptimizationReports = () => {
 				{/* Header */}
 				<div className="mb-8">
 					<button
-						onClick={() => navigate('/university-dashboard')}
+						onClick={() => navigate('/dashboard')}
 						className="text-indigo-600 hover:text-indigo-800 mb-4"
 					>
 						← Back to Dashboard
