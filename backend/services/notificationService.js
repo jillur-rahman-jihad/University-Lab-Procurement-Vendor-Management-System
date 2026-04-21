@@ -1,7 +1,6 @@
 const Notification = require("../models/Notification");
 const User = require("../models/User");
 const emailService = require("./emailService");
-const { queueEmailJob } = require("../queue/emailQueue");
 
 /**
  * Notification Service
@@ -107,9 +106,9 @@ async function notifyUsers(userIds, notificationParams) {
 }
 
 /**
- * Send email for notification (queued for async delivery)
+ * Send email for notification
  * @param {Object} notification - Notification document
- * @returns {Promise<boolean>} - Returns true if queued successfully
+ * @returns {Promise<boolean>}
  */
 async function sendNotificationEmail(notification) {
   try {
@@ -132,37 +131,22 @@ async function sendNotificationEmail(notification) {
     // Determine email template based on type
     const emailTemplate = getEmailTemplate(notification.type, notification.message, displayName, notification.actionUrl);
 
-    // Queue email job for async delivery (Phase 5 - Async Queue)
-    try {
-      await queueEmailJob({
-        notificationId: notification._id.toString(),
-        to: user.email,
-        subject: emailTemplate.subject,
-        html: emailTemplate.html
-      }, {
-        priority: notification.priority === 'high' ? 10 : (notification.priority === 'low' ? 1 : 5)
-      });
+    // Send email
+    const emailSent = await emailService.sendNotificationEmail(
+      user.email,
+      emailTemplate.subject,
+      emailTemplate.html
+    );
 
-      console.log(`[NOTIFICATION] Email queued for user ${notification.userId}`);
+    if (emailSent) {
+      // Update notification with email sent status
+      notification.deliveryChannels.email.sent = true;
+      notification.deliveryChannels.email.sentAt = new Date();
+      await notification.save();
       return true;
-    } catch (queueError) {
-      // If queue fails (e.g., Redis unavailable), fall back to direct send
-      console.warn('[NOTIFICATION] Queue unavailable, attempting direct email send:', queueError.message);
-      
-      const emailSent = await emailService.sendNotificationEmail(
-        user.email,
-        emailTemplate.subject,
-        emailTemplate.html
-      );
-
-      if (emailSent) {
-        notification.deliveryChannels.email.sent = true;
-        notification.deliveryChannels.email.sentAt = new Date();
-        await notification.save();
-      }
-      
-      return emailSent;
     }
+
+    return false;
   } catch (error) {
     console.error("[NOTIFICATION] Error in sendNotificationEmail:", error.message);
     return false;
