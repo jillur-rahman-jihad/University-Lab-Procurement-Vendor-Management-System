@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+
+const LEAFLET_SCRIPT_ID = 'leaflet-script';
+const LEAFLET_STYLE_ID = 'leaflet-style';
+const DEFAULT_MAP_CENTER = [23.8103, 90.4125];
 
 const Register = () => {
   const [role, setRole] = useState('university');
   const navigate = useNavigate();
+  const mapContainerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
 
   // Common Fields
   const [formData, setFormData] = useState({
@@ -28,6 +35,85 @@ const Register = () => {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState({ lat: null, lng: null });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const initializeMap = () => {
+      if (!isMounted || mapRef.current || !mapContainerRef.current || !window.L) return;
+
+      const map = window.L.map(mapContainerRef.current).setView(DEFAULT_MAP_CENTER, 13);
+
+      window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+
+      map.on('click', (event) => {
+        const { lat, lng } = event.latlng;
+
+        if (markerRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+        } else {
+          markerRef.current = window.L.marker([lat, lng]).addTo(map);
+        }
+
+        setSelectedLocation({
+          lat: Number(lat.toFixed(6)),
+          lng: Number(lng.toFixed(6))
+        });
+      });
+
+      mapRef.current = map;
+    };
+
+    const ensureLeafletLoaded = () => {
+      if (window.L) {
+        initializeMap();
+        return;
+      }
+
+      if (!document.getElementById(LEAFLET_STYLE_ID)) {
+        const style = document.createElement('link');
+        style.id = LEAFLET_STYLE_ID;
+        style.rel = 'stylesheet';
+        style.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        style.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+        style.crossOrigin = '';
+        document.head.appendChild(style);
+      }
+
+      const existingScript = document.getElementById(LEAFLET_SCRIPT_ID);
+      if (existingScript) {
+        existingScript.addEventListener('load', initializeMap);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = LEAFLET_SCRIPT_ID;
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+      script.crossOrigin = '';
+      script.onload = initializeMap;
+      document.body.appendChild(script);
+    };
+
+    ensureLeafletLoaded();
+
+    return () => {
+      isMounted = false;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        markerRef.current = null;
+      }
+      const existingScript = document.getElementById(LEAFLET_SCRIPT_ID);
+      if (existingScript) {
+        existingScript.removeEventListener('load', initializeMap);
+      }
+    };
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -38,6 +124,12 @@ const Register = () => {
     setError('');
     setLoading(true);
 
+    if (selectedLocation.lat === null || selectedLocation.lng === null) {
+      setError('Please click on the map to select coordinates.');
+      setLoading(false);
+      return;
+    }
+
     try {
       // Build payload matching backend expectations
       const payload = {
@@ -46,6 +138,7 @@ const Register = () => {
         password: formData.password,
         phone: formData.phone,
         address: formData.address,
+        location: selectedLocation,
         role,
       };
 
@@ -159,7 +252,34 @@ const Register = () => {
                 <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>location_on</span>
                 Physical Address
               </label>
-              <input name="address" type="text" value={formData.address} onChange={handleChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" />
+              <input
+                name="address"
+                type="text"
+                value={formData.address}
+                onChange={handleChange}
+                placeholder="Enter physical address"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 flex items-center gap-2 mb-2">
+                <span className="material-icons" style={{ fontSize: '20px', color: '#3b82f6' }}>map</span>
+                Select Coordinates From Map
+              </label>
+              <div
+                ref={mapContainerRef}
+                className="w-full h-64 rounded-md border border-gray-300 overflow-hidden"
+              />
+              <p className="mt-2 text-xs text-gray-500">
+                Click on the map to set coordinates.
+              </p>
+              <p className="mt-1 text-sm text-gray-700">
+                Selected Coordinates:{' '}
+                {selectedLocation.lat !== null && selectedLocation.lng !== null
+                  ? `${selectedLocation.lat}, ${selectedLocation.lng}`
+                  : 'Not selected'}
+              </p>
             </div>
 
             {/* University Specific Fields */}

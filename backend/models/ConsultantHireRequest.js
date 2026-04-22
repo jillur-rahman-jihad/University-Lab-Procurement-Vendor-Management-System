@@ -13,6 +13,14 @@ const consultantHireRequestSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
+  projectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'LabProject'
+  },
+  labAssignmentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'LabProjectAssignment'
+  },
   
   // Request status: pending -> accepted/rejected
   status: { 

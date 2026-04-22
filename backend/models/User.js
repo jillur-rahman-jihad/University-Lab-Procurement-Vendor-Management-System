@@ -19,6 +19,11 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     phone: String,
+    address: String,
+    location: {
+        lat: Number,
+        lng: Number
+    },
 
     // University-specific
     universityInfo: {

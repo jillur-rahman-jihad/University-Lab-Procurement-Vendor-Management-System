@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 const blankComponent = {
 	category: 'CPU',
@@ -11,8 +11,51 @@ const blankComponent = {
 	deliveryTime: ''
 };
 
+const LEAFLET_SCRIPT_ID = 'quotation-leaflet-script';
+const LEAFLET_STYLE_ID = 'quotation-leaflet-style';
+const DEFAULT_MAP_CENTER = [23.8103, 90.4125];
+
+const getVendorCoordinates = (quotation) => {
+	const directLocation = quotation?.vendorId?.location;
+	if (
+		directLocation &&
+		typeof directLocation.lat === 'number' &&
+		typeof directLocation.lng === 'number'
+	) {
+		return { lat: directLocation.lat, lng: directLocation.lng };
+	}
+
+	const nestedLocation = quotation?.vendorId?.vendorInfo?.location;
+	if (
+		nestedLocation &&
+		typeof nestedLocation.lat === 'number' &&
+		typeof nestedLocation.lng === 'number'
+	) {
+		return { lat: nestedLocation.lat, lng: nestedLocation.lng };
+	}
+
+	return null;
+};
+
+const calculateDistanceKm = (from, to) => {
+	if (!from || !to) return null;
+
+	const toRad = (value) => (value * Math.PI) / 180;
+	const earthRadiusKm = 6371;
+	const dLat = toRad(to.lat - from.lat);
+	const dLng = toRad(to.lng - from.lng);
+	const a =
+		Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+		Math.cos(toRad(from.lat)) * Math.cos(toRad(to.lat)) *
+		Math.sin(dLng / 2) * Math.sin(dLng / 2);
+	const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+	return earthRadiusKm * c;
+};
+
 function QuotationSystem() {
 	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 	let token = null;
 	let role = null;
@@ -37,6 +80,181 @@ function QuotationSystem() {
 	const [maintenanceIncluded, setMaintenanceIncluded] = useState(false);
 	const [selectedQuotations, setSelectedQuotations] = useState([]);
 	const [compareError, setCompareError] = useState('');
+	const mapContainerRef = useRef(null);
+	const mapRef = useRef(null);
+	const markerLayerRef = useRef(null);
+	const universityMarkerRef = useRef(null);
+	const [isLeafletReady, setIsLeafletReady] = useState(false);
+
+	const requestedLabId = searchParams.get('labId');
+	const requestedView = searchParams.get('view');
+
+	const universityCoordinates = useMemo(() => {
+		if (
+			labDetails?.universityLocation &&
+			typeof labDetails.universityLocation.lat === 'number' &&
+			typeof labDetails.universityLocation.lng === 'number'
+		) {
+			return {
+				lat: labDetails.universityLocation.lat,
+				lng: labDetails.universityLocation.lng
+			};
+		}
+
+		return null;
+	}, [labDetails]);
+
+	const quotationsWithDistance = useMemo(() => {
+		return quotations.map((quotation) => {
+			const vendorCoordinates = getVendorCoordinates(quotation);
+			const distanceKm = calculateDistanceKm(universityCoordinates, vendorCoordinates);
+
+			return {
+				...quotation,
+				_vendorCoordinates: vendorCoordinates,
+				_distanceKm: distanceKm
+			};
+		});
+	}, [quotations, universityCoordinates]);
+
+	const sortedQuotations = useMemo(() => {
+		return [...quotationsWithDistance].sort((a, b) => {
+			if (a._distanceKm === null && b._distanceKm === null) return 0;
+			if (a._distanceKm === null) return 1;
+			if (b._distanceKm === null) return -1;
+			return a._distanceKm - b._distanceKm;
+		});
+	}, [quotationsWithDistance]);
+
+	useEffect(function () {
+		if (role !== 'university') {
+			return undefined;
+		}
+
+		const initLeaflet = () => {
+			if (window.L) {
+				setIsLeafletReady(true);
+			}
+		};
+
+		if (window.L) {
+			setIsLeafletReady(true);
+			return undefined;
+		}
+
+		if (!document.getElementById(LEAFLET_STYLE_ID)) {
+			const style = document.createElement('link');
+			style.id = LEAFLET_STYLE_ID;
+			style.rel = 'stylesheet';
+			style.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+			style.integrity = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+			style.crossOrigin = '';
+			document.head.appendChild(style);
+		}
+
+		const existingScript = document.getElementById(LEAFLET_SCRIPT_ID);
+		if (existingScript) {
+			existingScript.addEventListener('load', initLeaflet);
+			return () => {
+				existingScript.removeEventListener('load', initLeaflet);
+			};
+		}
+
+		const script = document.createElement('script');
+		script.id = LEAFLET_SCRIPT_ID;
+		script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+		script.integrity = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+		script.crossOrigin = '';
+		script.onload = initLeaflet;
+		document.body.appendChild(script);
+
+		return () => {
+			script.removeEventListener('load', initLeaflet);
+		};
+	}, [role]);
+
+	useEffect(() => {
+		if (role !== 'university' || !isLeafletReady || !mapContainerRef.current || !window.L) {
+			return;
+		}
+
+		if (!mapRef.current) {
+			mapRef.current = window.L.map(mapContainerRef.current).setView(DEFAULT_MAP_CENTER, 11);
+			window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+				maxZoom: 19,
+				attribution: '&copy; OpenStreetMap contributors'
+			}).addTo(mapRef.current);
+			markerLayerRef.current = window.L.layerGroup().addTo(mapRef.current);
+		}
+
+		const map = mapRef.current;
+		const markerLayer = markerLayerRef.current;
+		if (!map || !markerLayer) {
+			return;
+		}
+
+		markerLayer.clearLayers();
+		const bounds = [];
+
+		if (universityCoordinates) {
+			if (universityMarkerRef.current) {
+				map.removeLayer(universityMarkerRef.current);
+			}
+
+			const universityIcon = window.L.divIcon({
+				className: '',
+				html: '<div style="width:30px;height:30px;border-radius:50%;background:#7c3aed;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.28);border:2px solid #ffffff;">🎓</div>',
+				iconSize: [30, 30],
+				iconAnchor: [15, 15]
+			});
+
+			universityMarkerRef.current = window.L.marker([universityCoordinates.lat, universityCoordinates.lng], { icon: universityIcon })
+				.bindTooltip('University', {
+					permanent: true,
+					direction: 'top',
+					offset: [0, -16]
+				})
+				.bindPopup('University Location')
+				.addTo(map);
+			bounds.push([universityCoordinates.lat, universityCoordinates.lng]);
+		}
+
+		sortedQuotations.forEach((quotation) => {
+			if (!quotation._vendorCoordinates) return;
+
+			const vendorName = quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor';
+			const distanceText = quotation._distanceKm !== null ? `${quotation._distanceKm.toFixed(2)} km away` : 'Distance unavailable';
+
+			window.L.marker([quotation._vendorCoordinates.lat, quotation._vendorCoordinates.lng])
+				.bindTooltip(vendorName, {
+					permanent: true,
+					direction: 'top',
+					offset: [0, -12],
+					className: 'vendor-name-tooltip'
+				})
+				.bindPopup(`<strong>${vendorName}</strong><br/>Total: ${quotation.totalPrice}<br/>${distanceText}`)
+				.addTo(markerLayer);
+
+			bounds.push([quotation._vendorCoordinates.lat, quotation._vendorCoordinates.lng]);
+		});
+
+		if (bounds.length > 1) {
+			map.fitBounds(bounds, { padding: [30, 30] });
+		} else if (bounds.length === 1) {
+			map.setView(bounds[0], 13);
+		}
+	}, [role, isLeafletReady, universityCoordinates, sortedQuotations]);
+
+	useEffect(() => {
+		return () => {
+			if (mapRef.current) {
+				mapRef.current.remove();
+				mapRef.current = null;
+				markerLayerRef.current = null;
+				universityMarkerRef.current = null;
+			}
+		};
+	}, []);
 
 	useEffect(function () {
 		async function fetchLabs() {
@@ -46,9 +264,13 @@ function QuotationSystem() {
 				const res = await axios.get('http://localhost:5001/api/quotation-system/labs', {
 					headers: { Authorization: `Bearer ${token}` }
 				});
-				setLabs(res.data || []);
-				if (res.data && res.data.length > 0) {
-					setSelectedLab(res.data[0]);
+				const availableLabs = res.data || [];
+				setLabs(availableLabs);
+				if (availableLabs.length > 0) {
+					const matchedLab = requestedLabId
+						? availableLabs.find((lab) => lab._id === requestedLabId)
+						: null;
+					setSelectedLab(matchedLab || availableLabs[0]);
 				}
 			} catch (err) {
 				if (err.response && err.response.data && err.response.data.message) {
@@ -64,7 +286,7 @@ function QuotationSystem() {
 		if (token) {
 			fetchLabs();
 		}
-	}, [token]);
+	}, [token, requestedLabId]);
 
 	useEffect(function () {
 		async function fetchLabDetails() {
@@ -136,6 +358,12 @@ function QuotationSystem() {
 		setCompareError('');
 	}, [selectedLab && selectedLab._id]);
 
+	useEffect(() => {
+		if (requestedView === 'map' && role === 'university' && mapContainerRef.current) {
+			mapContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+		}
+	}, [requestedView, role, selectedLab]);
+
 	const totalPrice = useMemo(function () {
 		return components.reduce(function (sum, component) {
 			const unitPrice = Number(component.unitPrice || 0);
@@ -145,11 +373,11 @@ function QuotationSystem() {
 	}, [components]);
 
 	const bestQuotation = useMemo(function () {
-		if (role !== 'university' || quotations.length === 0) {
+		if (role !== 'university' || sortedQuotations.length === 0) {
 			return null;
 		}
 
-		return quotations.reduce(function (currentBest, quotation) {
+		return sortedQuotations.reduce(function (currentBest, quotation) {
 			if (!currentBest) {
 				return quotation;
 			}
@@ -171,7 +399,7 @@ function QuotationSystem() {
 
 			return currentBest;
 		}, null);
-	}, [quotations, role]);
+	}, [sortedQuotations, role]);
 
 	function updateComponent(index, key, value) {
 		setComponents(function (prev) {
@@ -444,11 +672,21 @@ function QuotationSystem() {
 									</p>
 									{role === 'university' && <span className="text-sm text-gray-500 flex items-center gap-1">
 										<span className="material-icons" style={{ fontSize: '16px' }}>inventory_2</span>
-										{quotations.length} offers
+										{sortedQuotations.length} offers
 									</span>}
 								</div>
 								{role === 'university' && (
 									<>
+									<div className="mb-3 rounded-xl border border-gray-200 bg-white p-3">
+										<p className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+											<span className="material-icons" style={{ fontSize: '18px', color: '#3b82f6' }}>map</span>
+											Nearby Vendor Quotations Map
+										</p>
+										<div ref={mapContainerRef} className="h-72 w-full rounded-lg border border-gray-200" />
+										<p className="mt-2 text-xs text-gray-500">
+											Vendors are plotted when location coordinates are available.
+										</p>
+									</div>
 									<div className="mb-3 rounded-xl border border-green-100 bg-green-50 px-4 py-3 text-sm text-green-900">
 										<p className="font-semibold flex items-center gap-2">
 											<span className="material-icons" style={{ fontSize: '18px' }}>star</span>
@@ -485,9 +723,9 @@ function QuotationSystem() {
 
 								{role === 'university' ? (
 									<div className="space-y-3 max-h-72 overflow-auto pr-1">
-										{quotations.length === 0 ? (
+										{sortedQuotations.length === 0 ? (
 											<p className="text-sm text-gray-500">No quotations have been submitted yet.</p>
-										) : quotations.map((quotation) => (
+										) : sortedQuotations.map((quotation) => (
 											<div
 												key={quotation._id}
 												className={`rounded-xl border p-4 text-sm transition ${selectedQuotations.some((item) => item._id === quotation._id) ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white'}`}
@@ -503,6 +741,9 @@ function QuotationSystem() {
 															)}
 														</div>
 														<p className="text-gray-500">{quotation.vendorId?.email}</p>
+														<p className="text-xs text-gray-500">
+															{quotation._distanceKm !== null ? `Distance: ${quotation._distanceKm.toFixed(2)} km` : 'Distance unavailable'}
+														</p>
 													</div>
 													<div className="text-right">
 														<p className="font-semibold text-blue-700">{quotation.totalPrice}</p>

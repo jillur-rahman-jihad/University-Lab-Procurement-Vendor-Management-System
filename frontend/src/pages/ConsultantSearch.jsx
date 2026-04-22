@@ -13,8 +13,7 @@ const ConsultantSearch = () => {
 
   const EXPERTISE_OPTIONS = ["Networking", "Graphics", "Research", "AI Infrastructure"];
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const token = userInfo.token;
+  const token = localStorage.getItem('token');
 
   const handleLogout = () => {
     localStorage.removeItem('userInfo');

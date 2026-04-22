@@ -6,6 +6,7 @@ const HireConsultant = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     consultantId: '',
+    projectId: '',
     projectName: '',
     projectDescription: '',
     startDate: '',
@@ -13,20 +14,19 @@ const HireConsultant = () => {
   });
 
   const [consultants, setConsultants] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [selectedConsultantType, setSelectedConsultantType] = useState(null);
-  const [typeValidation, setTypeValidation] = useState(null);
-  const [typeCheckLoading, setTypeCheckLoading] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
-  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-  const token = userInfo.token;
+  const token = localStorage.getItem('token');
+  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   // Fetch available consultants on component mount
   useEffect(() => {
     fetchAvailableConsultants();
+    fetchAvailableProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -42,6 +42,18 @@ const HireConsultant = () => {
     }
   };
 
+  const fetchAvailableProjects = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/labs/user-projects`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setProjects(response.data.projects || []);
+    } catch (err) {
+      console.error('Error fetching projects:', err);
+      setError('Failed to load available projects');
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -49,35 +61,6 @@ const HireConsultant = () => {
       [name]: value
     }));
     setError(null); // Clear error when user starts typing
-
-    // If consultant is selected, validate the consultant type
-    if (name === 'consultantId' && value) {
-      validateConsultantType(value);
-    } else if (name === 'consultantId') {
-      setSelectedConsultantType(null);
-      setTypeValidation(null);
-    }
-  };
-
-  // Validate if current subscription allows hiring this consultant type
-  const validateConsultantType = async (consultantId) => {
-    setTypeCheckLoading(true);
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/subscription/check-consultant-type`,
-        { consultantId },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const selectedConsultant = consultants.find(c => c._id === consultantId);
-      setSelectedConsultantType(selectedConsultant?.consultantInfo?.experienceLevel || 'General');
-      setTypeValidation(response.data);
-    } catch (err) {
-      console.error('Error validating consultant type:', err);
-      setTypeValidation(null);
-    } finally {
-      setTypeCheckLoading(false);
-    }
   };
 
   const handleLogout = () => {
@@ -90,7 +73,7 @@ const HireConsultant = () => {
     e.preventDefault();
     
     // Validation
-    if (!formData.consultantId || !formData.projectName || !formData.startDate || !formData.endDate) {
+    if (!formData.consultantId || !formData.projectId || !formData.projectName || !formData.startDate || !formData.endDate) {
       setError('Please fill in all required fields');
       return;
     }
@@ -108,6 +91,7 @@ const HireConsultant = () => {
         `${API_URL}/api/hire/create`,
         {
           consultantId: formData.consultantId,
+          projectId: formData.projectId,
           projectName: formData.projectName,
           projectDescription: formData.projectDescription,
           startDate: formData.startDate,
@@ -119,6 +103,7 @@ const HireConsultant = () => {
       setSuccessMessage(`Hire request sent successfully to ${response.data.hireRequest.consultantId.name}!`);
       setFormData({
         consultantId: '',
+        projectId: '',
         projectName: '',
         projectDescription: '',
         startDate: '',
@@ -203,7 +188,7 @@ const HireConsultant = () => {
                 <option value="">-- Choose a consultant --</option>
                 {consultants.map((consultant) => (
                   <option key={consultant._id} value={consultant._id}>
-                    {consultant.name} - {consultant.consultantInfo?.expertise?.join(", ") || "No expertise"} ({consultant.consultantInfo?.experienceLevel || 'General'})
+                    {consultant.name} - {consultant.consultantInfo?.expertise?.join(", ") || "No expertise"}
                   </option>
                 ))}
               </select>
@@ -212,69 +197,33 @@ const HireConsultant = () => {
               </p>
             </div>
 
-            {/* Consultant Type Badge and Validation */}
-            {selectedConsultantType && (
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-gray-900">Consultant Type</h4>
-                  {typeCheckLoading ? (
-                    <span className="text-sm text-gray-500">Validating...</span>
-                  ) : (
-                    <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                      selectedConsultantType === 'General' ? 'bg-blue-100 text-blue-800' :
-                      selectedConsultantType === 'Certified' ? 'bg-amber-100 text-amber-800' :
-                      'bg-purple-100 text-purple-800'
-                    }`}>
-                      {selectedConsultantType === 'General' && '👤'}
-                      {selectedConsultantType === 'Certified' && '⭐'}
-                      {selectedConsultantType === 'Professional' && '💎'}
-                      {' '}{selectedConsultantType}
-                    </span>
-                  )}
-                </div>
-
-                {/* Validation Status */}
-                {typeValidation && (
-                  <>
-                    {typeValidation.allowed ? (
-                      <div className="p-3 bg-green-50 border border-green-200 rounded text-green-700 text-sm">
-                        ✓ You can hire this {selectedConsultantType} consultant on your current plan
-                      </div>
-                    ) : (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded mb-3">
-                        <p className="text-amber-800 text-sm font-medium mb-2">⚠️ Upgrade Required</p>
-                        <p className="text-amber-700 text-sm mb-3">
-                          Your Free Plan only allows hiring <strong>General</strong> consultants. This is a <strong>{selectedConsultantType}</strong> consultant.
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => navigate('/subscription-plans')}
-                          className="inline-block px-3 py-2 bg-amber-600 text-white rounded text-sm font-medium hover:bg-amber-700 transition"
-                        >
-                          Upgrade to Premium Plan
-                        </button>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Project Name */}
+            {/* Select Project */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Project Name <span className="text-red-600">*</span>
+                Select Project <span className="text-red-600">*</span>
               </label>
-              <input
-                type="text"
-                name="projectName"
-                value={formData.projectName}
-                onChange={handleInputChange}
-                placeholder="e.g., Network Infrastructure Setup"
-                maxLength="100"
+              <select
+                name="projectId"
+                value={formData.projectId}
+                onChange={(e) => {
+                  const projectId = e.target.value;
+                  const selectedProject = projects.find((p) => p._id === projectId);
+                  setFormData((prev) => ({
+                    ...prev,
+                    projectId,
+                    projectName: selectedProject?.labName || ''
+                  }));
+                }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required
-              />
+              >
+                <option value="">-- Choose a project --</option>
+                {projects.map((project) => (
+                  <option key={project._id} value={project._id}>
+                    {project.labName} - {project.labType}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Project Description */}
@@ -330,28 +279,25 @@ const HireConsultant = () => {
             <div className="flex gap-4 pt-4">
               <button
                 type="submit"
-                disabled={loading || (typeValidation && !typeValidation.allowed)}
+                disabled={loading}
                 className={`flex-1 px-6 py-3 rounded-lg font-semibold text-white transition ${
-                  loading || (typeValidation && !typeValidation.allowed)
+                  loading
                     ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700'
                 }`}
               >
-                {loading ? 'Sending...' : (typeValidation && !typeValidation.allowed ? 'Upgrade Required' : 'Send Hire Request')}
+                {loading ? 'Sending...' : 'Send Hire Request'}
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setFormData({
-                    consultantId: '',
-                    projectName: '',
-                    projectDescription: '',
-                    startDate: '',
-                    endDate: ''
-                  });
-                  setSelectedConsultantType(null);
-                  setTypeValidation(null);
-                }}
+                onClick={() => setFormData({
+                  consultantId: '',
+                  projectId: '',
+                  projectName: '',
+                  projectDescription: '',
+                  startDate: '',
+                  endDate: ''
+                })}
                 className="flex-1 px-6 py-3 rounded-lg font-semibold text-gray-700 bg-gray-200 hover:bg-gray-300 transition"
               >
                 Clear

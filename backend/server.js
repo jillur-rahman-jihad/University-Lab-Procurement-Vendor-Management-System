@@ -19,20 +19,8 @@ const hireRoutes = require('./routes/hireRoutes');
 const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoutes');
 // MODULE 2 - Task 2D: Lab Optimization Routes
 const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
-// Document Submission Routes (Finance/Procurement Approval Workflow)
-const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
-// Subscription Routes (Free/Premium Plan Management)
-const subscriptionRoutes = require('./routes/subscriptionRoutes');
-// Post-Deployment Support Routes (Premium Plan Feature)
-const postDeploymentRoutes = require('./routes/postDeploymentRoutes');
-// Infrastructure Optimization Reports Routes (Premium Plan Feature)
-const infrastructureOptimizationRoutes = require('./routes/infrastructureOptimizationRoutes');
-// Payment Routes (Premium Plan Payment Processing)
-const paymentRoutes = require('./routes/paymentRoutes');
-// Notification Routes (Module 3 - Feature 2.1)
-const notificationRoutes = require('./routes/notificationRoutes');
-// MODULE 3 - Feature 2.1: Cron Jobs for Notifications
-const { initializeCronJobs, stopCronJobs } = require('./jobs/cronJobs');
+// Consultant Rating & Ranking System Routes
+const consultantRRSystemRoutes = require('./routes/consultantRRSystemRoutes');
 
 connectDB();
 
@@ -45,12 +33,7 @@ app.use('/uploads', express.static('uploads'));
 
 app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
-app.use('/api/document-submission', documentSubmissionRoutes);
-app.use('/api/subscription', subscriptionRoutes);
-app.use('/api/post-deployment-support', postDeploymentRoutes);
-app.use('/api/infrastructure-optimization', infrastructureOptimizationRoutes);
-app.use('/api/vendor', vendorRoutes);
-app.use('/api/payment', paymentRoutes);
+app.use("/api/vendor", vendorRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);
 app.use('/api/university', universityRoutes);
@@ -61,42 +44,15 @@ app.use('/api/hire', hireRoutes);
 app.use('/api/infrastructure-services', infrastructureServiceRoutes);
 // MODULE 2 - Task 2D: Lab Optimization Routes (temporarily at /api/optimization for testing)
 app.use('/api/labs/optimization', labOptimizationRoutes);
-// MODULE 3 - Feature 2.1: Notification Routes
-app.use('/api/notifications', notificationRoutes);
+// Consultant Rating & Ranking System Routes
+app.use('/api/consultant-ranking', consultantRRSystemRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
 });
 
 const PORT = process.env.PORT || 5001;
-const ENABLE_CRON = process.env.ENABLE_CRON !== "false"; // Default: enabled
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-
-  // Initialize cron jobs if enabled
-  if (ENABLE_CRON) {
-    initializeCronJobs();
-  } else {
-    console.log("[CRON] Cron jobs are disabled (set ENABLE_CRON=true to enable)");
-  }
-});
-
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("\n[SERVER] SIGTERM signal received: closing HTTP server");
-  stopCronJobs();
-  server.close(() => {
-    console.log("[SERVER] HTTP server closed");
-    process.exit(0);
-  });
-});
-
-process.on("SIGINT", () => {
-  console.log("\n[SERVER] SIGINT signal received: closing HTTP server");
-  stopCronJobs();
-  server.close(() => {
-    console.log("[SERVER] HTTP server closed");
-    process.exit(0);
-  });
 });

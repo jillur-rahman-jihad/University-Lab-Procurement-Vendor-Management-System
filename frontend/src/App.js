@@ -54,14 +54,9 @@ import ViewAndAccept from './pages/ViewAndAccept';
 import HireConsultant from './pages/HireConsultant';
 import ConsultantAssignmentDashboard from './pages/ConsultantAssignmentDashboard';
 import MyHireRequests from './pages/MyHireRequests';
-import ReviewerDashboard from './pages/ReviewerDashboard';
-import SubscriptionPlans from './pages/SubscriptionPlans';
-import PremiumPayment from './pages/PremiumPayment';
-import PostDeploymentSupport from './pages/PostDeploymentSupport';
-import InfrastructureOptimizationReports from './pages/InfrastructureOptimizationReports';
-import VendorSearch from './pages/VendorSearch';
-// MODULE 3 - Feature 2.1: Notifications
-import NotificationCenter from './pages/NotificationCenter';
+import ConsultantRRSystem from './pages/ConsultantRRSystem';
+import UniversityConsultantSuggestions from './pages/UniversityConsultantSuggestions';
+import ConsultantManagementSystem from './pages/ConsultantManagementSystem';
 
 function App() {
   return (
@@ -90,6 +85,8 @@ function App() {
             <Route path="/hire-consultant" element={<HireConsultant />} />
             <Route path="/my-hire-requests" element={<MyHireRequests />} />
             <Route path="/my-assignments" element={<ConsultantAssignmentDashboard />} />
+            <Route path="/university/consultant-suggestions" element={<UniversityConsultantSuggestions />} />
+            <Route path="/consultant-management" element={<ConsultantManagementSystem />} />
             <Route path="/quotation-system" element={<QuotationSystem />} />
             <Route path="/compare-quotation" element={<CompareQuotation />} />
             <Route path="/view-and-accept/:quotationId" element={<ViewAndAccept />} />
@@ -100,24 +97,8 @@ function App() {
             <Route path="/vendor/contracts" element={<VendorContracts />} />
             <Route path="/vendor/analytics" element={<VendorAnalytics />} />
             
-            {/* Document Submission & Review Routes */}
-            <Route path="/document-reviewer" element={<ReviewerDashboard />} />
-
-            {/* Subscription & Payment Routes */}
-            <Route path="/subscription-plans" element={<SubscriptionPlans />} />
-            <Route path="/premium-payment" element={<PremiumPayment />} />
-            
-            {/* Post-Deployment Support Route (Premium Plan) */}
-            <Route path="/post-deployment-support" element={<PostDeploymentSupport />} />
-            
-            {/* Infrastructure Optimization Reports Route (Premium Plan) */}
-            <Route path="/infrastructure-optimization-reports" element={<InfrastructureOptimizationReports />} />
-            
-            {/* Vendor Search Route (Premium Priority Visibility) */}
-            <Route path="/vendor-search" element={<VendorSearch />} />
-            
-            {/* MODULE 3 - Feature 2.1: Notification Routes */}
-            <Route path="/notification-center" element={<NotificationCenter />} />
+            {/* Consultant Rating & Ranking System */}
+            <Route path="/consultant-rr-system" element={<ConsultantRRSystem />} />
           </Routes>
         </main>
       </div>
