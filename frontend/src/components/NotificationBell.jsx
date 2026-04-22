@@ -18,8 +18,14 @@ const NotificationBell = () => {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef(null);
   const bellRef = useRef(null);
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
-  const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  let userInfo = null;
+  try {
+    userInfo = JSON.parse(localStorage.getItem('userInfo'));
+  } catch (error) {
+    userInfo = null;
+  }
   const token = userInfo?.token;
 
   // Fetch notifications
@@ -29,7 +35,7 @@ const NotificationBell = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        'http://localhost:5001/api/notifications/my?unreadOnly=true&limit=5',
+        `${API_URL}/api/notifications/my?unreadOnly=true&limit=5`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -40,7 +46,7 @@ const NotificationBell = () => {
 
       // Fetch unread count separately
       const countResponse = await axios.get(
-        'http://localhost:5001/api/notifications/unread-count',
+        `${API_URL}/api/notifications/unread-count`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -81,7 +87,7 @@ const NotificationBell = () => {
     e.stopPropagation();
     try {
       await axios.patch(
-        `http://localhost:5001/api/notifications/${notificationId}/read`,
+        `${API_URL}/api/notifications/${notificationId}/read`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }

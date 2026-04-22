@@ -57,6 +57,7 @@ import MyHireRequests from './pages/MyHireRequests';
 import ConsultantRRSystem from './pages/ConsultantRRSystem';
 import UniversityConsultantSuggestions from './pages/UniversityConsultantSuggestions';
 import ConsultantManagementSystem from './pages/ConsultantManagementSystem';
+import NotificationCenter from './pages/NotificationCenter';
 
 function App() {
   return (
@@ -99,6 +100,9 @@ function App() {
             
             {/* Consultant Rating & Ranking System */}
             <Route path="/consultant-rr-system" element={<ConsultantRRSystem />} />
+
+            {/* Notification Center */}
+            <Route path="/notification-center" element={<NotificationCenter />} />
           </Routes>
         </main>
       </div>
