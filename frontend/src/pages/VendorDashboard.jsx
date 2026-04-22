@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import NotificationBell from "../components/NotificationBell";
 
 const VendorDashboard = () => {
   const navigate = useNavigate();
@@ -48,12 +49,15 @@ const VendorDashboard = () => {
             Manage lab offers, quotations, contracts and analytics
           </p>
         </div>
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
-        >
-          Logout
-        </button>
+        <div className="flex gap-2 items-center">
+          <NotificationBell />
+          <button
+            onClick={handleLogout}
+            className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {loading ? (

@@ -281,6 +281,109 @@ exports.searchVendors = async (req, res) => {
   }
 };
 
+// Search vendors with priority visibility for Premium Plan
+exports.searchVendorsWithPriority = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { serviceType, name, rating } = req.query;
+
+    // Check user's subscription plan
+    const Subscription = require("../models/Subscription");
+    let subscription = await Subscription.findOne({ userId, status: "active" });
+    
+    if (!subscription) {
+      subscription = new Subscription({
+        userId,
+        plan: "free",
+        status: "active",
+        startDate: new Date()
+      });
+      await subscription.save();
+    }
+
+    const isPremium = subscription.plan === "premium";
+
+    // Build filter
+    let filter = { role: "vendor" };
+    if (serviceType) {
+      filter["vendorInfo.serviceType"] = serviceType;
+    }
+    if (name) {
+      filter.name = { $regex: name, $options: "i" };
+    }
+
+    // Get all vendors
+    let vendors = await User.find(filter)
+      .select("name email phone vendorInfo createdAt")
+      .sort({ createdAt: -1 });
+
+    // Filter by rating if provided
+    if (rating) {
+      vendors = vendors.filter(v => (v.vendorInfo?.rating || 0) >= rating);
+    }
+
+    // For premium users, identify and prioritize vendors
+    if (isPremium) {
+      vendors = vendors.map(vendor => ({
+        ...vendor.toObject(),
+        isPriority: (vendor.vendorInfo?.rating || 0) >= 4.0 && vendor.vendorInfo?.isVerified,
+        priorityScore: calculatePriorityScore(vendor)
+      }));
+
+      // Sort by priority score (premium vendors first)
+      vendors.sort((a, b) => {
+        if (b.priorityScore !== a.priorityScore) {
+          return b.priorityScore - a.priorityScore;
+        }
+        return 0;
+      });
+    } else {
+      // For free users, don't show priority info
+      vendors = vendors.map(vendor => ({
+        ...vendor.toObject(),
+        isPriority: false,
+        priorityScore: 0
+      }));
+    }
+
+    res.status(200).json({
+      message: "Vendor search with priority completed successfully",
+      success: true,
+      isPremium,
+      count: vendors.length,
+      vendors
+    });
+  } catch (error) {
+    console.error("[UNIV] Error searching vendors with priority:", error);
+    res.status(500).json({
+      message: "Error searching vendors with priority",
+      error: error.message
+    });
+  }
+};
+
+// Helper function to calculate vendor priority score
+function calculatePriorityScore(vendor) {
+  let score = 0;
+
+  // Rating score (0-50 points)
+  const rating = vendor.vendorInfo?.rating || 0;
+  score += Math.min(rating * 10, 50);
+
+  // Verification bonus (20 points)
+  if (vendor.vendorInfo?.isVerified) {
+    score += 20;
+  }
+
+  // Recency bonus (30 points for vendors created in last 90 days)
+  const daysSinceCreation = (Date.now() - new Date(vendor.createdAt)) / (1000 * 60 * 60 * 24);
+  if (daysSinceCreation <= 90) {
+    score += 30 * (1 - daysSinceCreation / 90); // Decreasing bonus over time
+  }
+
+  return score;
+}
+
 // Update university profile
 exports.updateUniversityProfile = async (req, res) => {
   try {
