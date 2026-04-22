@@ -58,6 +58,7 @@ import ConsultantRRSystem from './pages/ConsultantRRSystem';
 import UniversityConsultantSuggestions from './pages/UniversityConsultantSuggestions';
 import ConsultantManagementSystem from './pages/ConsultantManagementSystem';
 import NotificationCenter from './pages/NotificationCenter';
+import ReviewerDashboard from './pages/ReviewerDashboard';
 
 function App() {
   return (
@@ -103,6 +104,9 @@ function App() {
 
             {/* Notification Center */}
             <Route path="/notification-center" element={<NotificationCenter />} />
+
+            {/* Document Reviewer */}
+            <Route path="/document-reviewer" element={<ReviewerDashboard />} />
           </Routes>
         </main>
       </div>

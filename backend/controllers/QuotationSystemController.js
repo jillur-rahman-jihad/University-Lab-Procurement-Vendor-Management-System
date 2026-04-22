@@ -328,8 +328,13 @@ exports.acceptQuotation = async (req, res) => {
 
 		const acceptanceType = req.body.acceptanceType === 'partial' ? 'partial' : 'full';
 		const componentIndexes = Array.isArray(req.body.componentIndexes) ? req.body.componentIndexes : [];
+		const quotationComponents = Array.isArray(quotation.components) ? quotation.components : [];
 
-		let acceptedComponents = quotation.components.map((component) => ({ ...component.toObject?.() || component }));
+		if (!quotationComponents.length) {
+			return res.status(400).json({ message: 'This quotation has no components and cannot be accepted' });
+		}
+
+		let acceptedComponents = quotationComponents.map((component) => ({ ...(component.toObject?.() || component) }));
 
 		if (acceptanceType === 'partial') {
 			const uniqueIndexes = [...new Set(componentIndexes.map((index) => Number(index)).filter((index) => Number.isInteger(index)))];
@@ -338,8 +343,8 @@ exports.acceptQuotation = async (req, res) => {
 			}
 
 			acceptedComponents = uniqueIndexes
-				.filter((index) => index >= 0 && index < quotation.components.length)
-				.map((index) => quotation.components[index].toObject ? quotation.components[index].toObject() : quotation.components[index]);
+				.filter((index) => index >= 0 && index < quotationComponents.length)
+				.map((index) => quotationComponents[index].toObject ? quotationComponents[index].toObject() : quotationComponents[index]);
 
 			if (!acceptedComponents.length) {
 				return res.status(400).json({ message: 'Selected components are invalid' });

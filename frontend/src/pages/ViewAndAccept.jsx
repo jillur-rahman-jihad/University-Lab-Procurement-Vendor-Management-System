@@ -14,6 +14,7 @@ const ViewAndAccept = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const params = useParams();
+	const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 	const token = userInfo?.token;
@@ -28,14 +29,14 @@ const ViewAndAccept = () => {
 
 	useEffect(() => {
 		const fetchQuotation = async () => {
-			if (!params.quotationId || quotation) {
+			if (!params.quotationId) {
 				return;
 			}
 
 			setLoading(true);
 			setError('');
 			try {
-				const res = await axios.get(`http://localhost:5001/api/quotation-system/quotations/${params.quotationId}`, {
+				const res = await axios.get(`${API_URL}/api/quotation-system/quotations/${params.quotationId}`, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
 				setQuotation(res.data);
@@ -49,7 +50,7 @@ const ViewAndAccept = () => {
 		if (token) {
 			fetchQuotation();
 		}
-	}, [params.quotationId, token, quotation]);
+	}, [params.quotationId, token, API_URL]);
 
 	useEffect(() => {
 		if (acceptanceType === 'full' && quotation?.components?.length) {
@@ -92,6 +93,11 @@ const ViewAndAccept = () => {
 			return;
 		}
 
+		if (quotation.status !== 'pending') {
+			setError(`This quotation is already ${quotation.status || 'processed'} and cannot be accepted again.`);
+			return;
+		}
+
 		if (acceptanceType === 'partial' && selectedComponents.length === 0) {
 			setError('Select at least one component for partial acceptance.');
 			return;
@@ -103,7 +109,7 @@ const ViewAndAccept = () => {
 
 		try {
 			await axios.post(
-				`http://localhost:5001/api/quotation-system/quotations/${quotation._id}/accept`,
+				`${API_URL}/api/quotation-system/quotations/${quotation._id}/accept`,
 				{
 					acceptanceType,
 					componentIndexes: acceptanceType === 'partial' ? selectedComponents : quotation.components.map((_, index) => index)
@@ -213,7 +219,7 @@ const ViewAndAccept = () => {
 					<button
 						type="button"
 						onClick={handleAccept}
-						disabled={submitting}
+						disabled={submitting || quotation.status !== 'pending'}
 						className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:bg-blue-300"
 					>
 						{submitting ? 'Processing...' : 'Confirm Acceptance'}
