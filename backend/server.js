@@ -49,7 +49,7 @@ app.use('/api/document-submission', documentSubmissionRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/post-deployment-support', postDeploymentRoutes);
 app.use('/api/infrastructure-optimization', infrastructureOptimizationRoutes);
-app.use("/api/vendor", vendorRoutes);
+app.use('/api/vendor', vendorRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);
