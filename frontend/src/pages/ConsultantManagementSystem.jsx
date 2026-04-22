@@ -17,6 +17,7 @@ const ConsultantManagementSystem = () => {
   const [selectedExpertise, setSelectedExpertise] = useState('');
   const [consultants, setConsultants] = useState([]);
   const [searched, setSearched] = useState(false);
+  const [expandedConsultantId, setExpandedConsultantId] = useState('');
   const [hireForm, setHireForm] = useState({
     consultantId: '',
     projectId: '',
@@ -444,21 +445,76 @@ const ConsultantManagementSystem = () => {
                 {consultants.length === 0 ? (
                   <p className="text-sm text-gray-500">No consultants found.</p>
                 ) : (
-                  consultants.map((consultant) => (
-                    <div key={consultant._id} className="border border-gray-200 rounded-md p-3">
-                      <p className="font-semibold text-gray-900">{consultant.name}</p>
-                      <p className="text-sm text-gray-600">{consultant.email}</p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Expertise: {consultant.consultantInfo?.expertise?.join(', ') || 'N/A'}
-                      </p>
-                      <button
-                        onClick={() => setHireForm((prev) => ({ ...prev, consultantId: consultant._id }))}
-                        className="mt-2 px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700"
-                      >
-                        Select for Hire
-                      </button>
-                    </div>
-                  ))
+                  consultants.map((consultant) => {
+                    const isExpanded = expandedConsultantId === consultant._id;
+                    const consultantReviews = consultant.consultantInfo?.reviews || [];
+
+                    return (
+                      <div key={consultant._id} className="border border-gray-200 rounded-md p-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-semibold text-gray-900">{consultant.name}</p>
+                            <p className="text-sm text-gray-600">{consultant.email}</p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Expertise: {consultant.consultantInfo?.expertise?.join(', ') || 'N/A'}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setExpandedConsultantId((prev) => (prev === consultant._id ? '' : consultant._id))}
+                            className="px-2.5 py-1 text-xs bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                          >
+                            {isExpanded ? 'Hide Profile' : 'View Profile'}
+                          </button>
+                        </div>
+
+                        {isExpanded && (
+                          <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-md space-y-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
+                              <p><span className="font-semibold text-gray-900">Projects Worked:</span> {consultant.consultantInfo?.completedLabDeployments || 0}</p>
+                              <p><span className="font-semibold text-gray-900">Rating:</span> {Number(consultant.consultantInfo?.rating || 0).toFixed(2)} ⭐</p>
+                              <p><span className="font-semibold text-gray-900">Experience Level:</span> {consultant.consultantInfo?.experienceLevel || 'N/A'}</p>
+                              <p><span className="font-semibold text-gray-900">Availability:</span> {consultant.consultantInfo?.availability ? 'Available' : 'Not Available'}</p>
+                              <p><span className="font-semibold text-gray-900">Avg Response Time:</span> {consultant.consultantInfo?.averageResponseTime || 24}h</p>
+                              <p><span className="font-semibold text-gray-900">Total Reviews:</span> {consultantReviews.length}</p>
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900 mb-1">Bio</p>
+                              <p className="text-sm text-gray-700">{consultant.consultantInfo?.bio || 'No bio added yet.'}</p>
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-semibold text-gray-900 mb-1">Reviews</p>
+                              {consultantReviews.length > 0 ? (
+                                <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
+                                  {[...consultantReviews]
+                                    .sort((a, b) => new Date(b.createdAt || b.date) - new Date(a.createdAt || a.date))
+                                    .map((review, index) => (
+                                      <div key={`${consultant._id}-review-${index}`} className="bg-white border border-gray-200 rounded p-2">
+                                        <div className="flex justify-between items-center gap-2">
+                                          <p className="text-xs font-semibold text-gray-800">{formatReviewerName(review.reviewer || review.universityName)}</p>
+                                          <p className="text-xs font-semibold text-yellow-600">{review.rating || 0}★</p>
+                                        </div>
+                                        <p className="text-xs text-gray-600 mt-1">{review.comment || review.reviewText || 'No comment provided.'}</p>
+                                      </div>
+                                    ))}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-500">No reviews yet.</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => setHireForm((prev) => ({ ...prev, consultantId: consultant._id }))}
+                          className="mt-2 px-3 py-1 bg-indigo-600 text-white text-xs rounded hover:bg-indigo-700"
+                        >
+                          Select for Hire
+                        </button>
+                      </div>
+                    );
+                  })
                 )}
               </div>
             )}
