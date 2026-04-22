@@ -457,13 +457,6 @@ const SubscriptionPlans = () => {
 					</div>
 
 					<div>
-						<h4 className="font-semibold text-gray-900 mb-2">What can I do with Infrastructure Optimization Reports?</h4>
-						<p className="text-gray-600 text-sm">
-							Infrastructure Optimization Reports (Premium Plan feature) provide detailed analysis of your lab infrastructure. Generate comprehensive reports on energy efficiency, performance optimization, capacity planning, and cost analysis. Receive actionable recommendations with ROI calculations, implementation timelines, and risk assessments to optimize your lab infrastructure and reduce operational costs.
-						</p>
-					</div>
-
-					<div>
 						<h4 className="font-semibold text-gray-900 mb-2">What is Priority Vendor Visibility?</h4>
 						<p className="text-gray-600 text-sm">
 							Priority Vendor Visibility is a Premium Plan feature that gives you preferred visibility of verified, high-rated vendor partners. When you search for vendors, priority partners appear first with special badges, allowing you to quickly identify the most reliable and efficient vendors. This ensures faster and more efficient procurement and deployment processes for your lab projects.
