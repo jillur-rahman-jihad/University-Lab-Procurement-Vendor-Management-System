@@ -1,6 +1,7 @@
 const LabProject = require("../models/LabProject");
 const LabProjectAssignment = require("../models/LabProjectAssignment");
 const User = require("../models/User");
+const notificationService = require("../services/notificationService");
 
 // MODULE 2 - Task 2D: Lab Project Consultant Optimization
 
@@ -135,6 +136,35 @@ exports.suggestArchitecture = async (req, res) => {
 
     // Populate to return full data
     await assignment.populate("consultantId", "name email expertise");
+
+    // Send notification to university about consultant suggestion (non-blocking)
+    (async () => {
+      try {
+        const lab = await LabProject.findById(assignment.projectId).select("labName");
+        const university = await User.findById(assignment.universityId).select("email");
+        const consultant = await User.findById(consultantId).select("name consultantInfo.expertise");
+
+        if (university) {
+          await notificationService.createNotification({
+            userId: assignment.universityId.toString(),
+            relatedUserId: consultantId,
+            type: "consultant",
+            category: "consultant_suggestion",
+            message: `${consultant?.name || "Consultant"} has submitted a suggestion: "${title}" for "${lab?.labName || "Lab Project"}". Review the details in your dashboard.`,
+            referenceData: {
+              resourceType: "LabProjectAssignment",
+              resourceId: assignment._id,
+              resourceName: lab?.labName || "Lab Project"
+            },
+            actionUrl: `/lab-optimization/assignments/${assignmentId}`,
+            sendEmail: true,
+            priority: "normal"
+          });
+        }
+      } catch (notifError) {
+        console.error("[LAB-OPT] Error sending consultant notification:", notifError.message);
+      }
+    })();
 
     console.log(`[LAB-OPT] Architecture suggestion created for assignment ${assignmentId}`);
 

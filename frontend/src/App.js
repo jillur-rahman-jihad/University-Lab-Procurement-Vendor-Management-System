@@ -60,6 +60,8 @@ import PremiumPayment from './pages/PremiumPayment';
 import PostDeploymentSupport from './pages/PostDeploymentSupport';
 import InfrastructureOptimizationReports from './pages/InfrastructureOptimizationReports';
 import VendorSearch from './pages/VendorSearch';
+// MODULE 3 - Feature 2.1: Notifications
+import NotificationCenter from './pages/NotificationCenter';
 
 function App() {
   return (
@@ -113,6 +115,9 @@ function App() {
             
             {/* Vendor Search Route (Premium Priority Visibility) */}
             <Route path="/vendor-search" element={<VendorSearch />} />
+            
+            {/* MODULE 3 - Feature 2.1: Notification Routes */}
+            <Route path="/notification-center" element={<NotificationCenter />} />
           </Routes>
         </main>
       </div>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ConsultantProfile from '../components/ConsultantProfile';
 import AssignedProjects from '../components/AssignedProjects';
 import ProjectProgress from '../components/ProjectProgress';
+import NotificationBell from '../components/NotificationBell';
 
 const ConsultantDashboard = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -18,8 +19,9 @@ const ConsultantDashboard = () => {
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow-md p-4 flex justify-between items-center">
         <h1 className="text-2xl font-bold text-blue-600">Consultant Dashboard</h1>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
           {/* MODULE 2 - Task 2A: My Assignments Button */}
+          <NotificationBell />
           <button
             onClick={() => navigate('/my-assignments')}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition font-medium"
