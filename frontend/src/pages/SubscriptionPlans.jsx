@@ -450,11 +450,12 @@ const SubscriptionPlans = () => {
 							</p>
 						</div>
 
-						<div>						<h4 className="font-semibold text-gray-900 mb-2">What can I do with Infrastructure Optimization Reports?</h4>
-						<p className="text-gray-600 text-sm">
-							Infrastructure Optimization Reports (Premium Plan feature) provide detailed analysis of your lab infrastructure. Generate comprehensive reports on energy efficiency, performance optimization, capacity planning, and cost analysis. Receive actionable recommendations with ROI calculations, implementation timelines, and risk assessments to optimize your lab infrastructure and reduce operational costs.
-						</p>
-					</div>
+						<div>
+							<h4 className="font-semibold text-gray-900 mb-2">What can I do with Infrastructure Optimization Reports?</h4>
+							<p className="text-gray-600 text-sm">
+								Infrastructure Optimization Reports (Premium Plan feature) provide detailed analysis of your lab infrastructure. Generate comprehensive reports on energy efficiency, performance optimization, capacity planning, and cost analysis. Receive actionable recommendations with ROI calculations, implementation timelines, and risk assessments to optimize your lab infrastructure and reduce operational costs.
+							</p>
+						</div>
 
 					<div>
 						<h4 className="font-semibold text-gray-900 mb-2">What is Priority Vendor Visibility?</h4>

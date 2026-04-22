@@ -248,10 +248,12 @@ const VendorSearch = () => {
 																<VendorCard
 																	key={vendor._id}
 																	vendor={vendor}
-																	isPremium={isPremium}																onViewDetails={() => {
+																	isPremium={isPremium}
+																	onViewDetails={() => {
 																	setSelectedVendor(vendor);
 																	setShowDetailsModal(true);
-																}}																/>
+																}}
+																/>
 															))}
 													</div>
 												</div>
@@ -270,10 +272,12 @@ const VendorSearch = () => {
 																<VendorCard
 																	key={vendor._id}
 																	vendor={vendor}
-																	isPremium={isPremium}																onViewDetails={() => {
+																	isPremium={isPremium}
+																	onViewDetails={() => {
 																	setSelectedVendor(vendor);
 																	setShowDetailsModal(true);
-																}}																/>
+																}}
+																/>
 															))}
 													</div>
 												</div>
