@@ -215,6 +215,32 @@ exports.updateAssignmentStatus = async (req, res) => {
 
     await assignment.save();
 
+    // Notify university about consultant status update (non-blocking)
+    (async () => {
+      try {
+        const consultant = await User.findById(consultantId).select("name");
+        const lab = await LabProject.findById(assignment.projectId).select("labName");
+
+        await notificationService.createNotification({
+          userId: assignment.universityId.toString(),
+          relatedUserId: consultantId.toString(),
+          type: "consultant",
+          category: "assignment_status_updated",
+          message: `${consultant?.name || "Consultant"} updated assignment status to "${status}" for "${lab?.labName || assignment.projectName || "Lab Project"}".${notes ? ` Note: ${notes}` : ""}`,
+          referenceData: {
+            resourceType: "LabProjectAssignment",
+            resourceId: assignment._id,
+            resourceName: lab?.labName || assignment.projectName || "Lab Project"
+          },
+          actionUrl: "/university/consultant-suggestions",
+          sendEmail: true,
+          priority: "normal"
+        });
+      } catch (notifError) {
+        console.error("[LAB-OPT] Error sending status update notification:", notifError.message);
+      }
+    })();
+
     console.log(`[LAB-OPT] Assignment ${assignmentId} status updated to ${status}`);
 
     res.status(200).json({
@@ -306,6 +332,29 @@ exports.assignConsultantToProject = async (req, res) => {
     await assignment.populate("universityId", "name email");
     await assignment.populate("consultantId", "name email expertise");
 
+    // Notify consultant about new assignment (non-blocking)
+    (async () => {
+      try {
+        await notificationService.createNotification({
+          userId: consultantId.toString(),
+          relatedUserId: universityId.toString(),
+          type: "consultant",
+          category: "consultant_assigned",
+          message: `${req.user?.name || "University"} assigned you to "${project.labName}" for technical optimization.`,
+          referenceData: {
+            resourceType: "LabProjectAssignment",
+            resourceId: assignment._id,
+            resourceName: project.labName
+          },
+          actionUrl: "/my-assignments",
+          sendEmail: true,
+          priority: "high"
+        });
+      } catch (notifError) {
+        console.error("[LAB-OPT] Error sending assignment notification:", notifError.message);
+      }
+    })();
+
     console.log(`[LAB-OPT] Consultant ${consultantId} assigned to project ${projectId}`);
 
     res.status(201).json({
@@ -392,6 +441,34 @@ exports.reviewArchitectureSuggestion = async (req, res) => {
     }
 
     await assignment.save();
+
+    // Notify consultant about review decision (non-blocking)
+    (async () => {
+      try {
+        const consultant = await User.findById(assignment.consultantId).select("email");
+        const project = await LabProject.findById(assignment.projectId).select("labName");
+
+        if (consultant) {
+          await notificationService.createNotification({
+            userId: assignment.consultantId.toString(),
+            relatedUserId: universityId.toString(),
+            type: "consultant",
+            category: "suggestion_reviewed",
+            message: `Your suggestion "${suggestion.title || "Untitled"}" for "${project?.labName || assignment.projectName || "Lab Project"}" was ${status.toLowerCase()}.${status === "Rejected" && rejectionReason ? ` Reason: ${rejectionReason}` : ""}`,
+            referenceData: {
+              resourceType: "LabProjectAssignment",
+              resourceId: assignment._id,
+              resourceName: project?.labName || assignment.projectName || "Lab Project"
+            },
+            actionUrl: "/my-assignments",
+            sendEmail: true,
+            priority: status === "Rejected" ? "high" : "normal"
+          });
+        }
+      } catch (notifError) {
+        console.error("[LAB-OPT] Error sending suggestion review notification:", notifError.message);
+      }
+    })();
 
     console.log(`[LAB-OPT] Suggestion ${suggestionIndex} in assignment ${assignmentId} ${status}`);
 

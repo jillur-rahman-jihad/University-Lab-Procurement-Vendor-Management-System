@@ -4,6 +4,7 @@ const LabProject = require("../models/LabProject");
 const LabProjectAssignment = require("../models/LabProjectAssignment");
 const Quotation = require("../models/Quotation");
 const Procurement = require("../models/Procurement");
+const notificationService = require("../services/notificationService");
 
 // MODULE 2 - Task 2A: Consultant Hire Request Management
 
@@ -82,6 +83,29 @@ exports.createHireRequest = async (req, res) => {
     await savedRequest.populate("consultantId", "name email");
 
     console.log("[HIRE] New hire request created:", savedRequest._id);
+
+    // Notify consultant about new hire request (non-blocking)
+    (async () => {
+      try {
+        await notificationService.createNotification({
+          userId: consultantId.toString(),
+          relatedUserId: universityId.toString(),
+          type: "consultant",
+          category: "hire_request_created",
+          message: `${savedRequest.universityId?.name || "University"} sent you a hire request for "${projectName}".`,
+          referenceData: {
+            resourceType: "ConsultantHireRequest",
+            resourceId: savedRequest._id,
+            resourceName: projectName
+          },
+          actionUrl: "/my-assignments",
+          sendEmail: true,
+          priority: "high"
+        });
+      } catch (notifError) {
+        console.error("[HIRE] Error sending create-hire notification:", notifError.message);
+      }
+    })();
 
     res.status(201).json({
       message: "Hire request created successfully",
@@ -182,6 +206,29 @@ exports.acceptHireRequest = async (req, res) => {
 
     console.log("[HIRE] Hire request accepted:", requestId);
 
+    // Notify university about consultant acceptance (non-blocking)
+    (async () => {
+      try {
+        await notificationService.createNotification({
+          userId: hireRequest.universityId.toString(),
+          relatedUserId: consultantId.toString(),
+          type: "consultant",
+          category: "hire_request_accepted",
+          message: `${updatedRequest.consultantId?.name || "Consultant"} accepted your hire request for "${hireRequest.projectName}".`,
+          referenceData: {
+            resourceType: "ConsultantHireRequest",
+            resourceId: hireRequest._id,
+            resourceName: hireRequest.projectName
+          },
+          actionUrl: "/my-hire-requests",
+          sendEmail: true,
+          priority: "high"
+        });
+      } catch (notifError) {
+        console.error("[HIRE] Error sending acceptance notification:", notifError.message);
+      }
+    })();
+
     res.status(200).json({
       message: "Hire request accepted successfully",
       hireRequest: updatedRequest
@@ -225,6 +272,29 @@ exports.rejectHireRequest = async (req, res) => {
     await updatedRequest.populate("consultantId", "name email");
 
     console.log("[HIRE] Hire request rejected:", requestId);
+
+    // Notify university about consultant rejection (non-blocking)
+    (async () => {
+      try {
+        await notificationService.createNotification({
+          userId: hireRequest.universityId.toString(),
+          relatedUserId: consultantId.toString(),
+          type: "consultant",
+          category: "hire_request_rejected",
+          message: `${updatedRequest.consultantId?.name || "Consultant"} rejected your hire request for "${hireRequest.projectName}".`,
+          referenceData: {
+            resourceType: "ConsultantHireRequest",
+            resourceId: hireRequest._id,
+            resourceName: hireRequest.projectName
+          },
+          actionUrl: "/my-hire-requests",
+          sendEmail: true,
+          priority: "high"
+        });
+      } catch (notifError) {
+        console.error("[HIRE] Error sending rejection notification:", notifError.message);
+      }
+    })();
 
     res.status(200).json({
       message: "Hire request rejected successfully",
@@ -402,6 +472,30 @@ exports.submitConsultantProjectSuggestion = async (req, res) => {
 
     const suggestion = assignment.configurationSuggestions[assignment.configurationSuggestions.length - 1];
 
+    // Notify university about consultant suggestion (non-blocking)
+    (async () => {
+      try {
+        const consultant = await User.findById(consultantId).select("name");
+        await notificationService.createNotification({
+          userId: hireRequest.universityId.toString(),
+          relatedUserId: consultantId.toString(),
+          type: "consultant",
+          category: "consultant_suggestion",
+          message: `${consultant?.name || "Consultant"} submitted a ${category} suggestion for "${hireRequest.projectName || hireRequest.projectId?.labName || "Lab Project"}": ${title}.`,
+          referenceData: {
+            resourceType: "LabProjectAssignment",
+            resourceId: assignment._id,
+            resourceName: hireRequest.projectName || hireRequest.projectId?.labName || "Lab Project"
+          },
+          actionUrl: "/university/consultant-suggestions",
+          sendEmail: true,
+          priority: "normal"
+        });
+      } catch (notifError) {
+        console.error("[HIRE] Error sending suggestion notification:", notifError.message);
+      }
+    })();
+
     res.status(201).json({
       message: "Suggestion submitted successfully",
       suggestion,
@@ -497,6 +591,29 @@ exports.cancelHireRequest = async (req, res) => {
     await updatedRequest.populate("consultantId", "name email");
 
     console.log("[HIRE] Hire request cancelled:", requestId);
+
+    // Notify consultant about cancellation (non-blocking)
+    (async () => {
+      try {
+        await notificationService.createNotification({
+          userId: updatedRequest.consultantId?._id?.toString() || hireRequest.consultantId.toString(),
+          relatedUserId: universityId.toString(),
+          type: "consultant",
+          category: "hire_request_cancelled",
+          message: `${req.user?.name || "University"} cancelled the hire request for "${hireRequest.projectName}".`,
+          referenceData: {
+            resourceType: "ConsultantHireRequest",
+            resourceId: hireRequest._id,
+            resourceName: hireRequest.projectName
+          },
+          actionUrl: "/my-assignments",
+          sendEmail: true,
+          priority: "normal"
+        });
+      } catch (notifError) {
+        console.error("[HIRE] Error sending cancellation notification:", notifError.message);
+      }
+    })();
 
     res.status(200).json({
       message: "Hire request cancelled successfully",
