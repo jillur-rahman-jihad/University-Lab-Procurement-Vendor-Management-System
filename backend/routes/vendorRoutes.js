@@ -10,7 +10,8 @@ const {
   deleteQuotation,
   getVendorContracts,
   getVendorAnalytics,
-  getLabQuotations
+  getLabQuotations,
+  getVendorProfile
 } = require("../controllers/vendorController");
 // include getQuotationById as well
 const { getQuotationById } = require("../controllers/vendorController");
@@ -25,5 +26,6 @@ router.put("/quotations/:id", authMiddleware, updateQuotation);
 router.delete("/quotations/:id", authMiddleware, deleteQuotation);
 router.get("/contracts", authMiddleware, getVendorContracts);
 router.get("/analytics", authMiddleware, getVendorAnalytics);
+router.get("/profile", authMiddleware, getVendorProfile);
 
 module.exports = router;

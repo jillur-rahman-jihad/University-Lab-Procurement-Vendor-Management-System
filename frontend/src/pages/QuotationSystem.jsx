@@ -739,10 +739,16 @@ function QuotationSystem() {
 																	Best offer
 																</span>
 															)}
+															<span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${quotation.status === 'accepted' ? 'bg-green-100 text-green-800' : quotation.status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
+																{quotation.status || 'pending'}
+															</span>
 														</div>
 														<p className="text-gray-500">{quotation.vendorId?.email}</p>
 														<p className="text-xs text-gray-500">
 															{quotation._distanceKm !== null ? `Distance: ${quotation._distanceKm.toFixed(2)} km` : 'Distance unavailable'}
+														</p>
+														<p className="text-xs text-yellow-700">
+															Rating: {Number(quotation.vendorId?.vendorInfo?.rating || 0).toFixed(1)} / 5
 														</p>
 													</div>
 													<div className="text-right">
@@ -761,8 +767,18 @@ function QuotationSystem() {
 															className="mt-2 ml-3 border border-green-600 text-xs font-bold text-green-600 hover:text-green-700 flex items-center gap-1 px-2 py-1"
 														>
 															<span className="material-icons" style={{ fontSize: '14px' }}>visibility</span>
-															View & Accept
+															{quotation.status === 'accepted' ? 'View Details' : 'View & Accept'}
 														</button>
+														{quotation.status === 'accepted' && (
+															<button
+																type="button"
+																onClick={() => navigate(`/view-and-accept/${quotation._id}`, { state: { quotation } })}
+																className="mt-2 ml-3 border border-yellow-500 text-xs font-bold text-yellow-600 hover:text-yellow-700 flex items-center gap-1 px-2 py-1"
+															>
+																<span className="material-icons" style={{ fontSize: '14px' }}>star</span>
+																Review & Rate Vendor
+															</button>
+														)}
 													</div>
 												</div>
 												<ul className="mt-3 space-y-1 text-gray-600">

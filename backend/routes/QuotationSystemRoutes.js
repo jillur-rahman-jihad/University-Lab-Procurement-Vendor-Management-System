@@ -13,5 +13,7 @@ router.get('/quotations/my', quotationController.getMyQuotations);
 router.get('/quotations/:id', quotationController.getQuotationById);
 router.put('/quotations/:id', quotationController.updateQuotation);
 router.post('/quotations/:id/accept', quotationController.acceptQuotation);
+router.get('/quotations/:id/vendor-review', quotationController.getVendorReviewForQuotation);
+router.post('/quotations/:id/vendor-review', quotationController.submitVendorReviewForQuotation);
 
 module.exports = router;

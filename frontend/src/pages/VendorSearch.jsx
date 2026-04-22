@@ -25,6 +25,8 @@ const VendorSearch = () => {
 	const SERVICE_TYPES = ['Equipment', 'Installation', 'Maintenance', 'Consulting', 'Other'];
 	const RATINGS = ['All', '3+', '3.5+', '4+', '4.5+'];
 	const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+	const ratedVendors = vendors.filter((v) => Number(v?.vendorInfo?.rating || 0) > 0);
+	const unratedVendors = vendors.filter((v) => Number(v?.vendorInfo?.rating || 0) <= 0);
 
 	// Check subscription on mount
 	useEffect(() => {
@@ -233,17 +235,16 @@ const VendorSearch = () => {
 									{/* Premium: Priority vendors section */}
 									{isPremium && (
 										<>
-											{/* Separate into priority and regular */}
-											{vendors.filter(v => v.isPriority).length > 0 && (
+											{/* Separate into rated(priority) and unrated vendors */}
+											{ratedVendors.length > 0 && (
 												<div className="mb-8">
 													<h4 className="text-md font-semibold text-green-700 mb-3 flex items-center gap-2">
 														<span className="bg-green-100 px-3 py-1 rounded-full text-sm">
-															⭐ Priority Vendors
+															⭐ Priority Vendors (Rated)
 														</span>
 													</h4>
 													<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-														{vendors
-															.filter(v => v.isPriority)
+														{ratedVendors
 															.map((vendor) => (
 																<VendorCard
 																	key={vendor._id}
@@ -260,14 +261,13 @@ const VendorSearch = () => {
 											)}
 
 											{/* Other vendors */}
-											{vendors.filter(v => !v.isPriority).length > 0 && (
+											{unratedVendors.length > 0 && (
 												<div>
 													<h4 className="text-md font-semibold text-gray-700 mb-3">
 														Other Vendors
 													</h4>
 													<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-														{vendors
-															.filter(v => !v.isPriority)
+														{unratedVendors
 															.map((vendor) => (
 																<VendorCard
 																	key={vendor._id}
@@ -398,6 +398,30 @@ const VendorSearch = () => {
 										)}
 									</div>
 								)}
+
+								{/* Vendor Reviews */}
+								<div className="border-t pt-6">
+									<h3 className="text-lg font-semibold text-gray-800 mb-3">
+										Vendor Reviews {selectedVendor.vendorReviewsCount ? `(${selectedVendor.vendorReviewsCount})` : ''}
+									</h3>
+									{selectedVendor.vendorReviews && selectedVendor.vendorReviews.length > 0 ? (
+										<div className="space-y-3 max-h-72 overflow-auto pr-1">
+											{selectedVendor.vendorReviews.map((review) => (
+												<div key={review._id} className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+													<div className="flex items-center justify-between gap-3">
+														<p className="font-semibold text-gray-900">{review.reviewerName}</p>
+														<p className="text-yellow-600 font-semibold">{Number(review.rating || 0).toFixed(1)} ★</p>
+													</div>
+													<p className="text-sm text-gray-600 mt-1">{review.labName}</p>
+													<p className="text-sm text-gray-700 mt-2">{review.comment || 'No comment provided.'}</p>
+													<p className="text-xs text-gray-500 mt-2">{new Date(review.createdAt).toLocaleDateString()}</p>
+												</div>
+											))}
+										</div>
+									) : (
+										<p className="text-sm text-gray-500">No vendor reviews available yet.</p>
+									)}
+								</div>
 							</div>
 
 							{/* Footer */}
@@ -423,6 +447,7 @@ const VendorSearch = () => {
 const VendorCard = ({ vendor, isPremium, onViewDetails }) => {
 	const rating = vendor.vendorInfo?.rating || 0;
 	const ratingStars = '★'.repeat(Math.floor(rating)) + '☆'.repeat(5 - Math.floor(rating));
+	const reviewsCount = Number(vendor.vendorReviewsCount || 0);
 
 	return (
 		<div
@@ -471,6 +496,7 @@ const VendorCard = ({ vendor, isPremium, onViewDetails }) => {
 							{rating.toFixed(1)}/5
 						</span>
 					</div>
+					<p className="text-xs text-gray-500 mt-1">{reviewsCount} review{reviewsCount !== 1 ? 's' : ''}</p>
 				</div>
 
 				{/* Verified Badge */}

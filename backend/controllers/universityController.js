@@ -1,8 +1,41 @@
 const User = require("../models/User");
+const Review = require("../models/Review");
 const LabProject = require("../models/LabProject");
 const Procurement = require("../models/Procurement");
 const InfrastructureServiceRequest = require("../models/InfrastructureServiceRequest");
 const LabProjectAssignment = require("../models/LabProjectAssignment");
+
+const attachVendorReviewDetails = async (vendors) => {
+  return Promise.all(
+    vendors.map(async (vendorDoc) => {
+      const vendor = vendorDoc.toObject ? vendorDoc.toObject() : vendorDoc;
+      const reviews = await Review.find({
+        targetId: vendor._id,
+        targetType: "vendor"
+      })
+        .populate("reviewerId", "name universityInfo.universityName")
+        .populate("labProjectId", "labName")
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .select("rating comment createdAt reviewerId labProjectId");
+
+      const mappedReviews = reviews.map((review) => ({
+        _id: review._id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        reviewerName: review.reviewerId?.universityInfo?.universityName || review.reviewerId?.name || "University",
+        labName: review.labProjectId?.labName || "Lab Project"
+      }));
+
+      return {
+        ...vendor,
+        vendorReviews: mappedReviews,
+        vendorReviewsCount: mappedReviews.length
+      };
+    })
+  );
+};
 
 // MODULE 2 - Task 2A: University Management & Dashboard
 
@@ -268,9 +301,11 @@ exports.searchVendors = async (req, res) => {
       vendors = vendors.filter(v => (v.vendorInfo?.rating || 0) >= rating);
     }
 
+    const vendorsWithReviews = await attachVendorReviewDetails(vendors);
+
     res.status(200).json({
       message: "Vendors search completed successfully",
-      vendors
+      vendors: vendorsWithReviews
     });
   } catch (error) {
     console.error("[UNIV] Error searching vendors:", error);
@@ -322,10 +357,12 @@ exports.searchVendorsWithPriority = async (req, res) => {
       vendors = vendors.filter(v => (v.vendorInfo?.rating || 0) >= rating);
     }
 
+    vendors = await attachVendorReviewDetails(vendors);
+
     // For premium users, identify and prioritize vendors
     if (isPremium) {
       vendors = vendors.map(vendor => ({
-        ...vendor.toObject(),
+        ...vendor,
         isPriority: (vendor.vendorInfo?.rating || 0) >= 4.0 && vendor.vendorInfo?.isVerified,
         priorityScore: calculatePriorityScore(vendor)
       }));
@@ -340,7 +377,7 @@ exports.searchVendorsWithPriority = async (req, res) => {
     } else {
       // For free users, don't show priority info
       vendors = vendors.map(vendor => ({
-        ...vendor.toObject(),
+        ...vendor,
         isPriority: false,
         priorityScore: 0
       }));

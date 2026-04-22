@@ -2,6 +2,55 @@ const LabProject = require("../models/LabProject");
 const Quotation = require("../models/Quotation");
 const Procurement = require("../models/Procurement");
 const User = require("../models/User");
+const Review = require("../models/Review");
+
+exports.getVendorProfile = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id).select("role name email phone address vendorInfo createdAt");
+
+    if (!vendor || vendor.role !== "vendor") {
+      return res.status(403).json({ message: "Access denied. Vendor only." });
+    }
+
+    const reviews = await Review.find({
+      targetId: req.user.id,
+      targetType: "vendor"
+    })
+      .populate("reviewerId", "name universityInfo.universityName")
+      .populate("labProjectId", "labName")
+      .sort({ createdAt: -1 });
+
+    const mappedReviews = reviews.map((review) => ({
+      _id: review._id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      reviewerName: review.reviewerId?.universityInfo?.universityName || review.reviewerId?.name || "University",
+      labName: review.labProjectId?.labName || "Lab Project"
+    }));
+
+    res.status(200).json({
+      message: "Vendor profile retrieved successfully",
+      vendor: {
+        _id: vendor._id,
+        name: vendor.name,
+        email: vendor.email,
+        phone: vendor.phone,
+        address: vendor.address,
+        createdAt: vendor.createdAt,
+        vendorInfo: vendor.vendorInfo || {}
+      },
+      rating: Number(vendor.vendorInfo?.rating || 0),
+      reviewsCount: mappedReviews.length,
+      reviews: mappedReviews
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch vendor profile",
+      error: error.message
+    });
+  }
+};
 
 exports.getAvailableLabRequests = async (req, res) => {
   try {

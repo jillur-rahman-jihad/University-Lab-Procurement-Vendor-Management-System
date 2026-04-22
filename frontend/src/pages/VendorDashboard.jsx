@@ -6,20 +6,37 @@ import NotificationBell from "../components/NotificationBell";
 const VendorDashboard = () => {
   const navigate = useNavigate();
   const [analytics, setAnalytics] = useState(null);
+  const [vendorProfile, setVendorProfile] = useState(null);
+  const [vendorReviews, setVendorReviews] = useState([]);
+  const [showReviews, setShowReviews] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
   const token = userInfo?.token;
+  const displayName = vendorProfile?.vendorInfo?.shopName || vendorProfile?.name || userInfo?.name || "Vendor";
+  const displayEmail = vendorProfile?.email || userInfo?.email || "No email";
+  const displayPhone = vendorProfile?.phone || userInfo?.phone || "No phone";
+  const displayAddress = vendorProfile?.vendorInfo?.location?.address || vendorProfile?.address || userInfo?.address || "No address";
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/api/vendor/analytics", {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        setAnalytics(res.data);
+        const [analyticsRes, profileRes] = await Promise.all([
+          axios.get("http://localhost:5001/api/vendor/analytics", {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }),
+          axios.get("http://localhost:5001/api/vendor/profile", {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          })
+        ]);
+
+        setAnalytics(analyticsRes.data);
+        setVendorProfile(profileRes.data?.vendor || null);
+        setVendorReviews(profileRes.data?.reviews || []);
       } catch (error) {
         console.error(error);
       } finally {
@@ -58,6 +75,59 @@ const VendorDashboard = () => {
             Logout
           </button>
         </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6 mb-8">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {displayName}
+            </h2>
+            <p className="text-gray-600 mt-1">{displayEmail}</p>
+            <p className="text-gray-600">{displayPhone}</p>
+            <p className="text-gray-600">{displayAddress}</p>
+            <div className="mt-3 flex items-center gap-3 flex-wrap">
+              <span className="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 px-3 py-1 text-sm font-semibold">
+                Rating: {Number(vendorProfile?.vendorInfo?.rating || 0).toFixed(1)} / 5
+              </span>
+              {vendorProfile?.vendorInfo?.isVerified && (
+                <span className="inline-flex items-center rounded-full bg-blue-100 text-blue-800 px-3 py-1 text-sm font-semibold">
+                  Verified Vendor
+                </span>
+              )}
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowReviews((prev) => !prev)}
+            className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+          >
+            {showReviews ? "Hide Reviews" : `Show Reviews (${vendorReviews.length})`}
+          </button>
+        </div>
+
+        {showReviews && (
+          <div className="mt-5 border-t pt-4">
+            {vendorReviews.length === 0 ? (
+              <p className="text-gray-500">No reviews yet.</p>
+            ) : (
+              <div className="space-y-3 max-h-80 overflow-auto pr-1">
+                {vendorReviews.map((review) => (
+                  <div key={review._id} className="rounded-lg border border-gray-200 p-3 bg-gray-50">
+                    <div className="flex justify-between items-center gap-3">
+                      <p className="font-semibold text-gray-900">{review.reviewerName}</p>
+                      <span className="text-yellow-600 font-semibold">{Number(review.rating || 0).toFixed(1)} ★</span>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{review.labName}</p>
+                    <p className="text-sm text-gray-700 mt-2">{review.comment || "No comment provided."}</p>
+                    <p className="text-xs text-gray-500 mt-2">{new Date(review.createdAt).toLocaleDateString()}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {loading ? (

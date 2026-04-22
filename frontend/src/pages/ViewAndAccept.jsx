@@ -18,6 +18,7 @@ const ViewAndAccept = () => {
 
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 	const token = userInfo?.token;
+	const role = userInfo?.role;
 
 	const [quotation, setQuotation] = useState(location.state?.quotation || null);
 	const [loading, setLoading] = useState(!location.state?.quotation);
@@ -26,6 +27,11 @@ const ViewAndAccept = () => {
 	const [acceptanceType, setAcceptanceType] = useState('full');
 	const [selectedComponents, setSelectedComponents] = useState([]);
 	const [submitting, setSubmitting] = useState(false);
+	const [reviewRating, setReviewRating] = useState(0);
+	const [reviewComment, setReviewComment] = useState('');
+	const [reviewSubmitting, setReviewSubmitting] = useState(false);
+	const [reviewLoading, setReviewLoading] = useState(false);
+	const [hasReview, setHasReview] = useState(false);
 
 	useEffect(() => {
 		const fetchQuotation = async () => {
@@ -59,6 +65,37 @@ const ViewAndAccept = () => {
 			setSelectedComponents([]);
 		}
 	}, [acceptanceType, quotation]);
+
+	useEffect(() => {
+		const fetchVendorReview = async () => {
+			if (!quotation?._id || !token || role !== 'university' || quotation.status !== 'accepted') {
+				return;
+			}
+
+			setReviewLoading(true);
+			try {
+				const res = await axios.get(`${API_URL}/api/quotation-system/quotations/${quotation._id}/vendor-review`, {
+					headers: { Authorization: `Bearer ${token}` }
+				});
+
+				if (res.data?.review) {
+					setReviewRating(Number(res.data.review.rating || 0));
+					setReviewComment(res.data.review.comment || '');
+					setHasReview(true);
+				} else {
+					setReviewRating(0);
+					setReviewComment('');
+					setHasReview(false);
+				}
+			} catch (err) {
+				setHasReview(false);
+			} finally {
+				setReviewLoading(false);
+			}
+		};
+
+		fetchVendorReview();
+	}, [quotation?._id, quotation?.status, token, role, API_URL]);
 
 	const acceptedComponents = useMemo(() => {
 		if (!quotation?.components?.length) {
@@ -122,9 +159,55 @@ const ViewAndAccept = () => {
 			setSuccess('Quotation accepted successfully.');
 			setTimeout(() => navigate('/quotation-system'), 1200);
 		} catch (err) {
-			setError(err.response?.data?.message || 'Failed to accept quotation');
+			setError(err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to accept quotation');
 		} finally {
 			setSubmitting(false);
+		}
+	};
+
+	const handleSubmitReview = async () => {
+		if (!quotation?._id) {
+			return;
+		}
+
+		if (reviewRating < 1 || reviewRating > 5) {
+			setError('Please select a rating between 1 and 5 stars.');
+			return;
+		}
+
+		setReviewSubmitting(true);
+		setError('');
+		setSuccess('');
+
+		try {
+			const res = await axios.post(
+				`${API_URL}/api/quotation-system/quotations/${quotation._id}/vendor-review`,
+				{
+					rating: reviewRating,
+					comment: reviewComment
+				},
+				{ headers: { Authorization: `Bearer ${token}` } }
+			);
+
+			setSuccess(res.data?.message || 'Vendor review submitted successfully.');
+			setHasReview(true);
+			setQuotation((prev) => {
+				if (!prev || !prev.vendorId) return prev;
+				return {
+					...prev,
+					vendorId: {
+						...prev.vendorId,
+						vendorInfo: {
+							...(prev.vendorId.vendorInfo || {}),
+							rating: res.data?.vendorRating ?? prev.vendorId.vendorInfo?.rating
+						}
+					}
+				};
+			});
+		} catch (err) {
+			setError(err.response?.data?.message || 'Failed to submit vendor review');
+		} finally {
+			setReviewSubmitting(false);
 		}
 	};
 
@@ -178,6 +261,7 @@ const ViewAndAccept = () => {
 						<p className="text-sm text-gray-500">Vendor</p>
 						<p className="font-semibold text-gray-900">{quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor'}</p>
 						<p className="text-sm text-gray-500">{quotation.vendorId?.email || 'No email available'}</p>
+						<p className="text-sm text-yellow-600 font-semibold mt-1">Rating: {Number(quotation.vendorId?.vendorInfo?.rating || 0).toFixed(1)} / 5</p>
 					</div>
 
 					<div className="grid grid-cols-2 gap-3 text-sm">
@@ -224,6 +308,43 @@ const ViewAndAccept = () => {
 					>
 						{submitting ? 'Processing...' : 'Confirm Acceptance'}
 					</button>
+
+					{role === 'university' && quotation.status === 'accepted' && (
+						<div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 space-y-3">
+							<div className="flex items-center justify-between gap-3">
+								<p className="text-sm font-semibold text-gray-900">Review & Rate Vendor</p>
+								{reviewLoading && <span className="text-xs text-gray-500">Loading review...</span>}
+							</div>
+							<div className="flex items-center gap-2 flex-wrap">
+								{[1, 2, 3, 4, 5].map((star) => (
+									<button
+										key={star}
+										type="button"
+										onClick={() => setReviewRating(star)}
+										className={`text-2xl ${reviewRating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
+									>
+										★
+									</button>
+								))}
+								<span className="text-sm text-gray-600 ml-1">{reviewRating ? `${reviewRating}/5` : 'Select rating'}</span>
+							</div>
+							<textarea
+								value={reviewComment}
+								onChange={(e) => setReviewComment(e.target.value)}
+								rows={3}
+								placeholder="Share your experience with this vendor (optional)"
+								className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+							/>
+							<button
+								type="button"
+								onClick={handleSubmitReview}
+								disabled={reviewSubmitting || reviewLoading}
+								className="w-full rounded-lg bg-yellow-500 px-4 py-2 font-semibold text-white hover:bg-yellow-600 disabled:bg-yellow-300"
+							>
+								{reviewSubmitting ? 'Submitting...' : hasReview ? 'Update Review & Rating' : 'Submit Review & Rating'}
+							</button>
+						</div>
+					)}
 				</div>
 
 				<div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">

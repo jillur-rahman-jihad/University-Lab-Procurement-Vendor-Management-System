@@ -2,6 +2,7 @@ const LabProject = require('../models/LabProject');
 const Quotation = require('../models/Quotation');
 const Procurement = require('../models/Procurement');
 const User = require('../models/User');
+const Review = require('../models/Review');
 const notificationService = require('../services/notificationService');
 
 const populateUniversity = 'name email location universityInfo.universityName universityInfo.department';
@@ -95,13 +96,13 @@ exports.getLabQuotations = async (req, res) => {
 
 		if (role === 'vendor') {
 			const myQuotation = await Quotation.findOne({ labProjectId: req.params.id, vendorId: req.user.id })
-				.populate('vendorId', 'name email phone address location vendorInfo.shopName vendorInfo.location');
+				.populate('vendorId', 'name email phone address location vendorInfo.shopName vendorInfo.location vendorInfo.rating');
 
 			return res.status(200).json(myQuotation ? [myQuotation] : []);
 		}
 
 		const quotations = await Quotation.find({ labProjectId: req.params.id })
-			.populate('vendorId', 'name email phone address location vendorInfo.shopName vendorInfo.location')
+			.populate('vendorId', 'name email phone address location vendorInfo.shopName vendorInfo.location vendorInfo.rating')
 			.sort({ createdAt: -1 });
 
 		return res.status(200).json(quotations);
@@ -274,7 +275,7 @@ exports.getQuotationById = async (req, res) => {
 	try {
 		const role = await getRole(req.user.id);
 		const quotation = await Quotation.findById(req.params.id)
-			.populate('vendorId', 'name vendorInfo.shopName email')
+			.populate('vendorId', 'name vendorInfo.shopName vendorInfo.rating email')
 			.populate({ path: 'labProjectId', populate: { path: 'universityId', select: populateUniversity } });
 
 		if (!quotation) {
@@ -354,6 +355,10 @@ exports.acceptQuotation = async (req, res) => {
 		const finalCost = acceptedComponents.reduce((sum, component) => sum + (Number(component.unitPrice || 0) * Number(component.quantity || 1)), 0);
 
 		quotation.status = 'accepted';
+		// Backfill legacy data: older quotations may miss createdBy, which is now required.
+		if (!quotation.createdBy) {
+			quotation.createdBy = quotation.vendorId?._id || quotation.vendorId || req.user.id;
+		}
 		quotation.revisionHistory = quotation.revisionHistory || [];
 		quotation.revisionHistory.push({ updatedAt: new Date(), changes: `Quotation accepted (${acceptanceType}) by university` });
 
@@ -421,7 +426,140 @@ exports.acceptQuotation = async (req, res) => {
 			acceptanceType
 		});
 	} catch (error) {
-		return res.status(500).json({ message: 'Failed to accept quotation', error: error.message });
+		console.error('[QUOTATION] Accept quotation failed:', error);
+		return res.status(500).json({
+			message: error?.message ? `Failed to accept quotation: ${error.message}` : 'Failed to accept quotation',
+			error: error?.message || null
+		});
+	}
+};
+
+exports.getVendorReviewForQuotation = async (req, res) => {
+	try {
+		const role = await getRole(req.user.id);
+
+		if (role !== 'university') {
+			return res.status(403).json({ message: 'Access denied. University only.' });
+		}
+
+		const quotation = await Quotation.findById(req.params.id)
+			.populate({ path: 'labProjectId', populate: { path: 'universityId', select: populateUniversity } })
+			.populate('vendorId', 'name vendorInfo.shopName vendorInfo.rating');
+
+		if (!quotation) {
+			return res.status(404).json({ message: 'Quotation not found' });
+		}
+
+		const labOwnerId = quotation.labProjectId?.universityId?._id?.toString?.() || quotation.labProjectId?.universityId?.toString?.();
+		if (labOwnerId !== req.user.id) {
+			return res.status(403).json({ message: 'You can only review vendors for your own lab projects' });
+		}
+
+		if (quotation.status !== 'accepted') {
+			return res.status(400).json({ message: 'Vendor can be reviewed only after quotation is accepted' });
+		}
+
+		const vendorId = quotation.vendorId?._id || quotation.vendorId;
+		const existingReview = await Review.findOne({
+			reviewerId: req.user.id,
+			targetId: vendorId,
+			targetType: 'vendor',
+			quotationId: quotation._id
+		}).sort({ createdAt: -1 });
+
+		return res.status(200).json({
+			review: existingReview,
+			vendor: {
+				id: vendorId,
+				name: quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor',
+				rating: Number(quotation.vendorId?.vendorInfo?.rating || 0)
+			}
+		});
+	} catch (error) {
+		return res.status(500).json({ message: 'Failed to fetch vendor review', error: error.message });
+	}
+};
+
+exports.submitVendorReviewForQuotation = async (req, res) => {
+	try {
+		const role = await getRole(req.user.id);
+
+		if (role !== 'university') {
+			return res.status(403).json({ message: 'Access denied. University only.' });
+		}
+
+		const { rating, comment } = req.body;
+		const numericRating = Number(rating);
+
+		if (!Number.isFinite(numericRating) || numericRating < 1 || numericRating > 5) {
+			return res.status(400).json({ message: 'Rating must be a number between 1 and 5' });
+		}
+
+		const quotation = await Quotation.findById(req.params.id)
+			.populate({ path: 'labProjectId', populate: { path: 'universityId', select: populateUniversity } })
+			.populate('vendorId', 'name role vendorInfo.shopName vendorInfo.rating');
+
+		if (!quotation) {
+			return res.status(404).json({ message: 'Quotation not found' });
+		}
+
+		const labOwnerId = quotation.labProjectId?.universityId?._id?.toString?.() || quotation.labProjectId?.universityId?.toString?.();
+		if (labOwnerId !== req.user.id) {
+			return res.status(403).json({ message: 'You can only review vendors for your own lab projects' });
+		}
+
+		if (quotation.status !== 'accepted') {
+			return res.status(400).json({ message: 'Vendor can be reviewed only after quotation is accepted' });
+		}
+
+		const vendorId = quotation.vendorId?._id || quotation.vendorId;
+		const vendor = await User.findById(vendorId).select('role vendorInfo.rating');
+
+		if (!vendor || vendor.role !== 'vendor') {
+			return res.status(404).json({ message: 'Vendor not found' });
+		}
+
+		let review = await Review.findOne({
+			reviewerId: req.user.id,
+			targetId: vendorId,
+			targetType: 'vendor',
+			quotationId: quotation._id
+		});
+		let createdNewReview = false;
+
+		if (review) {
+			review.rating = numericRating;
+			review.comment = String(comment || '').trim();
+			await review.save();
+		} else {
+			createdNewReview = true;
+			review = await Review.create({
+				reviewerId: req.user.id,
+				targetId: vendorId,
+				targetType: 'vendor',
+				quotationId: quotation._id,
+				labProjectId: quotation.labProjectId?._id || quotation.labProjectId,
+				rating: numericRating,
+				comment: String(comment || '').trim()
+			});
+		}
+
+		const allVendorReviews = await Review.find({ targetId: vendorId, targetType: 'vendor' }).select('rating');
+		const totalRating = allVendorReviews.reduce((sum, item) => sum + Number(item.rating || 0), 0);
+		const averageRating = allVendorReviews.length ? Number((totalRating / allVendorReviews.length).toFixed(2)) : 0;
+
+		vendor.vendorInfo = vendor.vendorInfo || {};
+		vendor.vendorInfo.rating = averageRating;
+		await vendor.save();
+
+		return res.status(200).json({
+			message: createdNewReview ? 'Vendor reviewed successfully' : 'Vendor review updated successfully',
+			review,
+			vendorRating: averageRating,
+			totalReviews: allVendorReviews.length
+		});
+	} catch (error) {
+		return res.status(500).json({ message: 'Failed to submit vendor review', error: error.message });
 	}
 };
 
