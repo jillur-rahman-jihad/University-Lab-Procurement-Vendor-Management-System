@@ -21,6 +21,14 @@ const infrastructureServiceRoutes = require('./routes/infrastructureServiceRoute
 const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
 // Document Submission Routes (Finance/Procurement Approval Workflow)
 const documentSubmissionRoutes = require('./routes/documentSubmissionRoutes');
+// Subscription Routes (Free/Premium Plan Management)
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
+// Post-Deployment Support Routes (Premium Plan Feature)
+const postDeploymentRoutes = require('./routes/postDeploymentRoutes');
+// Infrastructure Optimization Reports Routes (Premium Plan Feature)
+const infrastructureOptimizationRoutes = require('./routes/infrastructureOptimizationRoutes');
+// Payment Routes (Premium Plan Payment Processing)
+const paymentRoutes = require('./routes/paymentRoutes');
 // Notification Routes (Module 3 - Feature 2.1)
 const notificationRoutes = require('./routes/notificationRoutes');
 // MODULE 3 - Feature 2.1: Cron Jobs for Notifications
@@ -38,7 +46,11 @@ app.use('/uploads', express.static('uploads'));
 app.use("/api/auth", authRoutes);
 app.use('/api/labs', labRoutes);
 app.use('/api/document-submission', documentSubmissionRoutes);
-app.use("/api/vendor", vendorRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/post-deployment-support', postDeploymentRoutes);
+app.use('/api/infrastructure-optimization', infrastructureOptimizationRoutes);
+app.use('/api/vendor', vendorRoutes);
+app.use('/api/payment', paymentRoutes);
 app.use('/api/quotation-system', quotationSystemRoutes);
 app.use('/api/consultants', consultantRoutes);
 app.use('/api/university', universityRoutes);

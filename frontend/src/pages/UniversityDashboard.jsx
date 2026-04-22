@@ -624,6 +624,71 @@ const UniversityDashboard = () => {
 							Track and manage all your consultant hire requests and assignments.
 						</p>
 					</button>
+
+					<button
+						onClick={() => navigate('/subscription-plans')}
+						className="text-left rounded-2xl border border-amber-100 bg-amber-50 hover:bg-amber-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-amber-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 6
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Subscription Plans</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							Manage your subscription plan and payment information.
+						</p>
+					</button>
+
+					<button
+						onClick={() => navigate('/post-deployment-support')}
+						className="text-left rounded-2xl border border-teal-100 bg-teal-50 hover:bg-teal-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-teal-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 7
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Post-Deployment Support</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							Submit and track post-deployment support requests (Premium Plan).
+						</p>
+					</button>
+
+					<button
+						onClick={() => navigate('/infrastructure-optimization-reports')}
+						className="text-left rounded-2xl border border-cyan-100 bg-cyan-50 hover:bg-cyan-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-cyan-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 8
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Infrastructure Optimization Reports</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							Generate and analyze detailed infrastructure optimization reports (Premium Plan).
+						</p>
+					</button>
+
+					<button
+						onClick={() => navigate('/vendor-search')}
+						className="text-left rounded-2xl border border-emerald-100 bg-emerald-50 hover:bg-emerald-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 9
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Priority Vendor Search</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							Access priority vendor visibility with advanced search filters (Premium Plan).
+						</p>
+					</button>
+
+					<button
+						onClick={() => navigate('/premium-payment')}
+						className="text-left rounded-2xl border border-rose-100 bg-rose-50 hover:bg-rose-100 p-6 shadow-sm transition-all hover:-translate-y-0.5"
+					>
+						<span className="inline-flex items-center rounded-full bg-rose-600 px-3 py-1 text-xs font-semibold text-white">
+							Option 10
+						</span>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Premium Payment</h2>
+						<p className="mt-2 text-sm text-gray-600">
+							Pay for Premium Plan via Bkash or Institutional Billing.
+						</p>
+					</button>
 				</div>
 			</div>
 

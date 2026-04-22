@@ -164,7 +164,9 @@ exports.submitQuotation = async (req, res) => {
 			installationIncluded: Boolean(installationIncluded),
 			maintenanceIncluded: Boolean(maintenanceIncluded),
 			status: 'pending',
-			revisionHistory: []
+			revisionHistory: [],
+			createdBy: req.user.id,
+			expiryDate: null // Vendor quotations don't expire
 		});
 
 		// Send notification to university about new quotation (non-blocking)

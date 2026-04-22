@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 
 const subscriptionSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // university
-  plan: { type: String, enum: ["free", "premium"], required: true },
+  plan: { type: String, enum: ["free", "premium"], default: "free" },
   price: Number,
-  paymentMethod: { type: String, enum: ["bkash", "billing"] },
+  paymentMethod: { type: String, enum: ["bkash", "billing", "direct"] },
   transactionId: String,
   startDate: Date,
   endDate: Date,
