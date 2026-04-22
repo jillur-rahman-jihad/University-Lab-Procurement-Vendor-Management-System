@@ -15,6 +15,60 @@ const LEAFLET_SCRIPT_ID = 'quotation-leaflet-script';
 const LEAFLET_STYLE_ID = 'quotation-leaflet-style';
 const DEFAULT_MAP_CENTER = [23.8103, 90.4125];
 
+const escapeHtml = (value) => {
+	if (value === undefined || value === null) return '';
+
+	return String(value)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
+};
+
+const buildVendorPopupContent = (quotation) => {
+	const vendorName = quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor';
+	const distanceText = quotation._distanceKm !== null ? `${quotation._distanceKm.toFixed(2)} km away` : 'Distance unavailable';
+	const vendorRating = Number(quotation.vendorId?.vendorInfo?.rating || 0);
+	const ratingText = `${vendorRating.toFixed(1)} / 5`;
+	const totalPrice = quotation.totalPrice ?? 'N/A';
+	const reviews = Array.isArray(quotation.vendorReviews) ? quotation.vendorReviews : [];
+	const reviewsCount = Number(quotation.vendorReviewsCount || reviews.length || 0);
+
+	const reviewsSection = reviews.length > 0
+		? reviews.slice(0, 3).map((review) => {
+			const reviewerName = review.reviewerName || 'University';
+			const reviewRating = Number(review.rating || 0).toFixed(1);
+			const labName = review.labName || 'Lab Project';
+			const comment = review.comment && review.comment.trim()
+				? review.comment.trim()
+				: 'No comment provided.';
+
+			return `
+				<div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb;">
+					<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;color:#111827;">
+						<span>${escapeHtml(reviewerName)}</span>
+						<span style="color:#ca8a04;">${escapeHtml(reviewRating)} ★</span>
+					</div>
+					<div style="font-size:11px;color:#6b7280;margin-top:2px;">${escapeHtml(labName)}</div>
+					<div style="font-size:12px;color:#374151;margin-top:4px;">${escapeHtml(comment)}</div>
+				</div>
+			`;
+		}).join('')
+		: '<div style="margin-top:8px;font-size:12px;color:#6b7280;">No vendor reviews available yet.</div>';
+
+	return `
+		<div style="min-width:240px;max-width:280px;">
+			<div style="font-size:14px;font-weight:700;color:#111827;">${escapeHtml(vendorName)}</div>
+			<div style="font-size:12px;color:#374151;margin-top:4px;">Total: ${escapeHtml(totalPrice)}</div>
+			<div style="font-size:12px;color:#374151;">${escapeHtml(distanceText)}</div>
+			<div style="font-size:12px;color:#92400e;margin-top:4px;">Rating: ${escapeHtml(ratingText)}</div>
+			<div style="font-size:12px;color:#374151;margin-top:8px;font-weight:600;">Reviews (${reviewsCount})</div>
+			${reviewsSection}
+		</div>
+	`;
+};
+
 const getVendorCoordinates = (quotation) => {
 	const directLocation = quotation?.vendorId?.location;
 	if (
@@ -223,7 +277,6 @@ function QuotationSystem() {
 			if (!quotation._vendorCoordinates) return;
 
 			const vendorName = quotation.vendorId?.vendorInfo?.shopName || quotation.vendorId?.name || 'Vendor';
-			const distanceText = quotation._distanceKm !== null ? `${quotation._distanceKm.toFixed(2)} km away` : 'Distance unavailable';
 
 			window.L.marker([quotation._vendorCoordinates.lat, quotation._vendorCoordinates.lng])
 				.bindTooltip(vendorName, {
@@ -232,7 +285,7 @@ function QuotationSystem() {
 					offset: [0, -12],
 					className: 'vendor-name-tooltip'
 				})
-				.bindPopup(`<strong>${vendorName}</strong><br/>Total: ${quotation.totalPrice}<br/>${distanceText}`)
+				.bindPopup(buildVendorPopupContent(quotation), { maxWidth: 320 })
 				.addTo(markerLayer);
 
 			bounds.push([quotation._vendorCoordinates.lat, quotation._vendorCoordinates.lng]);
