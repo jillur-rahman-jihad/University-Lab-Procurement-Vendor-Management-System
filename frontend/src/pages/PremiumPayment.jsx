@@ -70,7 +70,7 @@ const PremiumPayment = () => {
 				console.log('[PREMIUM PAYMENT] Current subscription:', subscriptionResponse.data);
 				const subscription = subscriptionResponse.data.subscription;
 				setCurrentSubscription(subscription);
-				setIsPremium(subscription.plan === 'premium');
+				setIsPremium(subscription?.planType === 'premium');
 			} catch (err) {
 				console.error('[PREMIUM PAYMENT] Error fetching data:', err.response?.data || err.message);
 				setError(err.response?.data?.message || 'Error loading information');
@@ -78,7 +78,7 @@ const PremiumPayment = () => {
 		};
 
 		fetchData();
-}, [token, API_URL]);
+	}, [token, API_URL]);
 
 	const getDiscount = () => {
 		if (billingCycle === 'annual') {
@@ -94,6 +94,12 @@ const PremiumPayment = () => {
 			return premiumPricing.annual || 0;
 		}
 		return premiumPricing.monthly || 0;
+	};
+
+	const getAmountForCycle = (cycle) => {
+		if (!pricing) return 0;
+		const premiumPricing = pricing.premium || pricing;
+		return cycle === 'annual' ? (premiumPricing.annual || 0) : (premiumPricing.monthly || 0);
 	};
 
 	// Handle direct payment
@@ -182,7 +188,7 @@ const PremiumPayment = () => {
 									? 'border-blue-600 bg-blue-50'
 									: 'border-gray-300 bg-white'
 							}`}>
-								<div className="font-bold text-3xl text-blue-600">${getAmount()}</div>
+								<div className="font-bold text-3xl text-blue-600">${getAmountForCycle('monthly')}</div>
 								<div className="text-gray-600 text-lg">per month</div>
 								<div className="text-sm text-gray-500 mt-2">Billed monthly</div>
 							</div>
@@ -204,7 +210,7 @@ const PremiumPayment = () => {
 								<div className="absolute -top-3 -right-3 bg-green-500 text-white px-3 py-1 rounded text-sm font-bold">
 									Save {getDiscount()}
 								</div>
-								<div className="font-bold text-3xl text-green-600">${getAmount()}</div>
+								<div className="font-bold text-3xl text-green-600">${getAmountForCycle('annual')}</div>
 								<div className="text-gray-600 text-lg">per year</div>
 								<div className="text-sm text-gray-500 mt-2">Billed once yearly</div>
 							</div>
@@ -258,7 +264,6 @@ const PremiumPayment = () => {
 					❌ {error}
 				</div>
 			)}
-				)}
 
 				{success && (
 					<div className="mt-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">

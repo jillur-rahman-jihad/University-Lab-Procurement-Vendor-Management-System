@@ -59,6 +59,11 @@ import UniversityConsultantSuggestions from './pages/UniversityConsultantSuggest
 import ConsultantManagementSystem from './pages/ConsultantManagementSystem';
 import NotificationCenter from './pages/NotificationCenter';
 import ReviewerDashboard from './pages/ReviewerDashboard';
+import SubscriptionPlans from './pages/SubscriptionPlans';
+import PostDeploymentSupport from './pages/PostDeploymentSupport';
+import InfrastructureOptimizationReports from './pages/InfrastructureOptimizationReports';
+import VendorSearch from './pages/VendorSearch';
+import PremiumPayment from './pages/PremiumPayment';
 
 function App() {
   return (
@@ -107,6 +112,13 @@ function App() {
 
             {/* Document Reviewer */}
             <Route path="/document-reviewer" element={<ReviewerDashboard />} />
+
+            {/* Premium & Subscription Features */}
+            <Route path="/subscription-plans" element={<SubscriptionPlans />} />
+            <Route path="/post-deployment-support" element={<PostDeploymentSupport />} />
+            <Route path="/infrastructure-optimization-reports" element={<InfrastructureOptimizationReports />} />
+            <Route path="/vendor-search" element={<VendorSearch />} />
+            <Route path="/premium-payment" element={<PremiumPayment />} />
           </Routes>
         </main>
       </div>

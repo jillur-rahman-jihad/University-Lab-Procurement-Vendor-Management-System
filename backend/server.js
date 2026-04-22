@@ -22,6 +22,10 @@ const labOptimizationRoutes = require('./routes/labOptimizationRoutes');
 // Consultant Rating & Ranking System Routes
 const consultantRRSystemRoutes = require('./routes/consultantRRSystemRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const postDeploymentRoutes = require('./routes/postDeploymentRoutes');
+const infrastructureOptimizationRoutes = require('./routes/infrastructureOptimizationRoutes');
 
 connectDB();
 
@@ -48,6 +52,10 @@ app.use('/api/labs/optimization', labOptimizationRoutes);
 // Consultant Rating & Ranking System Routes
 app.use('/api/consultant-ranking', consultantRRSystemRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api/post-deployment-support', postDeploymentRoutes);
+app.use('/api/infrastructure-optimization', infrastructureOptimizationRoutes);
 
 app.get("/", (req, res) => {
   res.send("University Lab Procurement API Running");
