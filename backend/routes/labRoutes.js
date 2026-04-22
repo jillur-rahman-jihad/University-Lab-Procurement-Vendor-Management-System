@@ -38,4 +38,8 @@ router.get('/export-documentation-pdf/:labProjectId', authenticateToken, labCont
 router.get('/export-documentation-csv/:labProjectId', authenticateToken, labController.exportLabProjectDocumentationCSV);
 router.get('/export-procurement-report/:labProjectId', authenticateToken, labController.exportLabProjectDocumentationProcurementReport);
 
+// ============ AI BUILD RECOMMENDATION SYSTEM ============
+router.post('/generate-recommendation/:labProjectId', authenticateToken, labController.generateAIRecommendation);
+router.get('/get-recommendation/:labProjectId', authenticateToken, labController.getAIRecommendation);
+
 module.exports = router;
