@@ -26,6 +26,7 @@ const UniversityDashboard = () => {
 	});
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [submissions, setSubmissions] = useState([]);
+	const [visibleProjectsCount, setVisibleProjectsCount] = useState(5);
 
 	useEffect(() => {
 		const fetchUniversityProfile = async () => {
@@ -103,20 +104,20 @@ const UniversityDashboard = () => {
 			}
 
 			const data = await response.json();
-			
+
 			// Create a blob from the response data
 			const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-			
+
 			// Create a download link
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
 			link.download = `Lab_Project_Documentation_${projectId}_${Date.now()}.json`;
-			
+
 			// Trigger the download
 			document.body.appendChild(link);
 			link.click();
-			
+
 			// Cleanup
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
@@ -146,17 +147,17 @@ const UniversityDashboard = () => {
 
 			// Get the blob from the response
 			const blob = await response.blob();
-			
+
 			// Create a download link
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
 			link.download = `Lab_Project_Documentation_${projectId}_${Date.now()}.pdf`;
-			
+
 			// Trigger the download
 			document.body.appendChild(link);
 			link.click();
-			
+
 			// Cleanup
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
@@ -186,17 +187,17 @@ const UniversityDashboard = () => {
 
 			// Get the blob from the response
 			const blob = await response.blob();
-			
+
 			// Create a download link
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
 			link.download = `Lab_Project_Financial_Analysis_${projectId}_${Date.now()}.csv`;
-			
+
 			// Trigger the download
 			document.body.appendChild(link);
 			link.click();
-			
+
 			// Cleanup
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
@@ -226,17 +227,17 @@ const UniversityDashboard = () => {
 
 			// Get the blob from the response
 			const blob = await response.blob();
-			
+
 			// Create a download link
 			const url = window.URL.createObjectURL(blob);
 			const link = document.createElement('a');
 			link.href = url;
 			link.download = `Procurement_Summary_Report_${projectId}_${Date.now()}.pdf`;
-			
+
 			// Trigger the download
 			document.body.appendChild(link);
 			link.click();
-			
+
 			// Cleanup
 			document.body.removeChild(link);
 			window.URL.revokeObjectURL(url);
@@ -297,7 +298,7 @@ const UniversityDashboard = () => {
 			const data = await response.json();
 			alert(`Document submitted successfully for ${submissionForm.submittedTo} review and approval`);
 			setSubmissionModalOpen(false);
-			
+
 			// Fetch updated submissions
 			fetchSubmissions();
 		} catch (err) {
@@ -422,18 +423,17 @@ const UniversityDashboard = () => {
 									</tr>
 								</thead>
 								<tbody className="divide-y divide-gray-200">
-									{labProjects.map((project) => (
+									{labProjects.slice(0, visibleProjectsCount).map((project) => (
 										<tr key={project._id} className="hover:bg-gray-50 transition-colors">
 											<td className="px-6 py-4 text-sm text-gray-900">{project.labName}</td>
 											<td className="px-6 py-4 text-sm text-gray-600">{project.labType}</td>
 											<td className="px-6 py-4 text-sm">
-												<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-													project.status === 'draft' ? 'bg-gray-100 text-gray-800' :
+												<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${project.status === 'draft' ? 'bg-gray-100 text-gray-800' :
 													project.status === 'bidding' ? 'bg-blue-100 text-blue-800' :
-													project.status === 'finalized' ? 'bg-purple-100 text-purple-800' :
-													project.status === 'approved' ? 'bg-green-100 text-green-800' :
-													'bg-gray-100 text-gray-800'
-												}`}>
+														project.status === 'finalized' ? 'bg-purple-100 text-purple-800' :
+															project.status === 'approved' ? 'bg-green-100 text-green-800' :
+																'bg-gray-100 text-gray-800'
+													}`}>
 													{project.status.charAt(0).toUpperCase() + project.status.slice(1)}
 												</span>
 											</td>
@@ -463,7 +463,7 @@ const UniversityDashboard = () => {
 													>
 														Reorder
 													</button>
-													
+
 													{/* Export Dropdown */}
 													<div className="relative">
 														<button
@@ -479,7 +479,7 @@ const UniversityDashboard = () => {
 																{expandedExportMenu === project._id ? 'expand_less' : 'expand_more'}
 															</span>
 														</button>
-														
+
 														{expandedExportMenu === project._id && (
 															<div className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
 																<button
@@ -542,21 +542,25 @@ const UniversityDashboard = () => {
 													</div>
 
 													{/* Submit for Approval Button */}
-													<button
-														onClick={() => openSubmissionModal(project._id)}
-														className="inline-flex items-center px-3 py-1 rounded-md text-xs font-medium bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
-													>
-														<span className="material-icons" style={{ fontSize: '14px', marginRight: '4px' }}>
-															send
-														</span>
-														Submit
-													</button>
+
 												</div>
 											</td>
 										</tr>
 									))}
 								</tbody>
 							</table>
+
+							{labProjects.length > visibleProjectsCount && (
+								<div className="mt-4 flex justify-center">
+									<button
+										onClick={() => setVisibleProjectsCount(prev => prev + 5)}
+										className="inline-flex items-center px-6 py-2 rounded-full text-sm font-semibold text-blue-600 border-2 border-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm hover:shadow-md"
+									>
+										<span className="material-icons mr-2" style={{ fontSize: '20px' }}>expand_more</span>
+										View More Projects ({labProjects.length - visibleProjectsCount} remaining)
+									</button>
+								</div>
+							)}
 						</div>
 					) : (
 						<p className="text-sm text-gray-500">No lab projects created yet.</p>
@@ -649,9 +653,9 @@ const UniversityDashboard = () => {
 						<span className="inline-flex items-center rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white">
 							Option 9
 						</span>
-						<h2 className="mt-4 text-xl font-semibold text-gray-900">Priority Vendor Search</h2>
+						<h2 className="mt-4 text-xl font-semibold text-gray-900">Top rated Vendors search</h2>
 						<p className="mt-2 text-sm text-gray-600">
-							Access priority vendor visibility with advanced search filters (Premium Plan).
+							Access top rated vendor visibility with advanced search filters (Premium Plan).
 						</p>
 					</button>
 
@@ -705,11 +709,10 @@ const UniversityDashboard = () => {
 										<button
 											key={type}
 											onClick={() => setSubmissionForm({ ...submissionForm, documentType: type })}
-											className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-												submissionForm.documentType === type
-													? 'bg-blue-600 text-white border-2 border-blue-600'
-													: 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-blue-300'
-											}`}
+											className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${submissionForm.documentType === type
+												? 'bg-blue-600 text-white border-2 border-blue-600'
+												: 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-blue-300'
+												}`}
 										>
 											{type}
 										</button>
@@ -727,11 +730,10 @@ const UniversityDashboard = () => {
 										<button
 											key={recipient}
 											onClick={() => setSubmissionForm({ ...submissionForm, submittedTo: recipient })}
-											className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-												submissionForm.submittedTo === recipient
-													? 'bg-green-600 text-white border-2 border-green-600'
-													: 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-green-300'
-											}`}
+											className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${submissionForm.submittedTo === recipient
+												? 'bg-green-600 text-white border-2 border-green-600'
+												: 'bg-gray-100 text-gray-700 border-2 border-gray-200 hover:border-green-300'
+												}`}
 										>
 											{recipient}
 										</button>
@@ -829,11 +831,10 @@ const UniversityDashboard = () => {
 										<button
 											key={p}
 											onClick={() => setSubmissionForm({ ...submissionForm, priority: p })}
-											className={`px-3 py-2 rounded-lg text-xs font-medium transition-all capitalize ${
-												submissionForm.priority === p
-													? 'bg-red-600 text-white'
-													: 'bg-gray-100 text-gray-700 border border-gray-200'
-											}`}
+											className={`px-3 py-2 rounded-lg text-xs font-medium transition-all capitalize ${submissionForm.priority === p
+												? 'bg-red-600 text-white'
+												: 'bg-gray-100 text-gray-700 border border-gray-200'
+												}`}
 										>
 											{p}
 										</button>

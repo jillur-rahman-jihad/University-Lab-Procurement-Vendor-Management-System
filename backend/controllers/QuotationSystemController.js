@@ -105,7 +105,68 @@ exports.getLabQuotations = async (req, res) => {
 			.populate('vendorId', 'name email phone address location vendorInfo.shopName vendorInfo.location vendorInfo.rating')
 			.sort({ createdAt: -1 });
 
-		return res.status(200).json(quotations);
+		const vendorIds = [...new Set(
+			quotations
+				.map((quotation) => quotation.vendorId?._id?.toString?.())
+				.filter(Boolean)
+		)];
+
+		let vendorReviewsById = {};
+		let vendorReviewCountsById = {};
+
+		if (vendorIds.length > 0) {
+			const reviews = await Review.find({
+				targetType: 'vendor',
+				targetId: { $in: vendorIds }
+			})
+				.populate('reviewerId', 'name universityInfo.universityName')
+				.populate('labProjectId', 'labName')
+				.sort({ createdAt: -1 })
+				.select('targetId rating comment createdAt reviewerId labProjectId')
+				.lean();
+
+			vendorReviewsById = reviews.reduce((acc, review) => {
+				const key = review.targetId?.toString?.();
+				if (!key) return acc;
+
+				if (!acc[key]) {
+					acc[key] = [];
+				}
+
+				if (acc[key].length < 5) {
+					acc[key].push({
+						_id: review._id,
+						rating: review.rating,
+						comment: review.comment,
+						createdAt: review.createdAt,
+						reviewerName: review.reviewerId?.universityInfo?.universityName || review.reviewerId?.name || 'University',
+						labName: review.labProjectId?.labName || 'Lab Project'
+					});
+				}
+
+				return acc;
+			}, {});
+
+			vendorReviewCountsById = reviews.reduce((acc, review) => {
+				const key = review.targetId?.toString?.();
+				if (!key) return acc;
+				acc[key] = (acc[key] || 0) + 1;
+				return acc;
+			}, {});
+		}
+
+		const quotationsWithReviews = quotations.map((quotation) => {
+			const quotationObj = quotation.toObject();
+			const vendorId = quotationObj.vendorId?._id?.toString?.();
+
+			return {
+				...quotationObj,
+				vendorReviews: vendorId ? (vendorReviewsById[vendorId] || []) : [],
+				vendorReviewsCount: vendorId ? (vendorReviewCountsById[vendorId] || 0) : 0
+			};
+		});
+
+		return res.status(200).json(quotationsWithReviews);
 	} catch (error) {
 		return res.status(500).json({ message: 'Failed to fetch quotations', error: error.message });
 	}
