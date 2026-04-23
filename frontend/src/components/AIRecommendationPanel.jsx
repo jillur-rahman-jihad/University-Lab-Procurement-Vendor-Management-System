@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API_URL from '/Users/zihad/University-Lab-Procurement-Vendor-Management-System/frontend/src/config/api.js';
+import API_URL from '../config/api';
 import './AIRecommendationPanel.css';
 
 const AIRecommendationPanel = ({ labProjectId, token }) => {
