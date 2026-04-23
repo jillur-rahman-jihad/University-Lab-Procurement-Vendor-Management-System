@@ -5,14 +5,17 @@ const PERFORMANCE_POINTS = {
   LAB_COMPLETION: 10,
   POSITIVE_RATING: 5,
   BUDGET_OPTIMIZATION: 8,
-  TIMELY_DEPLOYMENT: 7
+  TIMELY_DEPLOYMENT: 7,
+  CONSULTANT_HIRE: 15,
+  SUGGESTION_SUBMITTED: 5,
+  SUGGESTION_ACCEPTED: 20
 };
 
 // Ranking thresholds
 const RANKING_THRESHOLDS = {
   General: 0,
-  Certified: 100,
-  Professional: 300
+  Certified: 30,
+  Professional: 50
 };
 
 const LEGACY_RANK_MAP = {
@@ -46,7 +49,43 @@ const calculateRank = (points) => {
   }
 };
 
-// Add performance points to consultant
+/**
+ * Internal helper to add points to a consultant and update their rank
+ * @param {string} consultantId - The ID of the consultant
+ * @param {string} pointsType - The type of achievement (key in PERFORMANCE_POINTS)
+ * @param {number} [manualAmount] - Optional manual points amount
+ * @returns {Promise<object>} - Updated consultant info
+ */
+const internalAddPoints = async (consultantId, pointsType, manualAmount = null) => {
+  const consultant = await User.findById(consultantId);
+  if (!consultant || consultant.role !== 'consultant') {
+    throw new Error('Consultant not found');
+  }
+
+  const pointsToAdd = manualAmount !== null ? manualAmount : (PERFORMANCE_POINTS[pointsType] || 0);
+  
+  if (!consultant.consultantInfo) {
+    consultant.consultantInfo = { points: 0, experienceLevel: 'General' };
+  }
+
+  consultant.consultantInfo.points = (consultant.consultantInfo.points || 0) + pointsToAdd;
+  
+  // Calculate and update rank
+  const newRank = calculateRank(consultant.consultantInfo.points);
+  consultant.consultantInfo.experienceLevel = newRank;
+
+  await consultant.save();
+  return {
+    points: consultant.consultantInfo.points,
+    rank: consultant.consultantInfo.experienceLevel,
+    added: pointsToAdd
+  };
+};
+
+// Export internal helper for use in other controllers
+exports.internalAddPoints = internalAddPoints;
+
+// Add performance points to consultant (API endpoint)
 exports.addPerformancePoints = async (req, res) => {
   try {
     const { consultantId, pointsType, amount, description } = req.body;
@@ -56,30 +95,15 @@ exports.addPerformancePoints = async (req, res) => {
       return res.status(400).json({ error: 'Consultant ID and points type are required' });
     }
 
-    const consultant = await User.findById(consultantId);
-    if (!consultant || consultant.role !== 'consultant') {
-      return res.status(404).json({ error: 'Consultant not found' });
-    }
-
-    const pointsValue = amount || PERFORMANCE_POINTS[pointsType] || 0;
-
-    // Update consultant points
-    consultant.consultantInfo.points += pointsValue;
-    
-    // Calculate and update rank
-    const newRank = calculateRank(consultant.consultantInfo.points);
-    consultant.consultantInfo.experienceLevel = newRank;
-
-    await consultant.save();
+    const result = await internalAddPoints(consultantId, pointsType, amount);
 
     res.status(200).json({
       message: 'Performance points added successfully',
       consultant: {
-        id: consultant._id,
-        name: consultant.name,
-        points: consultant.consultantInfo.points,
-        rank: consultant.consultantInfo.experienceLevel,
-        pointsAdded: pointsValue,
+        id: consultantId,
+        points: result.points,
+        rank: result.rank,
+        pointsAdded: result.added,
         description: description || `Added ${pointsType}`
       }
     });

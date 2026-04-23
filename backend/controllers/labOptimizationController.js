@@ -2,6 +2,7 @@ const LabProject = require("../models/LabProject");
 const LabProjectAssignment = require("../models/LabProjectAssignment");
 const User = require("../models/User");
 const notificationService = require("../services/notificationService");
+const { internalAddPoints } = require("./consultantRRSystemController");
 
 // MODULE 2 - Task 2D: Lab Project Consultant Optimization
 
@@ -163,6 +164,16 @@ exports.suggestArchitecture = async (req, res) => {
         }
       } catch (notifError) {
         console.error("[LAB-OPT] Error sending consultant notification:", notifError.message);
+      }
+    })();
+
+    // Award points for submitting a suggestion (non-blocking)
+    (async () => {
+      try {
+        await internalAddPoints(consultantId, "SUGGESTION_SUBMITTED");
+        console.log("[LAB-OPT] Points awarded to consultant for architecture suggestion:", consultantId);
+      } catch (pointsError) {
+        console.error("[LAB-OPT] Error awarding suggestion points:", pointsError.message);
       }
     })();
 
@@ -355,6 +366,16 @@ exports.assignConsultantToProject = async (req, res) => {
       }
     })();
 
+    // Award points for being hired/assigned (non-blocking)
+    (async () => {
+      try {
+        await internalAddPoints(consultantId, "CONSULTANT_HIRE");
+        console.log("[LAB-OPT] Points awarded to consultant for assignment:", consultantId);
+      } catch (pointsError) {
+        console.error("[LAB-OPT] Error awarding assignment points:", pointsError.message);
+      }
+    })();
+
     console.log(`[LAB-OPT] Consultant ${consultantId} assigned to project ${projectId}`);
 
     res.status(201).json({
@@ -469,6 +490,18 @@ exports.reviewArchitectureSuggestion = async (req, res) => {
         console.error("[LAB-OPT] Error sending suggestion review notification:", notifError.message);
       }
     })();
+
+    // Award points if suggestion was approved (non-blocking)
+    if (status === "Approved") {
+      (async () => {
+        try {
+          await internalAddPoints(assignment.consultantId.toString(), "SUGGESTION_ACCEPTED");
+          console.log("[LAB-OPT] Points awarded to consultant for accepted suggestion:", assignment.consultantId);
+        } catch (pointsError) {
+          console.error("[LAB-OPT] Error awarding acceptance points:", pointsError.message);
+        }
+      })();
+    }
 
     console.log(`[LAB-OPT] Suggestion ${suggestionIndex} in assignment ${assignmentId} ${status}`);
 

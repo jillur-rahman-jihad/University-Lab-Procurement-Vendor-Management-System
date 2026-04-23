@@ -5,6 +5,7 @@ const LabProjectAssignment = require("../models/LabProjectAssignment");
 const Quotation = require("../models/Quotation");
 const Procurement = require("../models/Procurement");
 const notificationService = require("../services/notificationService");
+const { internalAddPoints } = require("./consultantRRSystemController");
 
 // MODULE 2 - Task 2A: Consultant Hire Request Management
 
@@ -226,6 +227,16 @@ exports.acceptHireRequest = async (req, res) => {
         });
       } catch (notifError) {
         console.error("[HIRE] Error sending acceptance notification:", notifError.message);
+      }
+    })();
+
+    // Award points for being hired (non-blocking)
+    (async () => {
+      try {
+        await internalAddPoints(consultantId, "CONSULTANT_HIRE");
+        console.log("[HIRE] Points awarded to consultant for hiring:", consultantId);
+      } catch (pointsError) {
+        console.error("[HIRE] Error awarding hire points:", pointsError.message);
       }
     })();
 
@@ -493,6 +504,16 @@ exports.submitConsultantProjectSuggestion = async (req, res) => {
         });
       } catch (notifError) {
         console.error("[HIRE] Error sending suggestion notification:", notifError.message);
+      }
+    })();
+
+    // Award points for submitting a suggestion (non-blocking)
+    (async () => {
+      try {
+        await internalAddPoints(consultantId, "SUGGESTION_SUBMITTED");
+        console.log("[HIRE] Points awarded to consultant for suggestion:", consultantId);
+      } catch (pointsError) {
+        console.error("[HIRE] Error awarding suggestion points:", pointsError.message);
       }
     })();
 
