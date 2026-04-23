@@ -1,0 +1,497 @@
+{
+  "CPU": [
+    {
+      "id": "cpu_budget_001",
+      "name": "Intel Pentium G7400",
+      "price": 6600,
+      "powerConsumption": 65,
+      "specs": "2-core, 3.7GHz, Entry-level systems",
+      "tier": "Budget",
+      "performance": 3,
+      "availability": "stock"
+    },
+    {
+      "id": "cpu_budget_002",
+      "name": "AMD Ryzen 3 5100",
+      "price": 7700,
+      "powerConsumption": 65,
+      "specs": "4-core, 3.9GHz, Budget computing",
+      "tier": "Budget",
+      "performance": 4,
+      "availability": "stock"
+    },
+    {
+      "id": "cpu_mid_001",
+      "name": "Intel Core i5-13600K",
+      "price": 30800,
+      "powerConsumption": 125,
+      "specs": "13-core, 5.1GHz, Mid-range workstations",
+      "tier": "Mid-Range",
+      "performance": 7,
+      "availability": "stock"
+    },
+    {
+      "id": "cpu_mid_002",
+      "name": "AMD Ryzen 5 7600X",
+      "price": 27390,
+      "powerConsumption": 105,
+      "specs": "6-core, 4.7GHz, Entry-level systems",
+      "tier": "Mid-Range",
+      "performance": 6,
+      "availability": "stock"
+    },
+    {
+      "id": "cpu_high_001",
+      "name": "Intel Core i7-13700K",
+      "price": 46200,
+      "powerConsumption": 130,
+      "specs": "16-core, 5.4GHz, High-end workstations",
+      "tier": "High-End",
+      "performance": 8,
+      "availability": "stock"
+    },
+    {
+      "id": "cpu_high_002",
+      "name": "AMD Ryzen 7 7700X",
+      "price": 43890,
+      "powerConsumption": 120,
+      "specs": "8-core, 5.4GHz, Gaming and development",
+      "tier": "High-End",
+      "performance": 8,
+      "availability": "stock"
+    },
+    {
+      "id": "cpu_premium_001",
+      "name": "Intel Core i9-14900K",
+      "price": 64790,
+      "powerConsumption": 190,
+      "specs": "24-core, 6.2GHz, Max performance computing",
+      "tier": "Premium",
+      "performance": 10,
+      "availability": "stock"
+    },
+    {
+      "id": "cpu_premium_002",
+      "name": "AMD Ryzen 9 7950X",
+      "price": 76890,
+      "powerConsumption": 170,
+      "specs": "16-core, 5.7GHz, Server-grade performance",
+      "tier": "Premium",
+      "performance": 10,
+      "availability": "stock"
+    }
+  ],
+  "GPU": [
+    {
+      "id": "gpu_budget_001",
+      "name": "Intel Arc A380",
+      "price": 13200,
+      "powerConsumption": 75,
+      "specs": "6GB, Entry graphics, Budget option",
+      "tier": "Budget",
+      "performance": 4,
+      "availability": "stock",
+      "memory": "6GB"
+    },
+    {
+      "id": "gpu_budget_002",
+      "name": "NVIDIA GeForce GTX 1650",
+      "price": 15400,
+      "powerConsumption": 75,
+      "specs": "4GB GDDR6, Entry graphics",
+      "tier": "Budget",
+      "performance": 5,
+      "availability": "stock",
+      "memory": "4GB"
+    },
+    {
+      "id": "gpu_mid_001",
+      "name": "NVIDIA GeForce RTX 3060 Ti",
+      "price": 43890,
+      "powerConsumption": 290,
+      "specs": "8GB GDDR6, Entry graphics, CUDA support",
+      "tier": "Mid-Range",
+      "performance": 6,
+      "availability": "stock",
+      "memory": "8GB"
+    },
+    {
+      "id": "gpu_mid_002",
+      "name": "NVIDIA GeForce RTX 4070",
+      "price": 65890,
+      "powerConsumption": 200,
+      "specs": "12GB GDDR6X, Mid-range graphics",
+      "tier": "Mid-Range",
+      "performance": 8,
+      "availability": "stock",
+      "memory": "12GB"
+    },
+    {
+      "id": "gpu_high_001",
+      "name": "NVIDIA GeForce RTX 4080",
+      "price": 115500,
+      "powerConsumption": 320,
+      "specs": "16GB GDDR6X, High-end graphics",
+      "tier": "High-End",
+      "performance": 9,
+      "availability": "stock",
+      "memory": "16GB"
+    },
+    {
+      "id": "gpu_premium_001",
+      "name": "NVIDIA GeForce RTX 4090",
+      "price": 175890,
+      "powerConsumption": 575,
+      "specs": "24GB GDDR6X, Professional graphics, AI training",
+      "tier": "Premium",
+      "performance": 10,
+      "availability": "stock",
+      "memory": "24GB"
+    },
+    {
+      "id": "gpu_premium_002",
+      "name": "NVIDIA RTX A5000",
+      "price": 472890,
+      "powerConsumption": 250,
+      "specs": "24GB GDDR6, Professional workstation GPU",
+      "tier": "Premium",
+      "performance": 10,
+      "availability": "stock",
+      "memory": "24GB"
+    }
+  ],
+  "RAM": [
+    {
+      "id": "ram_budget_001",
+      "name": "Kingston ValueRAM 8GB DDR4",
+      "price": 2200,
+      "powerConsumption": 2,
+      "specs": "2666MHz, CAS 19, Entry-level RAM",
+      "tier": "Budget",
+      "capacity": 8,
+      "availability": "stock"
+    },
+    {
+      "id": "ram_budget_002",
+      "name": "Kingston Fury Beast 16GB DDR5",
+      "price": 9790,
+      "powerConsumption": 3,
+      "specs": "5600MHz, CAS 28, Entry-level RAM",
+      "tier": "Budget",
+      "capacity": 16,
+      "availability": "stock"
+    },
+    {
+      "id": "ram_mid_001",
+      "name": "Corsair Vengeance 32GB DDR5",
+      "price": 16500,
+      "powerConsumption": 5,
+      "specs": "6000MHz, CAS 30, Performance RAM",
+      "tier": "Mid-Range",
+      "capacity": 32,
+      "availability": "stock"
+    },
+    {
+      "id": "ram_high_001",
+      "name": "Kingston Fury Beast 64GB DDR5",
+      "price": 27500,
+      "powerConsumption": 7,
+      "specs": "5600MHz, CAS 28, High-capacity RAM",
+      "tier": "High-End",
+      "capacity": 64,
+      "availability": "stock"
+    },
+    {
+      "id": "ram_premium_001",
+      "name": "G.Skill Trident Z5 64GB DDR5",
+      "price": 30800,
+      "powerConsumption": 8,
+      "specs": "6400MHz, CAS 32, Gaming/Workstation RAM",
+      "tier": "Premium",
+      "capacity": 64,
+      "availability": "stock"
+    },
+    {
+      "id": "ram_premium_002",
+      "name": "Corsair Dominator 128GB DDR5",
+      "price": 52800,
+      "powerConsumption": 12,
+      "specs": "6400MHz, CAS 32, Dual channel, Premium",
+      "tier": "Premium",
+      "capacity": 128,
+      "availability": "stock"
+    }
+  ],
+  "SSD": [
+    {
+      "id": "ssd_budget_001",
+      "name": "WD Green SSD 480GB",
+      "price": 2640,
+      "powerConsumption": 3,
+      "specs": "2400MB/s, SATA, Budget storage",
+      "tier": "Budget",
+      "capacity": 0.48,
+      "type": "SATA SSD",
+      "availability": "stock"
+    },
+    {
+      "id": "ssd_budget_002",
+      "name": "Kingston A2000 1TB NVMe",
+      "price": 4620,
+      "powerConsumption": 4,
+      "specs": "2200MB/s read, PCIe 3.0, Budget NVMe",
+      "tier": "Budget",
+      "capacity": 1,
+      "type": "NVMe SSD",
+      "availability": "stock"
+    },
+    {
+      "id": "ssd_mid_001",
+      "name": "WD Blue SSD 1TB NVMe",
+      "price": 9790,
+      "powerConsumption": 4,
+      "specs": "5100MB/s read, PCIe 3.0, Budget storage",
+      "tier": "Mid-Range",
+      "capacity": 1,
+      "type": "NVMe SSD",
+      "availability": "stock"
+    },
+    {
+      "id": "ssd_mid_002",
+      "name": "Samsung 970 EVO Plus 2TB",
+      "price": 15400,
+      "powerConsumption": 5,
+      "specs": "5200MB/s, PCIe 3.0, Gaming storage",
+      "tier": "Mid-Range",
+      "capacity": 2,
+      "type": "NVMe SSD",
+      "availability": "stock"
+    },
+    {
+      "id": "ssd_high_001",
+      "name": "Samsung 980 Pro 2TB NVMe",
+      "price": 18590,
+      "powerConsumption": 5,
+      "specs": "7100MB/s read, PCIe 4.0, High performance",
+      "tier": "High-End",
+      "capacity": 2,
+      "type": "NVMe SSD",
+      "availability": "stock"
+    },
+    {
+      "id": "ssd_premium_001",
+      "name": "SK Hynix Platinum P41 4TB NVMe",
+      "price": 36190,
+      "powerConsumption": 6,
+      "specs": "7100MB/s read, PCIe 4.0, Professional storage",
+      "tier": "Premium",
+      "capacity": 4,
+      "type": "NVMe SSD",
+      "availability": "stock"
+    }
+  ],
+  "HDD": [
+    {
+      "id": "hdd_budget_001",
+      "name": "WD Blue 2TB HDD",
+      "price": 4620,
+      "powerConsumption": 4,
+      "specs": "5400 RPM, 256MB cache, Budget storage",
+      "tier": "Budget",
+      "capacity": 2,
+      "type": "HDD",
+      "availability": "stock"
+    },
+    {
+      "id": "hdd_mid_001",
+      "name": "WD Red Plus 4TB",
+      "price": 8800,
+      "powerConsumption": 5,
+      "specs": "5400 RPM, NAS-optimized, Reliable",
+      "tier": "Mid-Range",
+      "capacity": 4,
+      "type": "HDD",
+      "availability": "stock"
+    },
+    {
+      "id": "hdd_high_001",
+      "name": "Seagate Barracuda Pro 8TB HDD",
+      "price": 16390,
+      "powerConsumption": 8,
+      "specs": "7200 RPM, 256MB cache, Bulk storage",
+      "tier": "High-End",
+      "capacity": 8,
+      "type": "HDD",
+      "availability": "stock"
+    }
+  ],
+  "Motherboard": [
+    {
+      "id": "mobo_budget_001",
+      "name": "Gigabyte H610M H",
+      "price": 5500,
+      "powerConsumption": 15,
+      "specs": "LGA1700, DDR4, Budget entry-level",
+      "tier": "Budget",
+      "availability": "stock"
+    },
+    {
+      "id": "mobo_budget_002",
+      "name": "ASUS Prime H770-PLUS D4",
+      "price": 19690,
+      "powerConsumption": 20,
+      "specs": "LGA1700, DDR4, PCIe 5.0, Budget enthusiast",
+      "tier": "Budget",
+      "availability": "stock"
+    },
+    {
+      "id": "mobo_mid_001",
+      "name": "MSI B760M Mortar",
+      "price": 14300,
+      "powerConsumption": 18,
+      "specs": "LGA1700, DDR5, Micro-ATX, Mid-range",
+      "tier": "Mid-Range",
+      "availability": "stock"
+    },
+    {
+      "id": "mobo_high_001",
+      "name": "MSI Z790-A PRO",
+      "price": 31790,
+      "powerConsumption": 25,
+      "specs": "LGA1700, DDR5, PCIe 5.0, High-end gaming",
+      "tier": "High-End",
+      "availability": "stock"
+    },
+    {
+      "id": "mobo_premium_001",
+      "name": "ASUS ROG STRIX Z790-E",
+      "price": 43890,
+      "powerConsumption": 30,
+      "specs": "LGA1700, DDR5, PCIe 5.0 x16, Premium",
+      "tier": "Premium",
+      "availability": "stock"
+    }
+  ],
+  "PSU": [
+    {
+      "id": "psu_budget_001",
+      "name": "MSI MAG A550GL",
+      "price": 3300,
+      "powerConsumption": 0,
+      "specs": "550W, 80+ Bronze, Budget PSU",
+      "tier": "Budget",
+      "wattage": 550,
+      "availability": "stock"
+    },
+    {
+      "id": "psu_budget_002",
+      "name": "Seasonic Focus GX 650W",
+      "price": 9790,
+      "powerConsumption": 0,
+      "specs": "650W, 80+ Gold, Budget gaming PSU",
+      "tier": "Budget",
+      "wattage": 650,
+      "availability": "stock"
+    },
+    {
+      "id": "psu_high_001",
+      "name": "Corsair RM850e 850W",
+      "price": 14190,
+      "powerConsumption": 0,
+      "specs": "850W, 80+ Gold, Modular, High-end",
+      "tier": "High-End",
+      "wattage": 850,
+      "availability": "stock"
+    },
+    {
+      "id": "psu_premium_001",
+      "name": "EVGA SuperNOVA 1200 G+",
+      "price": 20790,
+      "powerConsumption": 0,
+      "specs": "1200W, 80+ Gold, Fully modular, Premium",
+      "tier": "Premium",
+      "wattage": 1200,
+      "availability": "stock"
+    }
+  ],
+  "Cooling": [
+    {
+      "id": "cool_budget_001",
+      "name": "Cooler Master Hyper H412R",
+      "price": 2200,
+      "powerConsumption": 1,
+      "specs": "Air cooler, Budget, Silent operation",
+      "tier": "Budget",
+      "availability": "stock"
+    },
+    {
+      "id": "cool_budget_002",
+      "name": "Noctua NH-U12S redux",
+      "price": 5390,
+      "powerConsumption": 2,
+      "specs": "Air cooler, Budget, Premium silence",
+      "tier": "Budget",
+      "availability": "stock"
+    },
+    {
+      "id": "cool_high_001",
+      "name": "Corsair H100i Elite Capellix",
+      "price": 14190,
+      "powerConsumption": 5,
+      "specs": "Liquid cooler, 240mm, High-end RGB",
+      "tier": "High-End",
+      "availability": "stock"
+    },
+    {
+      "id": "cool_premium_001",
+      "name": "NZXT Kraken Z73",
+      "price": 19690,
+      "powerConsumption": 8,
+      "specs": "Liquid cooler, 360mm, Premium, LCD display",
+      "tier": "Premium",
+      "availability": "stock"
+    }
+  ],
+  "Monitor": [
+    {
+      "id": "mon_budget_001",
+      "name": "ASUS VP228H 21.5\" FHD",
+      "price": 6600,
+      "powerConsumption": 20,
+      "specs": "1920x1080, 60Hz, Budget gaming",
+      "tier": "Budget",
+      "resolution": "FHD",
+      "availability": "stock"
+    },
+    {
+      "id": "mon_mid_001",
+      "name": "Dell P2423DE 24\" QHD",
+      "price": 27390,
+      "powerConsumption": 25,
+      "specs": "1920x1200, 99% sRGB, High-end",
+      "tier": "Mid-Range",
+      "resolution": "QHD",
+      "availability": "stock"
+    },
+    {
+      "id": "mon_high_001",
+      "name": "ASUS PA278CV 27\" QHD",
+      "price": 30690,
+      "powerConsumption": 28,
+      "specs": "2560x1440, 99% sRGB, Color accurate",
+      "tier": "High-End",
+      "resolution": "QHD",
+      "availability": "stock"
+    },
+    {
+      "id": "mon_premium_001",
+      "name": "LG 24UP550-W 24\" 4K IPS",
+      "price": 36190,
+      "powerConsumption": 30,
+      "specs": "4K UHD, 99% DCI-P3, Professional",
+      "tier": "Premium",
+      "resolution": "4K",
+      "availability": "stock"
+    }
+  ]
+}

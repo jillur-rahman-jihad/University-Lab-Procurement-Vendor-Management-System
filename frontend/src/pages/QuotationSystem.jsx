@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import AIRecommendationPanel from '../components/AIRecommendationPanel';
 
 const blankComponent = {
 	category: 'CPU',
@@ -960,6 +961,16 @@ function QuotationSystem() {
 					)}
 				</div>
 			</div>
+
+			{/* ============ AI BUILD RECOMMENDATION PANEL ============ */}
+			{selectedLab && role === 'university' && (
+				<div className="mt-8">
+					<AIRecommendationPanel 
+						labProjectId={selectedLab._id} 
+						token={token}
+					/>
+				</div>
+			)}
 		</div>
 	);
 };

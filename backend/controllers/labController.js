@@ -1433,3 +1433,144 @@ exports.exportLabProjectDocumentationProcurementReport = async (req, res) => {
         });
     }
 };
+
+// ============ AI BUILD RECOMMENDATION SYSTEM ============
+
+/**
+ * Generate AI-powered build recommendations
+ * POST /api/labs/generate-recommendation/:labProjectId
+ */
+exports.generateAIRecommendation = async (req, res) => {
+    try {
+        const { labProjectId } = req.params;
+        console.log('🔍 Generating AI recommendation for lab:', labProjectId);
+        
+        const labProject = await LabProject.findById(labProjectId);
+
+        if (!labProject) {
+            console.log('❌ Lab project not found:', labProjectId);
+            return res.status(404).json({ message: 'Lab project not found' });
+        }
+
+        // Verify ownership
+        if (labProject.universityId.toString() !== req.user.id) {
+            console.log('❌ Access denied - user:', req.user.id, 'university:', labProject.universityId);
+            return res.status(403).json({ message: 'Access denied - you do not own this lab project' });
+        }
+
+        // Check for GROQ API key
+        if (!process.env.GROQ_API_KEY) {
+            console.log('❌ GROQ_API_KEY not configured in .env');
+            return res.status(500).json({ message: 'Server error: GROQ_API_KEY not configured' });
+        }
+
+        console.log('✅ Validation passed, loading AI service...');
+        const aiService = require('../services/aiRecommendationService');
+
+        // Generate recommendation
+        console.log('🚀 Calling AI service with parameters:', {
+            labType: labProject.labType,
+            requirement: labProject.requirements?.mainRequirement?.substring(0, 50),
+            budget: labProject.requirements?.budgetMax,
+            systems: labProject.requirements?.systems
+        });
+        
+        const recommendation = await aiService.generateBuildRecommendation(
+            labProject.labType,
+            labProject.requirements?.mainRequirement || 'Standard lab setup',
+            labProject.requirements?.budgetMax || 5000,
+            labProject.requirements?.systems || 1
+        );
+
+        console.log('✅ Recommendation generated successfully');
+        console.log('📦 Recommendation object keys:', Object.keys(recommendation));
+
+        // Save recommendation to database
+        labProject.aiRecommendation = {
+            suggestedComponents: recommendation.suggestedComponents,
+            totalEstimatedCost: recommendation.costAnalysis.finalTotalCost,
+            costPerSystem: recommendation.costAnalysis.costPerSystem,
+            bulkDiscount: recommendation.costAnalysis.bulkDiscountPercentage,
+            powerConsumption: recommendation.powerRequirements.totalPowerConsumption,
+            recommendations: recommendation.recommendations,
+            softwareStack: recommendation.softwareStack,
+            powerRequirements: recommendation.powerRequirements,
+            costAnalysis: recommendation.costAnalysis
+        };
+
+        console.log('💾 Saving recommendation to database...');
+        await labProject.save();
+        console.log('✅ Database save successful');
+
+        res.status(200).json({
+            success: true,
+            message: 'AI recommendation generated successfully',
+            recommendation: {
+                generatedAt: recommendation.generatedAt,
+                labType: recommendation.labType,
+                numberOfSystems: recommendation.numberOfSystems,
+                components: recommendation.suggestedComponents,
+                costAnalysis: recommendation.costAnalysis,
+                powerRequirements: recommendation.powerRequirements,
+                recommendations: recommendation.recommendations,
+                softwareStack: recommendation.softwareStack,
+                vendorNotes: recommendation.vendorNotes
+            }
+        });
+
+    } catch (error) {
+        console.error('❌ [LAB] Error generating AI recommendation:');
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('Full error:', error);
+        
+        res.status(500).json({ 
+            success: false,
+            message: 'Error generating AI recommendation', 
+            error: error.message,
+            details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
+    }
+};
+
+/**
+ * Get AI recommendation for a lab project
+ * GET /api/labs/get-recommendation/:labProjectId
+ */
+exports.getAIRecommendation = async (req, res) => {
+    try {
+        const { labProjectId } = req.params;
+        const labProject = await LabProject.findById(labProjectId);
+
+        if (!labProject) {
+            return res.status(404).json({ message: 'Lab project not found' });
+        }
+
+        // Verify ownership
+        if (labProject.universityId.toString() !== req.user.id) {
+            return res.status(403).json({ message: 'Access denied - you do not own this lab project' });
+        }
+
+        if (!labProject.aiRecommendation) {
+            return res.status(404).json({ 
+                message: 'No AI recommendation found for this lab project',
+                hasRecommendation: false 
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'AI recommendation retrieved',
+            recommendation: labProject.aiRecommendation,
+            hasRecommendation: true
+        });
+
+    } catch (error) {
+        console.error('[LAB] Error retrieving AI recommendation:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error retrieving AI recommendation', 
+            error: error.message 
+        });
+    }
+};
