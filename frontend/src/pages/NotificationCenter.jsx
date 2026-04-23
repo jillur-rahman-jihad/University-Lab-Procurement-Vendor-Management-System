@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import API_URL from '../config/api';
 /**
  * NotificationCenter Page
  * Full notification management interface
@@ -57,7 +57,7 @@ const NotificationCenter = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:5001/api/notifications/my?${params.toString()}`,
+        `${API_URL}/api/notifications/my?${params.toString()}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -80,7 +80,7 @@ const NotificationCenter = () => {
   const handleMarkAsRead = async (notificationId) => {
     try {
       await axios.patch(
-        `http://localhost:5001/api/notifications/${notificationId}/read`,
+        `${API_URL}/api/notifications/${notificationId}/read`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -96,7 +96,7 @@ const NotificationCenter = () => {
     if (window.confirm('Are you sure you want to delete this notification?')) {
       try {
         await axios.delete(
-          `http://localhost:5001/api/notifications/${notificationId}`,
+          `${API_URL}/api/notifications/${notificationId}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
@@ -111,7 +111,7 @@ const NotificationCenter = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await axios.patch(
-        'http://localhost:5001/api/notifications/read-all',
+        `${API_URL}/api/notifications/read-all`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -127,7 +127,7 @@ const NotificationCenter = () => {
     if (window.confirm('Are you sure you want to delete all notifications? This cannot be undone.')) {
       try {
         await axios.delete(
-          'http://localhost:5001/api/notifications/clear-all',
+          `${API_URL}/api/notifications/clear-all`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }

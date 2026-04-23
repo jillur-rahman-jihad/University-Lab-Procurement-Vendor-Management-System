@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import AIRecommendationPanel from '../components/AIRecommendationPanel';
-
+import API_URL from '../config/api';
 const blankComponent = {
 	category: 'CPU',
 	name: '',
@@ -315,7 +315,7 @@ function QuotationSystem() {
 			setLoading(true);
 			setError('');
 			try {
-				const res = await axios.get('http://localhost:5001/api/quotation-system/labs', {
+				const res = await axios.get(`${API_URL}/api/quotation-system/labs`, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
 				const availableLabs = res.data || [];
@@ -351,10 +351,10 @@ function QuotationSystem() {
 			setLoadingDetails(true);
 			setError('');
 			try {
-				const labPromise = axios.get(`http://localhost:5001/api/quotation-system/labs/${selectedLab._id}`, {
+				const labPromise = axios.get(`${API_URL}/api/quotation-system/labs/${selectedLab._id}`, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
-				const quotationPromise = axios.get(`http://localhost:5001/api/quotation-system/labs/${selectedLab._id}/quotations`, {
+				const quotationPromise = axios.get(`${API_URL}/api/quotation-system/labs/${selectedLab._id}/quotations`, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
 				const labRes = await labPromise;
@@ -544,12 +544,12 @@ function QuotationSystem() {
 			};
 
 			if (editingQuotationId) {
-				await axios.put(`http://localhost:5001/api/quotation-system/quotations/${editingQuotationId}`, payload, {
+				await axios.put(`${API_URL}/api/quotation-system/quotations/${editingQuotationId}`, payload, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
 				setSuccess('Quotation updated successfully.');
 			} else {
-				await axios.post('http://localhost:5001/api/quotation-system/quotations', payload, {
+				await axios.post(`${API_URL}/api/quotation-system/quotations`, payload, {
 					headers: { Authorization: `Bearer ${token}` }
 				});
 				setSuccess('Quotation submitted successfully.');
@@ -806,7 +806,7 @@ function QuotationSystem() {
 														</p>
 													</div>
 													<div className="text-right">
-														<p className="font-semibold text-blue-700">{quotation.totalPrice}</p>
+														<p className="font-semibold text-blue-700">{quotation.totalPrice} Taka</p>
 														<button
 															type="button"
 															onClick={() => toggleQuotationSelection(quotation)}

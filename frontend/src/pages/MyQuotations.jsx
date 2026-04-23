@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import API_URL from "../config/api";
 const blankComponent = {
   category: "CPU",
   name: "",
@@ -31,7 +31,7 @@ const MyQuotations = () => {
     const fetchQuotations = async () => {
       setError("");
       try {
-        const res = await axios.get("http://localhost:5001/api/vendor/quotations/my", {
+        const res = await axios.get(`${API_URL}/api/vendor/quotations/my`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -124,7 +124,7 @@ const MyQuotations = () => {
       };
 
       const res = await axios.put(
-        `http://localhost:5001/api/vendor/quotations/${quotationId}`,
+        `${API_URL}/api/vendor/quotations/${quotationId}`,
         payload,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -154,7 +154,7 @@ const MyQuotations = () => {
     setSuccess("");
 
     try {
-      await axios.delete(`http://localhost:5001/api/vendor/quotations/${quotationId}`, {
+      await axios.delete(`${API_URL}/api/vendor/quotations/${quotationId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

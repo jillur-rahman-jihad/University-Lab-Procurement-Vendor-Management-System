@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from '../components/NotificationBell';
-
+import API_URL from '../config/api';
 const ReviewerDashboard = () => {
 	const navigate = useNavigate();
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
@@ -37,7 +37,7 @@ const ReviewerDashboard = () => {
 			// For demo, this would fetch all submissions for the reviewer's organization
 			// In production, this would be filtered based on the reviewer's role and organization
 			const response = await fetch(
-				'http://localhost:5001/api/document-submission/submissions',
+				`${API_URL}/api/document-submission/submissions`,
 				{
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,
@@ -117,7 +117,7 @@ const ReviewerDashboard = () => {
 			console.log('Submitting review with payload:', payload);
 
 			const response = await fetch(
-				`http://localhost:5001/api/document-submission/submission/${selectedSubmission._id}/add-review`,
+				`${API_URL}/api/document-submission/submission/${selectedSubmission._id}/add-review`,
 				{
 					method: 'POST',
 					headers: {
@@ -152,7 +152,7 @@ const ReviewerDashboard = () => {
 
 			setIsSubmitting(true);
 			const response = await fetch(
-				`http://localhost:5001/api/document-submission/submission/${selectedSubmission._id}/approve`,
+				`${API_URL}/api/document-submission/submission/${selectedSubmission._id}/approve`,
 				{
 					method: 'POST',
 					headers: {
@@ -192,7 +192,7 @@ const ReviewerDashboard = () => {
 
 			setIsSubmitting(true);
 			const response = await fetch(
-				`http://localhost:5001/api/document-submission/submission/${selectedSubmission._id}/reject`,
+				`${API_URL}/api/document-submission/submission/${selectedSubmission._id}/reject`,
 				{
 					method: 'POST',
 					headers: {
@@ -233,7 +233,7 @@ const ReviewerDashboard = () => {
 			const endpoint = endpoints[submission.documentType];
 			if (!endpoint) return;
 
-			const response = await fetch(`http://localhost:5001${endpoint}`, {
+			const response = await fetch(`${API_URL}${endpoint}`, {
 				headers: {
 					'Authorization': `Bearer ${userInfo?.token}`,
 				},

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-
+import API_URL from '../config/api';
 const LabPlanningDashboard = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -48,7 +48,7 @@ const LabPlanningDashboard = () => {
       }
 
       const response = await axios.get(
-        `http://localhost:5001/api/labs/${projectId}`,
+        `${API_URL}/api/labs/${projectId}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -150,7 +150,7 @@ const LabPlanningDashboard = () => {
         };
 
         const response = await axios.post(
-          'http://localhost:5001/api/labs/create',
+          `${API_URL}/api/labs/create`,
           payload,
           {
             headers: {
@@ -194,7 +194,7 @@ const LabPlanningDashboard = () => {
       formDataPayload.append('document', file);
 
       const response = await axios.post(
-        'http://localhost:5001/api/labs/upload-pdf',
+        `${API_URL}/api/labs/upload-pdf`,
         formDataPayload,
         {
           headers: {

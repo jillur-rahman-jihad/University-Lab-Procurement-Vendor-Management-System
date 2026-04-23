@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
+import API_URL from "../config/api";
 
 const AvailableLabRequests = () => {
   const [labs, setLabs] = useState([]);
@@ -13,7 +14,7 @@ const AvailableLabRequests = () => {
   useEffect(() => {
     const fetchLabs = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/api/vendor/labs", {
+        const res = await axios.get(`${API_URL}/api/vendor/labs`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -94,7 +95,7 @@ const LabReviewModal = ({ lab, onClose }) => {
     const fetchQuotations = async () => {
       setLoadingQuotes(true);
       try {
-        const res = await axios.get(`http://localhost:5001/api/vendor/labs/${lab._id}/quotations`, {
+        const res = await axios.get(`${API_URL}/api/vendor/labs/${lab._id}/quotations`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setQuotations(res.data || []);

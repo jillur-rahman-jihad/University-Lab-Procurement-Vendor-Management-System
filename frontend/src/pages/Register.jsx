@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
-
+import API_URL from '../config/api';
 const LEAFLET_SCRIPT_ID = 'leaflet-script';
 const LEAFLET_STYLE_ID = 'leaflet-style';
 const DEFAULT_MAP_CENTER = [23.8103, 90.4125];
@@ -157,7 +157,7 @@ const Register = () => {
         payload.certificationInformation = formData.certificationInformation;
       }
 
-      const response = await axios.post('http://localhost:5001/api/auth/register', payload);
+      const response = await axios.post(`${API_URL}/api/auth/register`, payload);
       localStorage.setItem('userInfo', JSON.stringify(response.data));
       navigate('/dashboard');
     } catch (err) {

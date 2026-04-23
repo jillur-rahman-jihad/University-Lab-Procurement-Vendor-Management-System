@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_URL from '/Users/zihad/University-Lab-Procurement-Vendor-Management-System/frontend/src/config/api.js';
 import './AIRecommendationPanel.css';
 
 const AIRecommendationPanel = ({ labProjectId, token }) => {
@@ -16,7 +17,7 @@ const AIRecommendationPanel = ({ labProjectId, token }) => {
 
     try {
       const response = await fetch(
-        `http://localhost:5001/api/labs/generate-recommendation/${labProjectId}`,
+        `${API_URL}/api/labs/generate-recommendation/${labProjectId}`,
         {
           method: 'POST',
           headers: {
@@ -144,7 +145,7 @@ const AIRecommendationPanel = ({ labProjectId, token }) => {
     const fetchRecommendation = async () => {
       try {
         const response = await fetch(
-          `http://localhost:5001/api/labs/get-recommendation/${labProjectId}`,
+          `${API_URL}/api/labs/get-recommendation/${labProjectId}`,
           {
             headers: { 'Authorization': `Bearer ${token}` }
           }

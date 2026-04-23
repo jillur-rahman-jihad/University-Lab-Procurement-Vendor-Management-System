@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ProcurementSummaryModal from '../components/ProcurementSummaryModal';
 import NotificationBell from '../components/NotificationBell';
-
+import API_URL from '../config/api';
 const UniversityDashboard = () => {
 	const navigate = useNavigate();
 	const userInfo = JSON.parse(localStorage.getItem('userInfo'));
@@ -32,7 +32,7 @@ const UniversityDashboard = () => {
 		const fetchUniversityProfile = async () => {
 			try {
 				setLoading(true);
-				const response = await fetch('http://localhost:5001/api/university/profile', {
+				const response = await fetch(`${API_URL}/api/university/profile`, {
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,
 					},
@@ -54,7 +54,7 @@ const UniversityDashboard = () => {
 
 		const fetchLabProjects = async () => {
 			try {
-				const response = await fetch('http://localhost:5001/api/labs/user-projects', {
+				const response = await fetch(`${API_URL}/api/labs/user-projects`, {
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,
 					},
@@ -91,7 +91,7 @@ const UniversityDashboard = () => {
 		try {
 			setExportingId(projectId);
 			const response = await fetch(
-				`http://localhost:5001/api/labs/export-documentation/${projectId}`,
+				`${API_URL}/api/labs/export-documentation/${projectId}`,
 				{
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,
@@ -133,7 +133,7 @@ const UniversityDashboard = () => {
 		try {
 			setExportingId(projectId);
 			const response = await fetch(
-				`http://localhost:5001/api/labs/export-documentation-pdf/${projectId}`,
+				`${API_URL}/api/labs/export-documentation-pdf/${projectId}`,
 				{
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,
@@ -173,7 +173,7 @@ const UniversityDashboard = () => {
 		try {
 			setExportingId(projectId);
 			const response = await fetch(
-				`http://localhost:5001/api/labs/export-documentation-csv/${projectId}`,
+				`${API_URL}/api/labs/export-documentation-csv/${projectId}`,
 				{
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,
@@ -213,7 +213,7 @@ const UniversityDashboard = () => {
 		try {
 			setExportingId(projectId);
 			const response = await fetch(
-				`http://localhost:5001/api/labs/export-procurement-report/${projectId}`,
+				`${API_URL}/api/labs/export-procurement-report/${projectId}`,
 				{
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,
@@ -271,7 +271,7 @@ const UniversityDashboard = () => {
 
 			setIsSubmitting(true);
 			const response = await fetch(
-				'http://localhost:5001/api/document-submission/submit-document',
+				`${API_URL}/api/document-submission/submit-document`,
 				{
 					method: 'POST',
 					headers: {
@@ -312,7 +312,7 @@ const UniversityDashboard = () => {
 	const fetchSubmissions = async () => {
 		try {
 			const response = await fetch(
-				'http://localhost:5001/api/document-submission/submissions',
+				`${API_URL}/api/document-submission/submissions`,
 				{
 					headers: {
 						'Authorization': `Bearer ${userInfo?.token}`,

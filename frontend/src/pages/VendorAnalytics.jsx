@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import API_URL from "../config/api";
 const VendorAnalytics = () => {
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -11,7 +11,7 @@ const VendorAnalytics = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/api/vendor/analytics", {
+        const res = await axios.get(`${API_URL}/api/vendor/analytics`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

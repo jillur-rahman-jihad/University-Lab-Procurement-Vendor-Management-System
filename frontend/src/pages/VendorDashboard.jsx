@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import NotificationBell from "../components/NotificationBell";
-
+import API_URL from "../config/api";
 const VendorDashboard = () => {
   const navigate = useNavigate();
   const [analytics, setAnalytics] = useState(null);
@@ -22,12 +22,12 @@ const VendorDashboard = () => {
     const fetchAnalytics = async () => {
       try {
         const [analyticsRes, profileRes] = await Promise.all([
-          axios.get("http://localhost:5001/api/vendor/analytics", {
+          axios.get(`${API_URL}/api/vendor/analytics`, {
             headers: {
               Authorization: `Bearer ${token}`
             }
           }),
-          axios.get("http://localhost:5001/api/vendor/profile", {
+          axios.get(`${API_URL}/api/vendor/profile`, {
             headers: {
               Authorization: `Bearer ${token}`
             }

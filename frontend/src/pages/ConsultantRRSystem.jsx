@@ -15,7 +15,7 @@ const ConsultantRRSystem = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [accessDenied, setAccessDenied] = useState(false);
 
-  const API_BASE_URL = 'http://localhost:5001/api/consultant-ranking';
+  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
   let userInfo = null;
   try {
     userInfo = JSON.parse(localStorage.getItem('userInfo'));

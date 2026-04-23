@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_URL from '../config/api';
 
 const ProcurementSummaryModal = ({ isOpen, projectId, onClose, userToken }) => {
 	const [summary, setSummary] = useState(null);
@@ -15,7 +16,7 @@ const ProcurementSummaryModal = ({ isOpen, projectId, onClose, userToken }) => {
 		try {
 			setLoading(true);
 			setError(null);
-			const response = await fetch(`http://localhost:5001/api/university/procurement/${projectId}`, {
+			const response = await fetch(`${API_URL}/api/university/procurement/${projectId}`, {
 				headers: {
 					'Authorization': `Bearer ${userToken}`,
 				},
@@ -38,7 +39,7 @@ const ProcurementSummaryModal = ({ isOpen, projectId, onClose, userToken }) => {
 
 	const handleDownload = async () => {
 		try {
-			const response = await fetch(`http://localhost:5001/api/university/procurement/${projectId}/download`, {
+			const response = await fetch(`${API_URL}/api/university/procurement/${projectId}/download`, {
 				headers: {
 					'Authorization': `Bearer ${userToken}`,
 				},

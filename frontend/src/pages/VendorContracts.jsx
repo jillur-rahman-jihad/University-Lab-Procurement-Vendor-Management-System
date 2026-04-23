@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-
+import API_URL from "../config/api";
 const VendorContracts = () => {
   const [contracts, setContracts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +11,7 @@ const VendorContracts = () => {
   useEffect(() => {
     const fetchContracts = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/api/vendor/contracts", {
+        const res = await axios.get(`${API_URL}/api/vendor/contracts`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
